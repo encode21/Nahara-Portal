@@ -1,4 +1,4 @@
-# Nahara — Portal Komunitas Cluster
+# Nahara — Portal Cluster
 
 Portal web modern untuk mengelola kegiatan komunitas, pendaftaran warga, dan kas komunitas perumahan Nahara.
 
@@ -58,15 +58,15 @@ npm run dev
 
 Buka [http://localhost:3000](http://localhost:3000)
 
-| Route | Deskripsi |
-|-------|-----------|
-| `/` | Beranda publik |
-| `/register` | Pendaftaran kegiatan |
-| `/login` | Login admin |
-| `/dashboard` | Dashboard admin |
-| `/activities` | Kelola kegiatan |
+| Route              | Deskripsi                 |
+| ------------------ | ------------------------- |
+| `/`                | Beranda publik            |
+| `/register`        | Pendaftaran kegiatan      |
+| `/login`           | Login admin               |
+| `/dashboard`       | Dashboard admin           |
+| `/activities`      | Kelola kegiatan           |
 | `/activities/[id]` | Detail kegiatan + peserta |
-| `/kas` | Kelola kas |
+| `/kas`             | Kelola kas                |
 
 ## Deploy ke Vercel
 
