@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 const KATEGORI = ["Keamanan", "Kebersihan", "Infrastruktur", "Lainnya"];
 
@@ -13,6 +15,7 @@ export default function PengaduanBaruPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     nama: "",
     blok: "",
@@ -30,12 +33,13 @@ export default function PengaduanBaruPage() {
       blok: form.blok || null,
       kategori: form.kategori,
       deskripsi: form.deskripsi,
+      foto_url: fotoUrl,
     });
 
     setLoading(false);
 
     if (insertError) {
-      setError("Gagal mengirim pengaduan. Silakan coba lagi.");
+      setError(getSupabaseErrorMessage(insertError) ?? "Gagal mengirim pengaduan. Silakan coba lagi.");
       return;
     }
 
@@ -77,6 +81,14 @@ export default function PengaduanBaruPage() {
           <label className="label">Deskripsi</label>
           <textarea className="input" rows={4} value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} required />
         </div>
+
+        <ImageUpload
+          folder="pengaduan"
+          value={fotoUrl}
+          onChange={setFotoUrl}
+          label="Foto Bukti (opsional)"
+          hint="Lampirkan foto kondisi lapangan — maks. 5 MB"
+        />
 
         <button type="submit" className="btn-primary w-full" disabled={loading}>
           {loading ? (

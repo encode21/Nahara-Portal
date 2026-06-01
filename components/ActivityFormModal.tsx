@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Activity } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 
 type Props = {
   activity: Activity | null;
@@ -28,6 +29,7 @@ export function ActivityFormModal({ activity, onClose }: Props) {
   const [registrationFee, setRegistrationFee] = useState(
     activity?.registration_fee?.toString() ?? "0"
   );
+  const [imageUrl, setImageUrl] = useState<string | null>(activity?.image_url ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +45,7 @@ export function ActivityFormModal({ activity, onClose }: Props) {
       location: location.trim() || null,
       max_participants: maxParticipants ? parseInt(maxParticipants, 10) : null,
       registration_fee: parseInt(registrationFee, 10) || 0,
+      image_url: imageUrl,
     };
 
     const result = isEdit
@@ -104,6 +107,13 @@ export function ActivityFormModal({ activity, onClose }: Props) {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
+
+          <ImageUpload
+            folder="kegiatan"
+            value={imageUrl}
+            onChange={setImageUrl}
+            label="Poster / Gambar Kegiatan"
+          />
 
           <div>
             <label htmlFor="date" className="label">Tanggal & Waktu</label>

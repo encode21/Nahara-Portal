@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS security_staff (
   nama TEXT NOT NULL,
   jabatan TEXT,
   telepon TEXT,
-  shift TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

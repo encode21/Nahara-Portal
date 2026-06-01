@@ -7,6 +7,7 @@ import type { Pengumuman } from "@/lib/types";
 import { formatShortDate } from "@/lib/utils";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Plus } from "lucide-react";
+import { StoredImage } from "@/components/ui/StoredImage";
 
 type PengumumanCardProps = {
   pengumuman?: Pengumuman[];
@@ -55,6 +56,13 @@ export function PengumumanCard({ pengumuman: initial = [] }: PengumumanCardProps
         <div className="mt-4 flex-1 space-y-3">
           {list.map((p) => (
             <div key={p.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              {p.image_url && (
+                <StoredImage
+                  src={p.image_url}
+                  alt=""
+                  className="mb-2 h-20 w-full rounded object-cover"
+                />
+              )}
               <p className="text-sm font-medium text-slate-800">{p.judul}</p>
               {p.isi && <p className="mt-1 line-clamp-2 text-xs text-slate-500">{p.isi}</p>}
               <p className="mt-2 text-xs text-slate-400">{formatShortDate(p.created_at)}</p>

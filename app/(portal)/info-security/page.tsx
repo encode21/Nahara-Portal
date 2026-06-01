@@ -11,8 +11,6 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
-const SHIFTS = ["Pagi", "Sore", "Malam", "24 Jam"];
-
 type Tab = "petugas" | "notifikasi" | "users";
 
 export default function InfoSecurityPage() {
@@ -34,7 +32,6 @@ export default function InfoSecurityPage() {
     nama: "",
     jabatan: "",
     telepon: "",
-    shift: "Pagi",
     is_active: true,
   });
 
@@ -101,7 +98,6 @@ export default function InfoSecurityPage() {
       nama: staffForm.nama,
       jabatan: staffForm.jabatan || null,
       telepon: staffForm.telepon || null,
-      shift: staffForm.shift || null,
       is_active: staffForm.is_active,
     };
     const result = editStaffId
@@ -115,7 +111,7 @@ export default function InfoSecurityPage() {
     }
     setShowStaffForm(false);
     setEditStaffId(null);
-    setStaffForm({ nama: "", jabatan: "", telepon: "", shift: "Pagi", is_active: true });
+    setStaffForm({ nama: "", jabatan: "", telepon: "", is_active: true });
     fetchStaff();
   }
 
@@ -131,7 +127,6 @@ export default function InfoSecurityPage() {
       nama: s.nama,
       jabatan: s.jabatan ?? "",
       telepon: s.telepon ?? "",
-      shift: s.shift ?? "Pagi",
       is_active: s.is_active,
     });
     setShowStaffForm(true);
@@ -336,7 +331,7 @@ function PetugasTab({
   staffList: SecurityStaff[];
   isAdmin: boolean;
   showForm: boolean;
-  form: { nama: string; jabatan: string; telepon: string; shift: string; is_active: boolean };
+  form: { nama: string; jabatan: string; telepon: string; is_active: boolean };
   editId: string | null;
   onShowForm: () => void;
   onHideForm: () => void;
@@ -368,15 +363,9 @@ function PetugasTab({
               <label className="label">Jabatan</label>
               <input className="input" placeholder="Satpam, Koordinator..." value={form.jabatan} onChange={(e) => onFormChange({ ...form, jabatan: e.target.value })} />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className="label">Telepon / WA</label>
               <input className="input" value={form.telepon} onChange={(e) => onFormChange({ ...form, telepon: e.target.value })} />
-            </div>
-            <div>
-              <label className="label">Shift</label>
-              <select className="input" value={form.shift} onChange={(e) => onFormChange({ ...form, shift: e.target.value })}>
-                {SHIFTS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -416,11 +405,6 @@ function PetugasTab({
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-900">{s.nama}</p>
                   {s.jabatan && <p className="text-sm text-slate-500">{s.jabatan}</p>}
-                  {s.shift && (
-                    <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                      Shift {s.shift}
-                    </span>
-                  )}
                   {s.telepon && (
                     <a
                       href={`https://wa.me/${s.telepon.replace(/\D/g, "")}`}
@@ -571,7 +555,7 @@ function UsersTab({
               <select className="input" value={form.staff_id} onChange={(e) => onFormChange({ ...form, staff_id: e.target.value })}>
                 <option value="">— Tidak dihubungkan —</option>
                 {staffList.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nama}{s.shift ? ` (${s.shift})` : ""}</option>
+                  <option key={s.id} value={s.id}>{s.nama}{s.jabatan ? ` — ${s.jabatan}` : ""}</option>
                 ))}
               </select>
             </div>

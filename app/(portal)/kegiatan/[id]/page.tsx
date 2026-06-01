@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Activity } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { StoredImage } from "@/components/ui/StoredImage";
 
 type PublicParticipant = {
   id: string;
@@ -70,8 +71,15 @@ export default function PublicActivityDetailPage({
           ← Kembali
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">{activity.title}</h1>
+        {activity.image_url && (
+          <StoredImage
+            src={activity.image_url}
+            alt={activity.title}
+            className="mt-4 max-h-80 w-full rounded-xl object-cover"
+          />
+        )}
         {activity.description && (
-          <p className="text-slate-600 whitespace-pre-line">{activity.description}</p>
+          <p className="mt-4 text-slate-600 whitespace-pre-line">{activity.description}</p>
         )}
       </div>
 

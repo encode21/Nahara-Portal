@@ -6,6 +6,7 @@ export type Activity = {
   location: string | null;
   max_participants: number | null;
   registration_fee: number;
+  image_url: string | null;
   created_at: string;
 };
 
@@ -88,6 +89,7 @@ export type Pengumuman = {
   id: string;
   judul: string;
   isi: string | null;
+  image_url: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -106,7 +108,6 @@ export type SecurityStaff = {
   nama: string;
   jabatan: string | null;
   telepon: string | null;
-  shift: string | null;
   is_active: boolean;
   created_at: string;
 };

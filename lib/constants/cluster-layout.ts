@@ -189,3 +189,20 @@ export function normalizeBlokKey(blok: string): string {
   if (!parsed) return blok;
   return formatBlok(parsed.rowId, parsed.lotNumber);
 }
+
+/** Label di siteplan JPG → kode database (NHT-2/19) */
+export function siteplanLabelToDbBlok(label: string): string {
+  const m = label.match(/^NAHARA\s+(BARAT|TIMUR)\s+(\d+)\s+(\d+)$/i);
+  if (!m) return label;
+  const prefix = m[1].toUpperCase() === "BARAT" ? "NHB" : "NHT";
+  return formatBlok(`${prefix}-${m[2]}`, parseInt(m[3], 10));
+}
+
+/** Kode database → label siteplan (NAHARA TIMUR 2 19) */
+export function dbBlokToSiteplanLabel(blok: string): string | null {
+  const parsed = parseBlok(blok);
+  if (!parsed) return null;
+  const side = parsed.rowId.startsWith("NHB") ? "BARAT" : "TIMUR";
+  const rowNum = parsed.rowId.split("-")[1];
+  return `NAHARA ${side} ${rowNum} ${parsed.lotNumber}`;
+}

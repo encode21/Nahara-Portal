@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS activities (
   location text,
   max_participants int,
   registration_fee int DEFAULT 0,
+  image_url text,
   created_at timestamptz DEFAULT now()
 );
 
@@ -89,6 +90,7 @@ CREATE TABLE IF NOT EXISTS pengumuman (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   judul text NOT NULL,
   isi text,
+  image_url text,
   created_by text,
   created_at timestamptz DEFAULT now()
 );

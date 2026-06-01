@@ -7,6 +7,7 @@ import type { Pengaduan } from "@/lib/types";
 import { timeAgo } from "@/lib/utils";
 import { StatusBadge, getPengaduanVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { StoredImage } from "@/components/ui/StoredImage";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
@@ -77,31 +78,39 @@ export default function PengaduanPage() {
       ) : list.length === 0 ? (
         <div className="glass-card text-center text-sm text-slate-500">Belum ada pengaduan.</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-400">
-                <th className="px-4 py-3">Nama / Blok</th>
-                <th className="px-4 py-3">Kategori</th>
-                <th className="px-4 py-3">Deskripsi</th>
-                <th className="px-4 py-3">Waktu</th>
-                <th className="px-4 py-3">Status</th>
-                {isAdmin && <th className="px-4 py-3">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <p className="text-slate-700">{p.nama}</p>
-                    {p.blok && <p className="text-xs text-slate-500">{p.blok}</p>}
-                  </td>
-                  <td className="px-4 py-3"><StatusBadge status={p.kategori} variant="neutral" /></td>
-                  <td className="max-w-xs px-4 py-3 text-slate-400">{p.deskripsi}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{timeAgo(p.created_at)}</td>
-                  <td className="px-4 py-3"><StatusBadge status={p.status} variant={getPengaduanVariant(p.status)} /></td>
-                  {isAdmin && (
-                    <td className="px-4 py-3">
+        <div className="space-y-4">
+          {list.map((p) => (
+            <article key={p.id} className="glass-card overflow-hidden">
+              <div className="flex flex-col gap-4 sm:flex-row">
+                {p.foto_url && (
+                  <a
+                    href={p.foto_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 sm:w-40"
+                  >
+                    <StoredImage
+                      src={p.foto_url}
+                      alt={`Foto pengaduan ${p.nama}`}
+                      className="h-32 w-full rounded-lg object-cover sm:h-full sm:min-h-[120px]"
+                    />
+                  </a>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-slate-900">{p.nama}</p>
+                      {p.blok && <p className="text-xs text-slate-500">{p.blok}</p>}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge status={p.kategori} variant="neutral" />
+                      <StatusBadge status={p.status} variant={getPengaduanVariant(p.status)} />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">{p.deskripsi}</p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-slate-400">{timeAgo(p.created_at)}</p>
+                    {isAdmin && (
                       <select
                         className="input w-auto py-1 text-xs"
                         value={p.status}
@@ -109,12 +118,12 @@ export default function PengaduanPage() {
                       >
                         {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </div>
