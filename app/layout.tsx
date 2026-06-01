@@ -1,5 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Syne } from "next/font/google";
+import {
+  SITE_DESCRIPTION,
+  SITE_TITLE,
+  THEME_COLOR,
+} from "@/lib/constants/brand";
+import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -14,15 +20,34 @@ const syne = Syne({
 
 export const metadata: Metadata = {
   title: {
-    default: "Nahara - Portal Warga",
-    template: "%s | Nahara - Portal Warga",
+    default: SITE_TITLE,
+    template: `%s | ${SITE_TITLE}`,
   },
-  description: "Portal warga Cluster Nahara, Cimanggis Golf Estate",
-  applicationName: "Nahara - Portal Warga",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_TITLE,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: SITE_TITLE,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
-    apple: [{ url: "/favicon.png", type: "image/png" }],
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: THEME_COLOR,
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -34,6 +59,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${jakarta.variable} ${syne.variable} font-sans`}>
         {children}
+        <PwaInstallPrompt />
       </body>
     </html>
   );
