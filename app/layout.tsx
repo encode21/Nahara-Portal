@@ -13,8 +13,16 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "Nahara — Portal Komunitas",
-  description: "Portal komunitas Cluster Nahara, Cimanggis Golf Estate",
+  title: {
+    default: "Nahara - Portal Warga",
+    template: "%s | Nahara - Portal Warga",
+  },
+  description: "Portal warga Cluster Nahara, Cimanggis Golf Estate",
+  applicationName: "Nahara - Portal Warga",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/favicon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

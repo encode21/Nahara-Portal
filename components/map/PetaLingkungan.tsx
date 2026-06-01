@@ -14,6 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { MapZoomViewport } from "@/components/map/MapZoomViewport";
 
 export interface PetaLingkunganProps {
   wargaData: WargaWithIuran[];
@@ -631,7 +632,7 @@ export default function PetaLingkungan({
         ))}
       </div>
 
-      <div className="overflow-x-auto overflow-y-auto rounded-lg border border-slate-200 bg-[#f5f5f5] p-3 sm:p-4">
+      <MapZoomViewport>
         <div
           className="relative mx-auto w-full leading-[0]"
           style={{ maxWidth: width }}
@@ -669,7 +670,7 @@ export default function PetaLingkungan({
             })}
           </svg>
         </div>
-      </div>
+      </MapZoomViewport>
     </TooltipProvider>
   );
 }

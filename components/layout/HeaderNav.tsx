@@ -201,7 +201,7 @@ export function HeaderNav() {
 export function Footer() {
   return (
     <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-slate-500">
-      © 2025 Nahara Komunitas. All rights reserved.
+      © 2025 Nahara - Portal Warga. All rights reserved.
     </footer>
   );
 }
