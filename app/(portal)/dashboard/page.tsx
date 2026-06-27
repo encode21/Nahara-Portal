@@ -4,7 +4,6 @@ import { getCurrentMonthStart } from "@/lib/utils";
 import { SaldoCard } from "@/components/dashboard/SaldoCard";
 import { PengaduanTerkini } from "@/components/dashboard/PengaduanTerkini";
 import { PengumumanCard } from "@/components/dashboard/PengumumanCard";
-import { GrafikKeuangan } from "@/components/dashboard/GrafikKeuangan";
 import { PetaLingkunganCard } from "@/components/map/PetaLingkunganCard";
 import { Users, Megaphone } from "lucide-react";
 
@@ -106,11 +105,6 @@ export default async function DashboardPage() {
         <PetaLingkunganCard wargaData={wargaData} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <GrafikKeuangan pemasukan={totalPemasukan} pengeluaran={totalPengeluaran} />
-        </div>
-      </div>
     </div>
   );
 }
