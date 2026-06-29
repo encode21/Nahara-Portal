@@ -184,52 +184,74 @@ export function HeaderNav() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu (drawer) */}
       {mobileOpen && (
-        <nav className="border-t border-gold/10 bg-white px-4 py-3 md:hidden">
-          <div className="space-y-1">
-            {portalNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                    isActive(item.href)
-                      ? "nav-active"
-                      : "text-slate-600 hover:bg-gold/5",
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {item.label}
-                </Link>
-              );
-            })}
-            {isAdmin && (
-              <>
-                <div className="my-2 border-t border-slate-100" />
-                <Link
-                  href="/activities"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
-                >
-                  <Settings className="h-5 w-5" />
-                  Kelola Kegiatan
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
-                >
-                  <LogOut className="h-5 w-5" />
-                  Keluar
-                </button>
-              </>
-            )}
-          </div>
-        </nav>
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+
+          <aside className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white px-4 py-6 shadow-lg md:hidden">
+            <div className="flex items-center justify-between mb-4">
+              <NaharaLogo />
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg p-2 text-slate-600 hover:bg-gold/5"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="space-y-1">
+              {portalNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                      isActive(item.href)
+                        ? "nav-active"
+                        : "text-slate-600 hover:bg-gold/5",
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {isAdmin && (
+                <>
+                  <div className="my-2 border-t border-slate-100" />
+                  <Link
+                    href="/activities"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Kelola Kegiatan
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Keluar
+                  </button>
+                </>
+              )}
+            </nav>
+          </aside>
+        </>
       )}
     </header>
   );
