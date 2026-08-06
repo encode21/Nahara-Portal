@@ -172,10 +172,19 @@ INSERT INTO event_contests (
   1, true, true
 ),
 (
+  'a0812026-0000-4000-8000-000000000116',
+  'a0812026-0000-4000-8000-000000000010',
+  14, 'Makan Kerupuk (Pre-Teen)', 'preteen', NULL,
+  'Jalan Tengah', '2026-08-15T08:00:00+07:00', '2026-08-15T09:00:00+07:00',
+  E'Tali\nKerupuk',
+  E'Peserta makan kerupuk.\nPemenang adalah yang tercepat menghabiskan kerupuk.',
+  1, true, true
+),
+(
   'a0812026-0000-4000-8000-000000000114',
   'a0812026-0000-4000-8000-000000000010',
-  14, 'Masukkan Pensil Ke Botol', 'preteen', NULL,
-  'Jalan Tengah', '2026-08-16T15:00:00+07:00', '2026-08-16T16:00:00+07:00',
+  15, 'Masukkan Pensil Ke Botol', 'preteen', NULL,
+  'Jalan Tengah', '2026-08-15T09:00:00+07:00', '2026-08-15T10:00:00+07:00',
   E'Alat pancing\nTali\nPensil\nBotol/Galon',
   E'Pensil diikat pada tali menggunakan bambu pancingan.\nPeserta memasukkan pensil ke dalam botol menggunakan satu tangan.\nWaktu tercepat menjadi pemenang.',
   1, true, true
@@ -183,19 +192,10 @@ INSERT INTO event_contests (
 (
   'a0812026-0000-4000-8000-000000000115',
   'a0812026-0000-4000-8000-000000000010',
-  15, 'Mengangkat Gelas dengan Balon', 'preteen', NULL,
-  'Jalan Tengah', '2026-08-16T15:00:00+07:00', '2026-08-16T16:00:00+07:00',
+  16, 'Mengangkat Gelas dengan Balon', 'preteen', NULL,
+  'Jalan Tengah', '2026-08-15T10:00:00+07:00', '2026-08-15T11:00:00+07:00',
   E'Gelas plastik\nBalon kecil',
   E'Peserta memindahkan/mengangkat gelas dengan balon sesuai instruksi panitia.\nTidak boleh menggunakan tangan.\nPemenang adalah peserta tercepat.',
-  1, true, true
-),
-(
-  'a0812026-0000-4000-8000-000000000116',
-  'a0812026-0000-4000-8000-000000000010',
-  16, 'Makan Kerupuk (Pre-Teen)', 'preteen', NULL,
-  'Jalan Tengah', '2026-08-16T15:00:00+07:00', '2026-08-16T16:00:00+07:00',
-  E'Tali\nKerupuk',
-  E'Peserta makan kerupuk.\nPemenang adalah yang tercepat menghabiskan kerupuk.',
   1, true, true
 ),
 (

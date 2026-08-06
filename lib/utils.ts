@@ -1,3 +1,5 @@
+export const TIMEZONE_JAKARTA = "Asia/Jakarta";
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -9,28 +11,42 @@ export function formatCurrency(amount: number): string {
 
 export function formatDate(date: string): string {
   return new Intl.DateTimeFormat("id-ID", {
+    timeZone: TIMEZONE_JAKARTA,
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00`));
+  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00+07:00`));
 }
 
 export function formatDateTime(date: string): string {
   return new Intl.DateTimeFormat("id-ID", {
+    timeZone: TIMEZONE_JAKARTA,
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   }).format(new Date(date));
 }
 
 export function formatShortDate(date: string): string {
   return new Intl.DateTimeFormat("id-ID", {
+    timeZone: TIMEZONE_JAKARTA,
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00`));
+  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00+07:00`));
+}
+
+/** Calendar date YYYY-MM-DD in Asia/Jakarta (not UTC slice). */
+export function toJakartaDateKey(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE_JAKARTA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
 }
 
 export function timeAgo(date: string): string {

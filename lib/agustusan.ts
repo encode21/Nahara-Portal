@@ -1,4 +1,5 @@
 import type { EventContest, EventEdition } from "@/lib/types";
+import { TIMEZONE_JAKARTA, toJakartaDateKey } from "@/lib/utils";
 
 export function isRegistrationOpen(
   edition: Pick<EventEdition, "registration_closes_at"> | null | undefined,
@@ -25,7 +26,7 @@ export function groupContestsByDay(contests: EventContest[]): {
 }[] {
   const map = new Map<string, EventContest[]>();
   for (const c of contests) {
-    const key = c.starts_at ? c.starts_at.slice(0, 10) : "tbd";
+    const key = c.starts_at ? toJakartaDateKey(c.starts_at) : "tbd";
     const list = map.get(key) ?? [];
     list.push(c);
     map.set(key, list);
@@ -38,6 +39,7 @@ export function groupContestsByDay(contests: EventContest[]): {
         key === "tbd"
           ? "Jadwal menyusul"
           : new Intl.DateTimeFormat("id-ID", {
+              timeZone: TIMEZONE_JAKARTA,
               weekday: "long",
               day: "numeric",
               month: "long",
