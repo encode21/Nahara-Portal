@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
+import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 const CATEGORIES = ["Saldo Awal", "Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
 
@@ -16,6 +17,7 @@ export default function KeuanganPage() {
   const { isAdmin } = useAuth();
   const [entries, setEntries] = useState<KasEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -30,6 +32,7 @@ export default function KeuanganPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     let query = supabase.from("kas_entries").select("*").order("date", { ascending: false });
     if (monthFilter) {
       const start = `${monthFilter}-01`;
@@ -39,8 +42,13 @@ export default function KeuanganPage() {
       query = query.gte("date", start).lte("date", end);
     }
     if (categoryFilter) query = query.eq("category", categoryFilter);
-    const { data } = await query;
-    setEntries((data ?? []) as KasEntry[]);
+    const { data, error: fetchError } = await query;
+    if (fetchError) {
+      setError(getSupabaseErrorMessage(fetchError));
+      setEntries([]);
+    } else {
+      setEntries((data ?? []) as KasEntry[]);
+    }
     setLoading(false);
   }, [supabase, monthFilter, categoryFilter]);
 
@@ -113,6 +121,10 @@ export default function KeuanganPage() {
         </div>
       )}
 
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="glass-card">
           <p className="text-xs text-slate-500">Saldo</p>
@@ -175,6 +187,19 @@ export default function KeuanganPage() {
 
       {loading ? (
         <div className="flex justify-center py-12"><LoadingSpinner className="h-8 w-8" /></div>
+      ) : entries.length === 0 ? (
+        <div className="glass-card space-y-2 text-sm text-slate-600">
+          <p className="font-medium text-slate-800">Belum ada transaksi kas.</p>
+          <p>
+            Import rekap bendahara dengan menjalankan file SQL di Supabase:
+          </p>
+          <code className="block rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            supabase/seeds/202606_arus_kas_jun2026.sql
+          </code>
+          <p className="text-xs text-slate-500">
+            Setelah Run berhasil, refresh halaman ini — saldo seharusnya ± Rp 12.773.817.
+          </p>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-sm">
