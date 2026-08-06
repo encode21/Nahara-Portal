@@ -29,11 +29,18 @@ export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
   umum: "Acara Umum",
 };
 
+/** Circle hole on twibbon-frame-circle.png (canvas coords, size 1024) */
+export const TWIBBON_PHOTO_CIRCLE = {
+  cx: 660,
+  cy: 406,
+  r: 364,
+} as const;
+
 export const AGUSTUSAN_MEDIA = {
   hero: "/assets/agustusan/hero-banner.png",
   video: "/assets/agustusan/teaser.mp4",
   videoPoster: "/assets/agustusan/nahara-flags-banner.png",
-  twibbonFrame: "/assets/agustusan/twibbon-frame-v3.png",
+  twibbonFrame: "/assets/agustusan/twibbon-frame-circle.png",
   gallery: [
     {
       src: "/assets/agustusan/nahara-flags-banner.png",

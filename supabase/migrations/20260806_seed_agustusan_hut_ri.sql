@@ -1,6 +1,7 @@
 -- Seed: Agustusan HUT RI ke-81 + daftar donatur (open donation)
 -- Fixed IDs match lib/constants/agustusan.ts
 -- Run in Supabase SQL Editor or via supabase db push / migration.
+-- Source of truth: List Donatur HUT RI 81 (55 nama, semua sudah bayar).
 
 BEGIN;
 
@@ -60,6 +61,7 @@ INSERT INTO participants (
   attendance_status,
   registered_at
 ) VALUES
+  ('a0812026-0000-4000-8000-000000000001', 'Pak Ferdi', NULL, true, false, '2026-08-06T10:18:00+07:00'),
   ('a0812026-0000-4000-8000-000000000001', 'Helmi', NULL, true, false, '2026-08-06T10:18:00+07:00'),
   ('a0812026-0000-4000-8000-000000000001', 'Fadilla', NULL, true, false, '2026-08-06T10:18:00+07:00'),
   ('a0812026-0000-4000-8000-000000000001', 'Andri', NULL, true, false, '2026-08-06T10:18:00+07:00'),
@@ -112,6 +114,7 @@ INSERT INTO participants (
   ('a0812026-0000-4000-8000-000000000001', 'Yofi', 'NHT1/1', true, false, '2026-08-06T10:18:00+07:00'),
   ('a0812026-0000-4000-8000-000000000001', 'Ayu Putri', 'NHT 1', true, false, '2026-08-06T10:18:00+07:00'),
   ('a0812026-0000-4000-8000-000000000001', 'Ichsan', NULL, true, false, '2026-08-06T10:18:00+07:00'),
-  ('a0812026-0000-4000-8000-000000000001', 'Whisnu', NULL, true, false, '2026-08-06T10:18:00+07:00');
+  ('a0812026-0000-4000-8000-000000000001', 'Whisnu', NULL, true, false, '2026-08-06T10:18:00+07:00'),
+  ('a0812026-0000-4000-8000-000000000001', 'Pak Eka', 'NHB7/11', true, false, '2026-08-06T10:18:00+07:00');
 
 COMMIT;

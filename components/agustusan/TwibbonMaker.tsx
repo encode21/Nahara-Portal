@@ -9,9 +9,13 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { AGUSTUSAN_MEDIA } from "@/lib/constants/agustusan";
+import {
+  AGUSTUSAN_MEDIA,
+  TWIBBON_PHOTO_CIRCLE,
+} from "@/lib/constants/agustusan";
 
 const SIZE = 1024;
+const { cx: CIRCLE_CX, cy: CIRCLE_CY, r: CIRCLE_R } = TWIBBON_PHOTO_CIRCLE;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -52,18 +56,27 @@ export function TwibbonMaker({
     ctx.clearRect(0, 0, SIZE, SIZE);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.fillStyle = "#e8e8e8";
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, SIZE, SIZE);
 
     const photo = photoRef.current;
     if (photo) {
-      const base = Math.max(SIZE / photo.width, SIZE / photo.height);
+      // Cover-fit inside design circle (+small bleed supaya tidak ada celah di pinggir)
+      const diam = CIRCLE_R * 2;
+      const base = Math.max(diam / photo.width, diam / photo.height) * 1.08;
       const s = base * scale;
       const w = photo.width * s;
       const h = photo.height * s;
-      const x = (SIZE - w) / 2 + offset.x;
-      const y = (SIZE - h) / 2 + offset.y;
+      const x = CIRCLE_CX - w / 2 + offset.x;
+      const y = CIRCLE_CY - h / 2 + offset.y;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(CIRCLE_CX, CIRCLE_CY, CIRCLE_R, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
       ctx.drawImage(photo, x, y, w, h);
+      ctx.restore();
     }
 
     ctx.drawImage(frame, 0, 0, SIZE, SIZE);
@@ -216,8 +229,8 @@ export function TwibbonMaker({
         />
         <p className="mt-2 text-center text-xs text-slate-500">
           {hasPhoto
-            ? "Geser foto untuk posisi. Pakai tombol zoom di bawah."
-            : "Unggah foto wajah/selfie untuk mengisi frame."}
+            ? "Geser / zoom supaya wajah pas di lingkaran."
+            : "Unggah foto wajah — nanti muncul di dalam lingkaran frame."}
         </p>
       </div>
 
