@@ -1,6 +1,6 @@
 export const LOGO_SRC = "/assets/newnahara.png";
-/** Logo circular Paguyuban — tampil sebelum wordmark di navbar */
-export const LOGO_BADGE_SRC = "/assets/nahara-badge.jpg";
+/** Logo circular Paguyuban — satu-satunya logo di navbar */
+export const LOGO_BADGE_SRC = "/assets/nahara-badge.png";
 
 export const SITE_TITLE = "Nahara Portal Warga";
 

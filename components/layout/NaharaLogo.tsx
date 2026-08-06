@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LOGO_BADGE_SRC, LOGO_SRC } from "@/lib/constants/brand";
+import { LOGO_BADGE_SRC } from "@/lib/constants/brand";
 import { cn } from "@/lib/utils";
 
 type NaharaLogoProps = {
@@ -9,32 +9,25 @@ type NaharaLogoProps = {
 };
 
 export function NaharaLogo({ href = "/dashboard", className }: NaharaLogoProps) {
-  const content = (
-    <span className={cn("inline-flex items-center gap-2.5 lg:gap-3", className)}>
-      <Image
-        src={LOGO_BADGE_SRC}
-        alt="Paguyuban Warga Nahara — Cimanggis Golf Estate"
-        width={72}
-        height={72}
-        className="h-11 w-11 shrink-0 object-contain sm:h-12 sm:w-12 lg:h-14 lg:w-14"
-        priority
-      />
-      <Image
-        src={LOGO_SRC}
-        alt="Nahara"
-        width={320}
-        height={90}
-        className="h-12 w-auto object-contain sm:h-14 lg:h-16"
-        priority
-      />
-    </span>
+  const img = (
+    <Image
+      src={LOGO_BADGE_SRC}
+      alt="Paguyuban Warga Nahara — Cimanggis Golf Estate"
+      width={160}
+      height={160}
+      className={cn(
+        "h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14 lg:h-16 lg:w-16",
+        className,
+      )}
+      priority
+    />
   );
 
-  if (!href) return content;
+  if (!href) return img;
 
   return (
-    <Link href={href} className="block shrink-0 leading-none">
-      {content}
+    <Link href={href} className="block shrink-0 leading-none" aria-label="Nahara Portal Warga">
+      {img}
     </Link>
   );
 }

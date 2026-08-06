@@ -28,3 +28,22 @@ export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
   art: "Lomba ART",
   umum: "Acara Umum",
 };
+
+export const AGUSTUSAN_MEDIA = {
+  hero: "/assets/agustusan/hero-banner.png",
+  video: "/assets/agustusan/teaser.mp4",
+  gallery: [
+    {
+      src: "/assets/agustusan/lomba-suasana.png",
+      alt: "Suasana lomba Agustusan di Cluster Nahara",
+    },
+    {
+      src: "/assets/agustusan/cluster-flags.png",
+      alt: "Cluster Nahara berhias bendera Merah Putih",
+    },
+    {
+      src: "/assets/agustusan/aerial-minigolf.png",
+      alt: "Area Mini Golf Cluster Nahara HUT RI",
+    },
+  ],
+} as const;
