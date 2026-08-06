@@ -9,7 +9,7 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
 
-const CATEGORIES = ["Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
+const CATEGORIES = ["Saldo Awal", "Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
 
 export default function KeuanganPage() {
   const supabase = createClient();

@@ -8,6 +8,7 @@ import { ActivityCard } from "@/components/ActivityCard";
 import { EmptyState, LoadingSpinner } from "@/components/ui/Loading";
 import { AdminOnly } from "@/components/AdminOnly";
 import { Settings } from "lucide-react";
+import { AGUSTUSAN_ACTIVITY_ID } from "@/lib/constants/agustusan";
 
 export default function KegiatanPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -92,7 +93,11 @@ export default function KegiatanPage() {
               key={activity.id}
               activity={activity}
               participantCount={participantCounts[activity.id] ?? 0}
-              href={`/kegiatan/${activity.id}`}
+              href={
+                activity.id === AGUSTUSAN_ACTIVITY_ID
+                  ? "/kegiatan/agustusan"
+                  : `/kegiatan/${activity.id}`
+              }
             />
           ))}
         </div>
