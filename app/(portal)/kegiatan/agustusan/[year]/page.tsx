@@ -8,11 +8,13 @@ import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake } fr
 import { createClient } from "@/lib/supabase/client";
 import type { Activity, DonasiCampaign, EventContest, EventEdition, Participant } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import { LOGO_SRC } from "@/lib/constants/brand";
 import {
+  AGUSTUSAN_ACTIVITY_ID,
   AGUSTUSAN_BANK,
+  AGUSTUSAN_CAMPAIGN_ID,
   AGUSTUSAN_MEDIA,
   AGUSTUSAN_TAGLINE,
+  AGUSTUSAN_YEAR,
   CONTEST_CATEGORY_LABELS,
 } from "@/lib/constants/agustusan";
 import { LoadingSpinner } from "@/components/ui/Loading";
@@ -54,33 +56,65 @@ export default function AgustusanEditionPage() {
         return;
       }
 
+      // Fallback: seed lomba sering dijalankan sebelum seed donasi → FK null.
+      // Untuk edisi 2026, pakai ID campaign/activity Agustusan; kalau ID beda (dibuat via admin), cari by judul.
+      let activityId =
+        editionRow.activity_id ??
+        (editionRow.year === AGUSTUSAN_YEAR ? AGUSTUSAN_ACTIVITY_ID : null);
+      let campaignId =
+        editionRow.campaign_id ??
+        (editionRow.year === AGUSTUSAN_YEAR ? AGUSTUSAN_CAMPAIGN_ID : null);
+
       const [contestsRes, activityRes, campaignRes] = await Promise.all([
         supabase
           .from("event_contests")
           .select("*")
           .eq("edition_id", editionRow.id)
           .order("sort_order"),
-        editionRow.activity_id
-          ? supabase.from("activities").select("*").eq("id", editionRow.activity_id).maybeSingle()
+        activityId
+          ? supabase.from("activities").select("*").eq("id", activityId).maybeSingle()
           : Promise.resolve({ data: null }),
-        editionRow.campaign_id
-          ? supabase
-              .from("donasi_campaign")
-              .select("*")
-              .eq("id", editionRow.campaign_id)
-              .maybeSingle()
+        campaignId
+          ? supabase.from("donasi_campaign").select("*").eq("id", campaignId).maybeSingle()
           : Promise.resolve({ data: null }),
       ]);
 
-      setContests((contestsRes.data ?? []) as EventContest[]);
-      setActivity((activityRes.data ?? null) as Activity | null);
-      setCampaign((campaignRes.data ?? null) as DonasiCampaign | null);
+      let activityData = (activityRes.data ?? null) as Activity | null;
+      let campaignData = (campaignRes.data ?? null) as DonasiCampaign | null;
 
-      if (editionRow.activity_id) {
+      if (!campaignData && editionRow.year === AGUSTUSAN_YEAR) {
+        const { data: byTitle } = await supabase
+          .from("donasi_campaign")
+          .select("*")
+          .ilike("judul", "%Agustusan%HUT RI%")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        campaignData = (byTitle ?? null) as DonasiCampaign | null;
+        if (campaignData) campaignId = campaignData.id;
+      }
+
+      if (!activityData && editionRow.year === AGUSTUSAN_YEAR) {
+        const { data: byTitle } = await supabase
+          .from("activities")
+          .select("*")
+          .ilike("title", "%Agustusan%HUT RI%")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        activityData = (byTitle ?? null) as Activity | null;
+        if (activityData) activityId = activityData.id;
+      }
+
+      setContests((contestsRes.data ?? []) as EventContest[]);
+      setActivity(activityData);
+      setCampaign(campaignData);
+
+      if (activityId) {
         const { data: donorsData } = await supabase
           .from("participants")
           .select("id,name,block_number,payment_status")
-          .eq("activity_id", editionRow.activity_id)
+          .eq("activity_id", activityId)
           .order("name");
         setDonors((donorsData ?? []) as Donor[]);
       }
@@ -136,87 +170,83 @@ export default function AgustusanEditionPage() {
   const showMedia = year === 2026;
 
   return (
-    <div className="-mx-4 -mt-6 space-y-0 lg:-mx-6 lg:-mt-8">
-      <section className="relative isolate min-h-[min(88vh,720px)] overflow-hidden bg-[#7a1218] text-white">
-        {showMedia && (
-          <Image
-            src={AGUSTUSAN_MEDIA.hero}
-            alt="Nahara Agustusan HUT RI"
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        )}
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#5c0e13]/95 via-[#7a1218]/55 to-[#7a1218]/30"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(-18deg, transparent, transparent 12px, rgba(255,255,255,0.04) 12px, rgba(255,255,255,0.04) 13px)",
-          }}
-          aria-hidden
-        />
+    <div className="-mx-4 -mt-6 overflow-x-clip lg:-mx-6 lg:-mt-8">
+      {/* Poster + card overlay (hemat tinggi di HP & desktop) */}
+      <section className="relative bg-[#f4f1ec] pb-2 sm:pb-4">
+        <Link
+          href="/kegiatan/agustusan"
+          className="absolute left-3 top-3 z-20 rounded-md bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#7a1218] shadow-sm hover:bg-white sm:left-4 sm:top-4 sm:text-sm"
+        >
+          ← Semua edisi
+        </Link>
 
-        <div className="relative z-10 mx-auto flex min-h-[min(88vh,720px)] max-w-7xl flex-col justify-end px-4 pb-10 pt-8 lg:px-6 lg:pb-14">
-          <Link href="/kegiatan/agustusan" className="mb-6 text-sm text-white/70 hover:text-white">
-            ← Semua edisi
-          </Link>
-          <div className="mb-5 flex items-center gap-3">
+        <div className="relative w-full">
+          {showMedia ? (
             <Image
-              src={LOGO_SRC}
-              alt="Nahara"
-              width={44}
-              height={44}
-              className="h-11 w-11 rounded-full bg-white/95 object-contain p-1"
+              src={AGUSTUSAN_MEDIA.hero}
+              alt="Dirgahayu Republik Indonesia ke-81 — Nahara"
+              width={1600}
+              height={1000}
               priority
+              className="h-auto w-full"
+              sizes="100vw"
             />
-            <p className="font-display text-2xl font-bold drop-shadow-sm">Nahara</p>
-          </div>
-          <p className="text-sm font-medium tracking-[0.2em] text-[#f0d78c] uppercase">
-            Edisi {edition.year}
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-bold leading-tight drop-shadow-sm sm:text-5xl">
-            {edition.title}
-          </h1>
-          {edition.description && (
-            <p className="mt-3 max-w-xl text-white/90">{edition.description}</p>
+          ) : (
+            <div className="min-h-[220px] bg-[#7a1218] sm:min-h-[320px]" />
           )}
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href={`/kegiatan/agustusan/${year}/lomba`}
-              className="inline-flex items-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Daftar Lomba ({competitionCount})
-            </Link>
-            <Link
-              href={`/kegiatan/agustusan/${year}/juara`}
-              className="inline-flex items-center rounded-lg border border-white/35 bg-white/10 px-5 py-3 text-sm font-medium backdrop-blur-sm hover:bg-white/20"
-            >
-              <Trophy className="mr-2 h-4 w-4" />
-              Juara & Hadiah
-            </Link>
-            <a
-              href="#donasi"
-              onClick={scrollToDonasi}
-              className="inline-flex cursor-pointer items-center rounded-lg border border-white/35 bg-white/10 px-5 py-3 text-sm font-medium backdrop-blur-sm hover:bg-white/20"
-            >
-              <HeartHandshake className="mr-2 h-4 w-4" />
-              Donasi
-            </a>
+          {/* Soft fade biar card lebih nyatu, tanpa menutup full poster */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 to-transparent sm:h-32"
+            aria-hidden
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto -mt-14 max-w-7xl px-4 sm:-mt-20 lg:-mt-24 lg:px-6">
+          <div className="rounded-2xl bg-[#7a1218] p-5 text-white shadow-xl ring-1 ring-black/10 sm:p-7 lg:p-8">
+            <p className="text-xs font-medium tracking-[0.2em] text-[#f0d78c] uppercase sm:text-sm">
+              Edisi {edition.year}
+            </p>
+            <h1 className="mt-1.5 font-display text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+              {edition.title}
+            </h1>
+            {edition.description && (
+              <p className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">
+                {edition.description}
+              </p>
+            )}
+            <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
+              <Link
+                href={`/kegiatan/agustusan/${year}/lomba`}
+                className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Daftar Lomba ({competitionCount})
+              </Link>
+              <Link
+                href={`/kegiatan/agustusan/${year}/juara`}
+                className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <Trophy className="mr-2 h-4 w-4" />
+                Juara & Hadiah
+              </Link>
+              <a
+                href="#donasi"
+                onClick={scrollToDonasi}
+                className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <HeartHandshake className="mr-2 h-4 w-4" />
+                Donasi
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-[#c9a84c]/20 bg-[#faf7f0] px-4 py-4 lg:px-6">
-        <div className="mx-auto flex max-w-7xl flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
+      <section className="mt-4 border-b border-[#c9a84c]/20 bg-[#faf7f0] px-4 py-4 lg:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 text-sm text-slate-700 sm:flex-row sm:flex-wrap sm:gap-x-8">
           {deadlineLabel && (
-            <span className="inline-flex items-center gap-2 font-medium text-[#7a1218]">
-              <CalendarDays className="h-4 w-4" />
+            <span className="inline-flex items-start gap-2 font-medium text-[#7a1218] sm:items-center">
+              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 sm:mt-0" />
               Batas daftar peserta: {deadlineLabel}
             </span>
           )}
@@ -236,7 +266,7 @@ export default function AgustusanEditionPage() {
                   controls
                   playsInline
                   preload="metadata"
-                  poster={AGUSTUSAN_MEDIA.hero}
+                  poster={AGUSTUSAN_MEDIA.videoPoster}
                 >
                   <source src={AGUSTUSAN_MEDIA.video} type="video/mp4" />
                   Browser Anda tidak mendukung pemutar video.
@@ -303,7 +333,7 @@ export default function AgustusanEditionPage() {
               <FileText className="mr-2 inline h-6 w-6 text-[#9b1b23]" />
               SOP singkat
             </h2>
-            <pre className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-5 font-sans text-sm leading-relaxed text-slate-700">
+            <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-slate-200 bg-white p-5 font-sans text-sm leading-relaxed text-slate-700">
               {edition.sop_text}
             </pre>
           </section>
@@ -327,7 +357,6 @@ export default function AgustusanEditionPage() {
                 <p className="mt-2 text-sm text-slate-500">
                   {pct}% dari {formatCurrency(target)}
                   {paidCount > 0 ? ` · ${paidCount} donatur` : ""}
-                  {!activity && !campaign ? " · hubungkan seed donasi untuk update otomatis" : ""}
                 </p>
               </>
             )}

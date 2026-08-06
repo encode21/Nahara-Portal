@@ -32,7 +32,12 @@ export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
 export const AGUSTUSAN_MEDIA = {
   hero: "/assets/agustusan/hero-banner.png",
   video: "/assets/agustusan/teaser.mp4",
+  videoPoster: "/assets/agustusan/nahara-flags-banner.png",
   gallery: [
+    {
+      src: "/assets/agustusan/nahara-flags-banner.png",
+      alt: "Nahara menyambut HUT RI — banner cluster berhias bendera",
+    },
     {
       src: "/assets/agustusan/lomba-suasana.png",
       alt: "Suasana lomba Agustusan di Cluster Nahara",

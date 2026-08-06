@@ -58,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={`${jakarta.variable} ${syne.variable} font-sans`}>
+      <body className={`${jakarta.variable} ${syne.variable} max-w-[100%] overflow-x-clip font-sans`}>
         {children}
         <PwaInstallPrompt />
         <Analytics />

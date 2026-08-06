@@ -10,13 +10,13 @@ type NaharaLogoProps = {
 
 export function NaharaLogo({ href = "/dashboard", className }: NaharaLogoProps) {
   const content = (
-    <span className={cn("inline-flex items-center gap-2.5 sm:gap-3", className)}>
+    <span className={cn("inline-flex min-w-0 max-w-full items-center gap-2 sm:gap-3", className)}>
       <Image
         src={LOGO_BADGE_SRC}
         alt=""
         width={160}
         height={160}
-        className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+        className="h-10 w-10 shrink-0 object-contain sm:h-14 sm:w-14 lg:h-16 lg:w-16"
         priority
         aria-hidden
       />
@@ -25,7 +25,7 @@ export function NaharaLogo({ href = "/dashboard", className }: NaharaLogoProps) 
         alt="Nahara"
         width={400}
         height={90}
-        className="h-7 w-auto object-contain object-left sm:h-8 lg:h-9"
+        className="h-6 w-auto max-w-[min(9.5rem,42vw)] object-contain object-left sm:h-8 sm:max-w-none lg:h-9"
         priority
       />
     </span>

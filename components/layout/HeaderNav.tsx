@@ -127,10 +127,10 @@ export function HeaderNav() {
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gold/20 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full max-w-[100%] overflow-x-clip border-b border-gold/20 bg-white shadow-sm">
       {/* Bar 1: logo + user */}
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 lg:px-6">
-        <NaharaLogo />
+      <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2 px-4 py-2 sm:gap-3 lg:px-6">
+        <NaharaLogo className="min-w-0" />
 
         <div className="flex items-center gap-2">
           {!loading &&
@@ -165,8 +165,8 @@ export function HeaderNav() {
 
       {/* Bar 2: nav — scroll horizontal di desktop/tablet */}
       <nav className="hidden border-t border-gold/10 md:block">
-        <div className="mx-auto max-w-7xl overflow-x-auto px-4 lg:px-6">
-          <div className="flex gap-0.5 py-1.5">
+        <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
+          <div className="flex w-max max-w-none gap-0.5 py-1.5">
             {portalNavItems.map((item) => {
               const Icon = item.icon;
               return (
