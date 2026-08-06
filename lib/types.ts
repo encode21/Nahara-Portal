@@ -139,6 +139,78 @@ export type ActivityWithCounts = Activity & {
   attending_count?: number;
 };
 
+export type EventEditionStatus = "draft" | "active" | "archived";
+
+export type EventContestCategory =
+  | "ibu"
+  | "bapak"
+  | "pasangan"
+  | "dewasa_remaja"
+  | "keluarga"
+  | "balita"
+  | "preteen"
+  | "art"
+  | "umum";
+
+export type EventEdition = {
+  id: string;
+  year: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  sop_text: string | null;
+  starts_on: string | null;
+  ends_on: string | null;
+  registration_closes_at: string | null;
+  status: EventEditionStatus;
+  activity_id: string | null;
+  campaign_id: string | null;
+  created_at: string;
+};
+
+export type EventContest = {
+  id: string;
+  edition_id: string;
+  sort_order: number;
+  title: string;
+  category: EventContestCategory;
+  category_note: string | null;
+  location: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  equipment: string | null;
+  rules: string | null;
+  team_size: number;
+  max_entries: number | null;
+  registration_open: boolean;
+  is_competition: boolean;
+  created_at: string;
+};
+
+export type EventContestEntry = {
+  id: string;
+  contest_id: string;
+  display_name: string;
+  partner_name: string | null;
+  block_number: string | null;
+  phone: string | null;
+  notes: string | null;
+  status: "registered" | "withdrawn";
+  registered_at: string;
+};
+
+export type EventContestResult = {
+  id: string;
+  contest_id: string;
+  entry_id: string | null;
+  rank: number;
+  winner_label: string;
+  prize: string | null;
+  published: boolean;
+  announced_at: string | null;
+  created_at: string;
+};
+
 export type KasSummary = {
   totalPemasukan: number;
   totalPengeluaran: number;

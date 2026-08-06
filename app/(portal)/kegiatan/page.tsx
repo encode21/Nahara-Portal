@@ -8,7 +8,7 @@ import { ActivityCard } from "@/components/ActivityCard";
 import { EmptyState, LoadingSpinner } from "@/components/ui/Loading";
 import { AdminOnly } from "@/components/AdminOnly";
 import { Settings } from "lucide-react";
-import { AGUSTUSAN_ACTIVITY_ID } from "@/lib/constants/agustusan";
+import { AGUSTUSAN_ACTIVITY_ID, AGUSTUSAN_YEAR } from "@/lib/constants/agustusan";
 
 export default function KegiatanPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -61,6 +61,9 @@ export default function KegiatanPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/kegiatan/agustusan" className="btn-secondary w-full sm:w-auto">
+            Agustusan
+          </Link>
           <Link href="/register" className="btn-primary w-full sm:w-auto">
             Daftar Kegiatan
           </Link>
@@ -95,7 +98,7 @@ export default function KegiatanPage() {
               participantCount={participantCounts[activity.id] ?? 0}
               href={
                 activity.id === AGUSTUSAN_ACTIVITY_ID
-                  ? "/kegiatan/agustusan"
+                  ? `/kegiatan/agustusan/${AGUSTUSAN_YEAR}`
                   : `/kegiatan/${activity.id}`
               }
             />

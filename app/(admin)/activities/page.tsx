@@ -71,16 +71,21 @@ export default function ActivitiesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Kegiatan</h1>
           <p className="mt-1 text-slate-500">Kelola kegiatan komunitas</p>
         </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            setEditingActivity(null);
-            setShowForm(true);
-          }}
-        >
-          + Tambah Kegiatan
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/activities/agustusan" className="btn-secondary">
+            Kelola Agustusan
+          </Link>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setEditingActivity(null);
+              setShowForm(true);
+            }}
+          >
+            + Tambah Kegiatan
+          </button>
+        </div>
       </div>
 
       {loading ? (
