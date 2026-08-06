@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images } from "lucide-react";
+import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images, Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Activity, DonasiCampaign, EventContest, EventEdition, Participant } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -18,6 +18,7 @@ import {
   CONTEST_CATEGORY_LABELS,
 } from "@/lib/constants/agustusan";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { AgustusanFab } from "@/components/agustusan/AgustusanFab";
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 
@@ -236,6 +237,13 @@ export default function AgustusanEditionPage() {
                 <Images className="mr-2 h-4 w-4" />
                 Galeri & Dokumentasi
               </Link>
+              <Link
+                href={`/kegiatan/agustusan/${year}/twibbon`}
+                className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                Buat Twibbon
+              </Link>
               <a
                 href="#donasi"
                 onClick={scrollToDonasi}
@@ -447,6 +455,8 @@ export default function AgustusanEditionPage() {
           )}
         </section>
       </div>
+
+      <AgustusanFab year={year} title={edition.title} />
     </div>
   );
 }
