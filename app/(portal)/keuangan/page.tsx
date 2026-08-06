@@ -34,7 +34,8 @@ export default function KeuanganPage() {
     if (monthFilter) {
       const start = `${monthFilter}-01`;
       const [y, m] = monthFilter.split("-").map(Number);
-      const end = new Date(y, m, 0).toISOString().split("T")[0];
+      const lastDay = new Date(y, m, 0).getDate();
+      const end = `${monthFilter}-${String(lastDay).padStart(2, "0")}`;
       query = query.gte("date", start).lte("date", end);
     }
     if (categoryFilter) query = query.eq("category", categoryFilter);

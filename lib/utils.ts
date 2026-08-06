@@ -12,7 +12,7 @@ export function formatDate(date: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(date));
+  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00`));
 }
 
 export function formatDateTime(date: string): string {
@@ -30,7 +30,7 @@ export function formatShortDate(date: string): string {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(date));
+  }).format(new Date(date.includes("T") ? date : `${date}T12:00:00`));
 }
 
 export function timeAgo(date: string): string {
@@ -45,9 +45,86 @@ export function timeAgo(date: string): string {
   return formatShortDate(date);
 }
 
+/** YYYY-MM-01 in local timezone (NOT UTC — avoids off-by-one in WIB) */
+export function toMonthStart(year: number, monthIndex: number): string {
+  const m = String(monthIndex + 1).padStart(2, "0");
+  return `${year}-${m}-01`;
+}
+
 export function getCurrentMonthStart(): string {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  return toMonthStart(now.getFullYear(), now.getMonth());
+}
+
+export function getCurrentYearMonth(): string {
+  return getCurrentMonthStart().slice(0, 7);
+}
+
+/** Normalize DB date/timestamptz to YYYY-MM-01 for month comparisons */
+export function normalizeMonthDate(value: string | null | undefined): string {
+  if (!value) return "";
+  const ymd = value.slice(0, 10);
+  return `${ymd.slice(0, 7)}-01`;
+}
+
+export function formatMonthShort(monthDate: string): string {
+  const d = new Date(`${normalizeMonthDate(monthDate).slice(0, 7)}-01T12:00:00`);
+  return new Intl.DateTimeFormat("id-ID", { month: "short", year: "numeric" }).format(d);
+}
+
+export type PrepaidCoverage = {
+  start: string;
+  end: string;
+  months: number;
+  total: number;
+};
+
+/** Contiguous paid months around focusMonth (monthly rate Rp 50.000) */
+export function getPrepaidCoverage(
+  paidMonthDates: string[],
+  focusMonth: string,
+  monthlyRate = 50000,
+): PrepaidCoverage | null {
+  const focus = normalizeMonthDate(focusMonth);
+  const set = new Set(paidMonthDates.map(normalizeMonthDate).filter(Boolean));
+  if (!set.has(focus)) return null;
+
+  const [fy, fm] = focus.split("-").map(Number);
+  let startY = fy;
+  let startM = fm - 1;
+  while (true) {
+    const prevM = startM === 0 ? 11 : startM - 1;
+    const prevY = startM === 0 ? startY - 1 : startY;
+    if (!set.has(toMonthStart(prevY, prevM))) break;
+    startY = prevY;
+    startM = prevM;
+  }
+
+  let endY = fy;
+  let endM = fm - 1;
+  while (true) {
+    const nextM = endM === 11 ? 0 : endM + 1;
+    const nextY = endM === 11 ? endY + 1 : endY;
+    if (!set.has(toMonthStart(nextY, nextM))) break;
+    endY = nextY;
+    endM = nextM;
+  }
+
+  const start = toMonthStart(startY, startM);
+  const end = toMonthStart(endY, endM);
+  let months = 0;
+  let y = startY;
+  let m = startM;
+  while (y < endY || (y === endY && m <= endM)) {
+    months++;
+    m++;
+    if (m > 11) {
+      m = 0;
+      y++;
+    }
+  }
+
+  return { start, end, months, total: months * monthlyRate };
 }
 
 export function cn(...classes: (string | false | null | undefined)[]): string {

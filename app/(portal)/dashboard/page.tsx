@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { KasEntry, Pengaduan, Pengumuman, Warga, Iuran, WargaWithIuran } from "@/lib/types";
-import { getCurrentMonthStart } from "@/lib/utils";
+import { getCurrentMonthStart, normalizeMonthDate } from "@/lib/utils";
 import { SaldoCard } from "@/components/dashboard/SaldoCard";
 import { PengaduanTerkini } from "@/components/dashboard/PengaduanTerkini";
 import { PengumumanCard } from "@/components/dashboard/PengumumanCard";
@@ -19,7 +19,9 @@ function mapWargaWithIuran(wargaList: WargaWithIuranRows[], bulanIni: string): W
     status_hunian: w.status_hunian,
     telepon: w.telepon ?? undefined,
     iuran_lunas:
-      w.iuran?.find((i) => i.bulan === bulanIni)?.status ?? false,
+      w.iuran?.some(
+        (i) => normalizeMonthDate(i.bulan) === bulanIni && i.status,
+      ) ?? false,
   }));
 }
 
@@ -48,8 +50,7 @@ export default async function DashboardPage() {
   const totalPengeluaran = kasEntries.filter((e) => e.type === "pengeluaran").reduce((s, e) => s + e.amount, 0);
   const saldo = totalPemasukan - totalPengeluaran;
 
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  const monthStart = getCurrentMonthStart();
   const pemasukanBulan = kasEntries
     .filter((e) => e.type === "pemasukan" && e.date >= monthStart)
     .reduce((s, e) => s + e.amount, 0);

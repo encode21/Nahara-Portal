@@ -5,7 +5,7 @@ import { Drawer } from "vaul";
 import { Home, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Iuran, WargaWithIuran } from "@/lib/types";
-import { formatCurrency, getCurrentMonthStart } from "@/lib/utils";
+import { formatCurrency, getCurrentMonthStart, normalizeMonthDate } from "@/lib/utils";
 import { StatusBadge, getHunianVariant, getIuranVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
 
@@ -49,7 +49,9 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
   }, [open, fetchHistory]);
 
   const bulanIni = getCurrentMonthStart();
-  const currentIuran = iuranHistory.find((i) => i.bulan === bulanIni);
+  const currentIuran = iuranHistory.find(
+    (i) => normalizeMonthDate(i.bulan) === bulanIni,
+  );
 
   async function handleTandaiLunas() {
     if (!warga?.id) return;
