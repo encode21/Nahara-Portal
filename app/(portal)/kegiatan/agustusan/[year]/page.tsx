@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake } from "lucide-react";
+import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Activity, DonasiCampaign, EventContest, EventEdition, Participant } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -229,6 +229,13 @@ export default function AgustusanEditionPage() {
                 <Trophy className="mr-2 h-4 w-4" />
                 Juara & Hadiah
               </Link>
+              <Link
+                href={`/kegiatan/agustusan/${year}/galeri`}
+                className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <Images className="mr-2 h-4 w-4" />
+                Galeri & Dokumentasi
+              </Link>
               <a
                 href="#donasi"
                 onClick={scrollToDonasi}
@@ -275,11 +282,25 @@ export default function AgustusanEditionPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-display text-2xl font-bold text-slate-900">Galeri</h2>
-              <p className="text-sm text-slate-600">Suasana cluster & semangat Agustusan.</p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-slate-900">Galeri</h2>
+                  <p className="text-sm text-slate-600">Suasana cluster & semangat Agustusan.</p>
+                </div>
+                <Link
+                  href={`/kegiatan/agustusan/${year}/galeri`}
+                  className="inline-flex text-sm font-medium text-[#9a7b2e] hover:underline"
+                >
+                  Lihat galeri / dokumentasi →
+                </Link>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                {AGUSTUSAN_MEDIA.gallery.map((img) => (
-                  <div key={img.src} className="relative aspect-[4/3] overflow-hidden">
+                {AGUSTUSAN_MEDIA.gallery.slice(0, 3).map((img) => (
+                  <Link
+                    key={img.src}
+                    href={`/kegiatan/agustusan/${year}/galeri`}
+                    className="relative aspect-[4/3] overflow-hidden"
+                  >
                     <Image
                       src={img.src}
                       alt={img.alt}
@@ -287,7 +308,7 @@ export default function AgustusanEditionPage() {
                       className="object-cover transition duration-500 hover:scale-[1.03]"
                       sizes="(max-width: 640px) 100vw, 33vw"
                     />
-                  </div>
+                  </Link>
                 ))}
               </div>
             </section>

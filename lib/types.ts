@@ -211,6 +211,16 @@ export type EventContestResult = {
   created_at: string;
 };
 
+export type EventGalleryItem = {
+  id: string;
+  edition_id: string;
+  image_url: string;
+  caption: string | null;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+};
+
 export type KasSummary = {
   totalPemasukan: number;
   totalPengeluaran: number;

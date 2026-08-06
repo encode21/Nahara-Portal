@@ -9,14 +9,17 @@ import type {
   EventContestEntry,
   EventContestResult,
   EventEdition,
+  EventGalleryItem,
 } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { CONTEST_CATEGORY_LABELS } from "@/lib/constants/agustusan";
 import { entryLabel } from "@/lib/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
+import { uploadPortalImage, removePortalImage } from "@/lib/supabase/storage";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { StoredImage } from "@/components/ui/StoredImage";
 
-type Tab = "lomba" | "peserta" | "juara" | "sop";
+type Tab = "lomba" | "peserta" | "juara" | "galeri" | "sop";
 
 export default function AdminEditionPage() {
   const params = useParams();
@@ -45,8 +48,24 @@ export default function AdminEditionPage() {
     prize: "",
     published: true,
   });
+  const [gallery, setGallery] = useState<EventGalleryItem[]>([]);
+  const [galleryCaption, setGalleryCaption] = useState("");
+  const [galleryUploading, setGalleryUploading] = useState(false);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
+
+  const loadGallery = useCallback(
+    async (editionId: string) => {
+      const { data } = await supabase
+        .from("event_gallery_items")
+        .select("*")
+        .eq("edition_id", editionId)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+      setGallery((data ?? []) as EventGalleryItem[]);
+    },
+    [supabase]
+  );
 
   const loadEdition = useCallback(async () => {
     const { data: ed } = await supabase
@@ -105,6 +124,10 @@ export default function AdminEditionPage() {
     if (tab === "peserta") loadEntries(selectedId);
     if (tab === "juara") loadResults(selectedId);
   }, [selectedId, tab, loadEntries, loadResults]);
+
+  useEffect(() => {
+    if (tab === "galeri" && edition?.id) loadGallery(edition.id);
+  }, [tab, edition?.id, loadGallery]);
 
   async function toggleRegistration(contest: EventContest) {
     setError(null);
@@ -210,6 +233,74 @@ export default function AdminEditionPage() {
     setMessage("Pengumuman dibuat di menu Pengumuman.");
   }
 
+  async function handleGalleryUpload(files: FileList | null) {
+    if (!edition || !files?.length) return;
+    setError(null);
+    setGalleryUploading(true);
+    let ok = 0;
+    for (const file of Array.from(files)) {
+      const { url, error: uploadError } = await uploadPortalImage(
+        supabase,
+        file,
+        "agustusan"
+      );
+      if (uploadError || !url) {
+        setError(uploadError ?? "Gagal upload");
+        continue;
+      }
+      const nextOrder =
+        gallery.reduce((m, g) => Math.max(m, g.sort_order), 0) + 1 + ok;
+      const { error: err } = await supabase.from("event_gallery_items").insert({
+        edition_id: edition.id,
+        image_url: url,
+        caption: galleryCaption.trim() || null,
+        sort_order: nextOrder,
+        is_published: true,
+      });
+      if (err) {
+        setError(getSupabaseErrorMessage(err) ?? "Gagal simpan galeri");
+        continue;
+      }
+      ok += 1;
+    }
+    setGalleryCaption("");
+    setGalleryUploading(false);
+    if (ok) {
+      setMessage(`${ok} foto ditambahkan ke galeri.`);
+      await loadGallery(edition.id);
+    }
+  }
+
+  async function deleteGalleryItem(item: EventGalleryItem) {
+    if (!confirm("Hapus foto ini dari galeri?")) return;
+    setError(null);
+    const { error: err } = await supabase
+      .from("event_gallery_items")
+      .delete()
+      .eq("id", item.id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal hapus");
+      return;
+    }
+    if (item.image_url.includes("/storage/")) {
+      await removePortalImage(supabase, item.image_url);
+    }
+    if (edition) await loadGallery(edition.id);
+    setMessage("Foto dihapus.");
+  }
+
+  async function toggleGalleryPublish(item: EventGalleryItem) {
+    const { error: err } = await supabase
+      .from("event_gallery_items")
+      .update({ is_published: !item.is_published })
+      .eq("id", item.id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal update");
+      return;
+    }
+    if (edition) await loadGallery(edition.id);
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -226,6 +317,7 @@ export default function AdminEditionPage() {
     { id: "lomba", label: "Lomba" },
     { id: "peserta", label: "Peserta" },
     { id: "juara", label: "Juara" },
+    { id: "galeri", label: "Galeri" },
     { id: "sop", label: "SOP" },
   ];
 
@@ -459,6 +551,97 @@ export default function AdminEditionPage() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {tab === "galeri" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+            <p className="text-sm text-slate-600">
+              Upload dokumentasi (bisa banyak file sekaligus). Tampil di{" "}
+              <Link
+                href={`/kegiatan/agustusan/${year}/galeri`}
+                className="text-accent hover:underline"
+              >
+                /kegiatan/agustusan/{year}/galeri
+              </Link>
+            </p>
+            <div>
+              <label className="label">Keterangan (opsional, untuk batch ini)</label>
+              <input
+                className="input"
+                placeholder="Contoh: Lomba Jalan Silang — 8 Agu"
+                value={galleryCaption}
+                onChange={(e) => setGalleryCaption(e.target.value)}
+              />
+            </div>
+            <label className="btn-primary inline-flex cursor-pointer">
+              {galleryUploading ? "Mengunggah…" : "Pilih & upload foto"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                className="hidden"
+                disabled={galleryUploading}
+                onChange={(e) => {
+                  handleGalleryUpload(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+
+          {gallery.length === 0 ? (
+            <p className="text-sm text-slate-500">Belum ada foto. Jalankan seed galeri atau upload di sini.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {gallery.map((item) => (
+                <div
+                  key={item.id}
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+                >
+                  {item.image_url.startsWith("/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.image_url}
+                      alt={item.caption ?? ""}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  ) : (
+                    <StoredImage
+                      src={item.image_url}
+                      alt={item.caption ?? ""}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  )}
+                  <div className="space-y-2 p-2">
+                    <p className="line-clamp-2 text-xs text-slate-600">
+                      {item.caption || "Tanpa keterangan"}
+                      {!item.is_published && (
+                        <span className="ml-1 text-slate-400">(draft)</span>
+                      )}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-accent hover:underline"
+                        onClick={() => toggleGalleryPublish(item)}
+                      >
+                        {item.is_published ? "Sembunyikan" : "Publish"}
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-red-600 hover:underline"
+                        onClick={() => deleteGalleryItem(item)}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

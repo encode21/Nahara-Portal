@@ -9,7 +9,7 @@ export const ALLOWED_IMAGE_TYPES = [
   "image/gif",
 ] as const;
 
-export type UploadFolder = "kegiatan" | "pengumuman" | "pengaduan";
+export type UploadFolder = "kegiatan" | "pengumuman" | "pengaduan" | "agustusan";
 
 function extensionFromFile(file: File): string {
   const fromName = file.name.split(".").pop()?.toLowerCase();
