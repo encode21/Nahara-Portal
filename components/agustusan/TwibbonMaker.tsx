@@ -50,6 +50,8 @@ export function TwibbonMaker({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, SIZE, SIZE);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.fillStyle = "#e8e8e8";
     ctx.fillRect(0, 0, SIZE, SIZE);
 
@@ -95,6 +97,8 @@ export function TwibbonMaker({
       setHasPhoto(true);
       setScale(1);
       setOffset({ x: 0, y: 0 });
+      // photoRef is not React state — redraw even when scale/offset unchanged
+      draw();
     } catch {
       setMessage("File gambar tidak valid.");
     } finally {

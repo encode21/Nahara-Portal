@@ -33,7 +33,7 @@ export const AGUSTUSAN_MEDIA = {
   hero: "/assets/agustusan/hero-banner.png",
   video: "/assets/agustusan/teaser.mp4",
   videoPoster: "/assets/agustusan/nahara-flags-banner.png",
-  twibbonFrame: "/assets/agustusan/twibbon-frame.png",
+  twibbonFrame: "/assets/agustusan/twibbon-frame-v3.png",
   gallery: [
     {
       src: "/assets/agustusan/nahara-flags-banner.png",
