@@ -12,7 +12,11 @@ import type {
   EventGalleryItem,
 } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
-import { CONTEST_CATEGORY_LABELS } from "@/lib/constants/agustusan";
+import {
+  AGUSTUSAN_ACTIVITY_ID,
+  AGUSTUSAN_YEAR,
+  CONTEST_CATEGORY_LABELS,
+} from "@/lib/constants/agustusan";
 import { entryLabel } from "@/lib/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { uploadPortalImage, removePortalImage } from "@/lib/supabase/storage";
@@ -321,6 +325,10 @@ export default function AdminEditionPage() {
     { id: "sop", label: "SOP" },
   ];
 
+  const activityId =
+    edition.activity_id ??
+    (year === AGUSTUSAN_YEAR ? AGUSTUSAN_ACTIVITY_ID : null);
+
   return (
     <div className="space-y-6">
       <div>
@@ -337,6 +345,28 @@ export default function AdminEditionPage() {
             <> · Batas daftar {formatDateTime(edition.registration_closes_at)}</>
           )}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {activityId && (
+            <Link
+              href={`/activities/${activityId}`}
+              className="rounded-lg border border-gold/40 bg-gold/10 px-3 py-1.5 text-sm font-medium text-gold-dark hover:bg-gold/20"
+            >
+              Kelola donatur
+            </Link>
+          )}
+          <Link
+            href="/donasi"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Kelola donasi
+          </Link>
+        </div>
+        {!activityId && (
+          <p className="mt-2 text-xs text-amber-700">
+            Edisi ini belum tertaut ke kegiatan — tautkan activity_id agar kelola
+            donatur muncul.
+          </p>
+        )}
       </div>
 
       {(message || error) && (
