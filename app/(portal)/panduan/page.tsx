@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Shield, Users } from "lucide-react";
+import { Shield, Users } from "lucide-react";
 
 export default function PanduanHubPage() {
   return (
@@ -37,14 +37,6 @@ export default function PanduanHubPage() {
           </p>
           <span className="mt-4 inline-block text-sm font-medium text-gold-dark">Buka panduan →</span>
         </Link>
-      </div>
-
-      <div className="flex items-start gap-3 rounded-xl border border-gold/15 bg-gold/5 px-4 py-3 text-sm text-slate-600">
-        <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
-        <p>
-          File panduan yang sama juga tersimpan di folder <code className="rounded bg-white px-1.5 py-0.5 text-xs">docs/</code> di
-          repositori proyek.
-        </p>
       </div>
     </div>
   );
