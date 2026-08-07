@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Syne } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import {
   OG_IMAGE_PATH,
   SITE_DESCRIPTION,
@@ -102,6 +103,7 @@ export default function RootLayout({
         {children}
         <PwaInstallPrompt />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
