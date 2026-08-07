@@ -53,22 +53,32 @@
   }
 }
 
+/* Fall distance uses px (not %) — % translate is relative to the tiny piece itself */
 @keyframes agustusan-confetti-fall {
   0% {
-    transform: translate3d(0, -10%, 0) rotate(0deg);
+    top: -12%;
+    transform: translate3d(0, 0, 0) rotate(0deg);
     opacity: 0;
   }
-  10% {
-    opacity: 0.9;
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.95;
   }
   100% {
-    transform: translate3d(12px, 120%, 0) rotate(280deg);
+    top: 108%;
+    transform: translate3d(var(--confetti-drift, 20px), 0, 0) rotate(360deg);
     opacity: 0;
   }
 }
 
 .agustusan-confetti {
+  top: -12%;
+  display: block;
+  opacity: 0;
   animation-name: agustusan-confetti-fall;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  will-change: transform, top, opacity;
 }

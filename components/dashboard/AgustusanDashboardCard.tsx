@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight, Flag } from "lucide-react";
 import type { EventEdition } from "@/lib/types";
@@ -9,31 +10,37 @@ type Props = {
   edition: Pick<EventEdition, "id" | "year" | "title" | "status" | "starts_on" | "ends_on">;
 };
 
-/** Lightweight red/white/gold confetti scraps — scoped to the card */
+const CONFETTI = Array.from({ length: 28 }, (_, i) => {
+  const shapes = ["rect", "square", "dot"] as const;
+  return {
+    id: i,
+    left: `${(i * 13 + 5) % 96}%`,
+    delay: `${(i % 8) * 0.28}s`,
+    duration: `${3.2 + (i % 6) * 0.4}s`,
+    // white / gold / soft pink — contrast on red bg (no solid red)
+    color: i % 3 === 0 ? "#fff8e7" : i % 3 === 1 ? "#f0d78c" : "#ffc9ce",
+    shape: shapes[i % 3],
+    drift: `${(i % 2 === 0 ? 1 : -1) * (18 + (i % 5) * 8)}px`,
+    size: 6 + (i % 5) * 2,
+  };
+});
+
 function CardConfetti() {
-  const pieces = Array.from({ length: 18 }, (_, i) => i);
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl" aria-hidden>
-      {pieces.map((i) => {
-        const left = `${(i * 17 + 7) % 100}%`;
-        const delay = `${(i % 6) * 0.35}s`;
-        const duration = `${2.8 + (i % 5) * 0.35}s`;
-        const color =
-          i % 3 === 0 ? "#9b1b23" : i % 3 === 1 ? "#f5f5f4" : "#c9a84c";
-        const rot = `${(i * 47) % 360}deg`;
-        return (
-          <span
-            key={i}
-            className="agustusan-confetti absolute top-[-12%] h-2 w-1.5 opacity-80"
-            style={{
-              left,
-              backgroundColor: color,
-              animationDelay: delay,
-              animationDuration: duration,
-              transform: `rotate(${rot})`,
-            }}
-          />
-        );
+      {CONFETTI.map((p) => {
+        const style: CSSProperties = {
+          left: p.left,
+          backgroundColor: p.color,
+          width: p.shape === "dot" ? p.size : p.shape === "square" ? p.size : Math.round(p.size * 0.55),
+          height: p.shape === "dot" ? p.size : p.shape === "square" ? p.size : Math.round(p.size * 1.4),
+          borderRadius: p.shape === "dot" ? "9999px" : "1px",
+          animationDelay: p.delay,
+          animationDuration: p.duration,
+          // custom property used by keyframes for horizontal drift
+          ["--confetti-drift" as string]: p.drift,
+        };
+        return <span key={p.id} className="agustusan-confetti absolute" style={style} />;
       })}
     </div>
   );
@@ -46,6 +53,11 @@ export function AgustusanDashboardCard({ edition }: Props) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-[#9b1b23]/20 bg-gradient-to-br from-[#7a1218] via-[#9b1b23] to-[#5c0e14] p-6 text-white shadow-sm">
       <CardConfetti />
+      {/* soft highlight so motion pops a bit more */}
+      <div
+        className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-[#f0d78c]/15 blur-2xl"
+        aria-hidden
+      />
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-3">
           <div>
