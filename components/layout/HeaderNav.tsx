@@ -260,7 +260,12 @@ export function HeaderNav() {
 export function Footer() {
   return (
     <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-slate-500">
-      © 2026 Nahara Portal Warga. All rights reserved.
+      <p>© 2026 Nahara Portal Warga. All rights reserved.</p>
+      <p className="mt-1">
+        <Link href="/panduan" className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold">
+          Panduan Penggunaan
+        </Link>
+      </p>
     </footer>
   );
 }

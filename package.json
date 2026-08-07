@@ -18,8 +18,10 @@
     "next": "14.2.29",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
     "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
     "vaul": "^1.1.2"
   },
   "devDependencies": {
