@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Iuran, Warga } from "@/lib/types";
 import {
@@ -16,9 +16,12 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
-import { RefreshCw } from "lucide-react";
+import { MonthYearSelect } from "@/components/ui/MonthYearSelect";
+import { Pagination } from "@/components/ui/Pagination";
+import { RefreshCw, Search } from "lucide-react";
 
 const MONTHLY_RATE = 50000;
+const PAGE_SIZE = 20;
 
 type IuranRow = {
   warga: Warga;
@@ -35,6 +38,8 @@ export default function IuranPage() {
   const [error, setError] = useState<string | null>(null);
   const [bulan, setBulan] = useState(getCurrentYearMonth());
   const [blokFilter, setBlokFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const bulanDate = `${bulan}-01`;
 
@@ -70,9 +75,7 @@ export default function IuranPage() {
       "warga_id" | "bulan" | "status" | "nominal"
     >[];
 
-    const iuranByWarga = new Map(
-      iuranList.map((i) => [i.warga_id, i] as const),
-    );
+    const iuranByWarga = new Map(iuranList.map((i) => [i.warga_id, i] as const));
     const paidByWarga = new Map<string, string[]>();
     for (const row of history) {
       const list = paidByWarga.get(row.warga_id) ?? [];
@@ -82,10 +85,9 @@ export default function IuranPage() {
 
     let merged: IuranRow[] = wargaList.map((w) => {
       const iuran = iuranByWarga.get(w.id) ?? null;
-      const coverage =
-        iuran?.status
-          ? getPrepaidCoverage(paidByWarga.get(w.id) ?? [], bulanDate, MONTHLY_RATE)
-          : null;
+      const coverage = iuran?.status
+        ? getPrepaidCoverage(paidByWarga.get(w.id) ?? [], bulanDate, MONTHLY_RATE)
+        : null;
       return { warga: w, iuran, coverage };
     });
 
@@ -100,6 +102,10 @@ export default function IuranPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [bulan, blokFilter, search]);
 
   async function generateIuran() {
     if (!isAdmin) return;
@@ -170,9 +176,25 @@ export default function IuranPage() {
     await fetchData();
   }
 
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.warga.nama.toLowerCase().includes(q) ||
+        r.warga.blok.toLowerCase().includes(q)
+    );
+  }, [rows, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filteredRows.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
   const lunasRows = rows.filter((r) => r.iuran?.status);
   const totalTerkumpul = lunasRows.reduce((s, r) => {
-    // Hitung sekali per periode bayar: ambil total hanya di bulan awal periode
     if (r.coverage && normalizeMonthDate(r.coverage.start) === bulanDate) {
       return s + r.coverage.total;
     }
@@ -188,7 +210,8 @@ export default function IuranPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-slate-900">Iuran</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Status iuran bulanan (Rp {MONTHLY_RATE.toLocaleString("id-ID")}/bulan). Bayar multi-bulan dicatat penuh.
+            Status iuran bulanan (Rp {MONTHLY_RATE.toLocaleString("id-ID")}/bulan).
+            Bayar multi-bulan dicatat penuh.
           </p>
         </div>
         {isAdmin && (
@@ -232,25 +255,41 @@ export default function IuranPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="month"
-          className="input w-auto"
-          value={bulan}
-          onChange={(e) => setBulan(e.target.value)}
-        />
-        <select
-          className="input w-auto"
-          value={blokFilter}
-          onChange={(e) => setBlokFilter(e.target.value)}
-        >
-          <option value="">Semua Blok</option>
-          {BLOK_ROWS.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-500">Periode</p>
+            <MonthYearSelect value={bulan} onChange={setBulan} />
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-500">Blok</p>
+            <select
+              className="input w-auto min-w-[8rem]"
+              value={blokFilter}
+              onChange={(e) => setBlokFilter(e.target.value)}
+            >
+              <option value="">Semua Blok</option>
+              {BLOK_ROWS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="w-full sm:max-w-xs">
+          <p className="mb-1.5 text-xs font-medium text-slate-500">Cari</p>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              className="input w-full pl-9"
+              placeholder="Nama atau blok…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -261,68 +300,84 @@ export default function IuranPage() {
         <div className="glass-card text-center text-sm text-slate-500">
           Belum ada data warga. Tambahkan warga di Info Warga, lalu klik Generate Iuran.
         </div>
+      ) : filteredRows.length === 0 ? (
+        <div className="glass-card text-center text-sm text-slate-500">
+          Tidak ada warga yang cocok dengan pencarian.
+        </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3">Blok</th>
-                <th className="px-4 py-3">Iuran / Periode</th>
-                <th className="px-4 py-3">Status</th>
-                {isAdmin && <th className="px-4 py-3">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const paid = row.iuran?.status ?? false;
-                const coverage = row.coverage;
-                return (
-                  <tr
-                    key={row.warga.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
-                  >
-                    <td className="px-4 py-3 text-slate-800">{row.warga.nama}</td>
-                    <td className="px-4 py-3 text-slate-500">{row.warga.blok}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <p>{formatCurrency(MONTHLY_RATE)} / bulan</p>
-                      {paid && coverage && coverage.months > 1 && (
-                        <p className="mt-0.5 text-xs text-gold-dark">
-                          Bayar {coverage.months} bulan (
-                          {formatMonthShort(coverage.start)} –{" "}
-                          {formatMonthShort(coverage.end)}) · total{" "}
-                          {formatCurrency(coverage.total)}
-                        </p>
-                      )}
-                      {paid && coverage && coverage.months === 1 && (
-                        <p className="mt-0.5 text-xs text-slate-400">1 bulan</p>
-                      )}
-                      {!paid && !row.iuran && (
-                        <p className="mt-0.5 text-xs text-slate-400">Belum ada catatan</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge
-                        status={paid ? "Lunas" : "Belum Bayar"}
-                        variant={getIuranVariant(paid)}
-                      />
-                    </td>
-                    {isAdmin && (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/90 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="w-12 px-4 py-3">#</th>
+                  <th className="px-4 py-3">Nama</th>
+                  <th className="px-4 py-3">Blok</th>
+                  <th className="px-4 py-3">Iuran / Periode</th>
+                  <th className="px-4 py-3">Status</th>
+                  {isAdmin && <th className="px-4 py-3">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pageRows.map((row, idx) => {
+                  const paid = row.iuran?.status ?? false;
+                  const coverage = row.coverage;
+                  const no = (safePage - 1) * PAGE_SIZE + idx + 1;
+                  return (
+                    <tr key={row.warga.id} className="transition hover:bg-slate-50/80">
+                      <td className="px-4 py-3 tabular-nums text-slate-400">{no}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800">{row.warga.nama}</td>
                       <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => toggleStatus(row)}
-                          className="text-xs text-gold-dark hover:underline"
-                        >
-                          {paid ? "Batalkan" : "Tandai Lunas"}
-                        </button>
+                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                          {row.warga.blok}
+                        </span>
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="px-4 py-3 text-slate-600">
+                        <p className="tabular-nums">{formatCurrency(MONTHLY_RATE)} / bulan</p>
+                        {paid && coverage && coverage.months > 1 && (
+                          <p className="mt-0.5 text-xs text-gold-dark">
+                            Bayar {coverage.months} bulan (
+                            {formatMonthShort(coverage.start)} –{" "}
+                            {formatMonthShort(coverage.end)}) · total{" "}
+                            {formatCurrency(coverage.total)}
+                          </p>
+                        )}
+                        {paid && coverage && coverage.months === 1 && (
+                          <p className="mt-0.5 text-xs text-slate-400">1 bulan</p>
+                        )}
+                        {!paid && !row.iuran && (
+                          <p className="mt-0.5 text-xs text-slate-400">Belum ada catatan</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge
+                          status={paid ? "Lunas" : "Belum Bayar"}
+                          variant={getIuranVariant(paid)}
+                        />
+                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleStatus(row)}
+                            className="rounded-lg px-2.5 py-1 text-xs font-medium text-gold-dark transition hover:bg-gold/10"
+                          >
+                            {paid ? "Batalkan" : "Tandai Lunas"}
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            page={safePage}
+            pageSize={PAGE_SIZE}
+            total={filteredRows.length}
+            onChange={setPage}
+          />
         </div>
       )}
     </div>
