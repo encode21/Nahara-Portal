@@ -98,10 +98,9 @@ export default function KeuanganPage() {
   }, [fetchData]);
 
   const monthSummary = summarizeKas(entries);
-  const totalPemasukan = monthSummary.totalPemasukan;
-  const totalPengeluaran = monthSummary.totalPengeluaran;
-  const saldoBulanIni = monthSummary.saldoBulanIni;
-  /** Bawa-asal bulan sebelumnya + kategori Saldo Awal di periode */
+  const totalMasuk = monthSummary.totalPemasukan;
+  const totalKeluar = monthSummary.totalPengeluaran;
+  /** Spreadsheet: Saldo Awal = bawa-asal bulan lalu (+ entri kategori Saldo Awal di periode) */
   const saldoAwalTampil = monthFilter
     ? saldoAwalPeriode + monthSummary.saldoAwal
     : monthSummary.saldoAwal;
@@ -226,41 +225,27 @@ export default function KeuanganPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        {saldoAwalTampil !== 0 && (
-          <div className="glass-card">
-            <p className="text-xs text-slate-500">Saldo Awal</p>
-            <p className="mt-1 font-display text-2xl font-bold text-slate-900">
-              {formatCurrency(saldoAwalTampil)}
-            </p>
-          </div>
-        )}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="glass-card">
-          <p className="text-xs text-slate-500">Total Pemasukan</p>
+          <p className="text-xs text-slate-500">Saldo Awal</p>
+          <p className="mt-1 font-display text-2xl font-bold text-slate-900">
+            {formatCurrency(saldoAwalTampil)}
+          </p>
+        </div>
+        <div className="glass-card">
+          <p className="text-xs text-slate-500">Total Masuk</p>
           <p className="mt-1 font-display text-2xl font-bold text-gold-dark">
-            {formatCurrency(totalPemasukan)}
+            {formatCurrency(totalMasuk)}
           </p>
         </div>
         <div className="glass-card">
-          <p className="text-xs text-slate-500">Total Pengeluaran</p>
+          <p className="text-xs text-slate-500">Total Keluar</p>
           <p className="mt-1 font-display text-2xl font-bold text-red-600">
-            {formatCurrency(totalPengeluaran)}
+            {formatCurrency(totalKeluar)}
           </p>
         </div>
-        {monthFilter && (
-          <div className="glass-card">
-            <p className="text-xs text-slate-500">Saldo Bulan Ini</p>
-            <p
-              className={`mt-1 font-display text-2xl font-bold ${
-                saldoBulanIni < 0 ? "text-red-600" : "text-slate-900"
-              }`}
-            >
-              {formatCurrency(saldoBulanIni)}
-            </p>
-          </div>
-        )}
         <div className="glass-card">
-          <p className="text-xs text-slate-500">{monthFilter ? "Saldo Akhir" : "Saldo"}</p>
+          <p className="text-xs text-slate-500">Saldo Akhir</p>
           <p
             className={`mt-1 font-display text-2xl font-bold ${
               saldoAkhir < 0 ? "text-red-600" : "text-slate-900"

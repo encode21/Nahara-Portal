@@ -35,7 +35,8 @@ export default function KasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { saldoAwal, totalPemasukan, totalPengeluaran, saldo } = summarizeKas(entries);
+  const { saldoAwal, totalPemasukan: totalMasuk, totalPengeluaran: totalKeluar, saldo: saldoAkhir } =
+    summarizeKas(entries);
 
   async function handleDelete(id: string) {
     const entry = entries.find((e) => e.id === id);
@@ -98,21 +99,11 @@ export default function KasPage() {
         </div>
       </div>
 
-      <div className={`grid gap-4 ${saldoAwal > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
-        {saldoAwal > 0 && (
-          <StatCard label="Saldo Awal" value={formatCurrency(saldoAwal)} />
-        )}
-        <StatCard
-          label="Total Pemasukan"
-          value={formatCurrency(totalPemasukan)}
-          variant="success"
-        />
-        <StatCard
-          label="Total Pengeluaran"
-          value={formatCurrency(totalPengeluaran)}
-          variant="danger"
-        />
-        <StatCard label="Saldo" value={formatCurrency(saldo)} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Saldo Awal" value={formatCurrency(saldoAwal)} />
+        <StatCard label="Total Masuk" value={formatCurrency(totalMasuk)} variant="success" />
+        <StatCard label="Total Keluar" value={formatCurrency(totalKeluar)} variant="danger" />
+        <StatCard label="Saldo Akhir" value={formatCurrency(saldoAkhir)} />
       </div>
 
       {loading ? (
