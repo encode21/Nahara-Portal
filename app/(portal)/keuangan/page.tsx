@@ -11,7 +11,12 @@ import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { KasToDonasiForm } from "@/components/KasToDonasiForm";
 import { parseKasToDonasiCampaignId } from "@/lib/kas-donasi";
-import { summarizeKas } from "@/lib/kas-summary";
+import {
+  entryDelta,
+  monthBounds,
+  netKas,
+  summarizeKas,
+} from "@/lib/kas-summary";
 
 const CATEGORIES = ["Saldo Awal", "Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
 
@@ -19,6 +24,8 @@ export default function KeuanganPage() {
   const supabase = createClient();
   const { isAdmin } = useAuth();
   const [entries, setEntries] = useState<KasEntry[]>([]);
+  const [saldoAwalPeriode, setSaldoAwalPeriode] = useState(0);
+  const [saldoAkhir, setSaldoAkhir] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState("");
@@ -37,34 +44,76 @@ export default function KeuanganPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    let query = supabase.from("kas_entries").select("*").order("date", { ascending: false });
+
+    let listQuery = supabase.from("kas_entries").select("*").order("date", { ascending: false });
     if (monthFilter) {
-      const start = `${monthFilter}-01`;
-      const [y, m] = monthFilter.split("-").map(Number);
-      const lastDay = new Date(y, m, 0).getDate();
-      const end = `${monthFilter}-${String(lastDay).padStart(2, "0")}`;
-      query = query.gte("date", start).lte("date", end);
+      const { start, end } = monthBounds(monthFilter);
+      listQuery = listQuery.gte("date", start).lte("date", end);
     }
-    if (categoryFilter) query = query.eq("category", categoryFilter);
-    const { data, error: fetchError } = await query;
-    if (fetchError) {
-      setError(getSupabaseErrorMessage(fetchError));
+    if (categoryFilter) listQuery = listQuery.eq("category", categoryFilter);
+
+    // Kumulatif sampai akhir periode (abaikan filter kategori)
+    let akhirQuery = supabase.from("kas_entries").select("type, amount");
+    if (monthFilter) {
+      const { end } = monthBounds(monthFilter);
+      akhirQuery = akhirQuery.lte("date", end);
+    }
+
+    const awalPromise = monthFilter
+      ? supabase
+          .from("kas_entries")
+          .select("type, amount")
+          .lt("date", monthBounds(monthFilter).start)
+      : Promise.resolve({ data: null as { type: string; amount: number }[] | null, error: null });
+
+    const [listRes, akhirRes, awalRes] = await Promise.all([
+      listQuery,
+      akhirQuery,
+      awalPromise,
+    ]);
+
+    if (listRes.error) {
+      setError(getSupabaseErrorMessage(listRes.error));
       setEntries([]);
-    } else {
-      setEntries((data ?? []) as KasEntry[]);
+      setSaldoAwalPeriode(0);
+      setSaldoAkhir(0);
+      setLoading(false);
+      return;
     }
+
+    setEntries((listRes.data ?? []) as KasEntry[]);
+    setSaldoAkhir(netKas((akhirRes.data ?? []) as Pick<KasEntry, "type" | "amount">[]));
+
+    if (monthFilter && awalRes.data) {
+      setSaldoAwalPeriode(netKas(awalRes.data as Pick<KasEntry, "type" | "amount">[]));
+    } else {
+      setSaldoAwalPeriode(0);
+    }
+
     setLoading(false);
   }, [supabase, monthFilter, categoryFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const { saldoAwal, totalPemasukan, totalPengeluaran, saldo } = summarizeKas(entries);
+  const monthSummary = summarizeKas(entries);
+  const totalPemasukan = monthSummary.totalPemasukan;
+  const totalPengeluaran = monthSummary.totalPengeluaran;
+  const saldoBulanIni = monthSummary.saldoBulanIni;
+  /** Bawa-asal bulan sebelumnya + kategori Saldo Awal di periode */
+  const saldoAwalTampil = monthFilter
+    ? saldoAwalPeriode + monthSummary.saldoAwal
+    : monthSummary.saldoAwal;
 
-  let runningSaldo = saldo;
-  const entriesWithSaldo = [...entries].reverse().map((e) => {
-    runningSaldo = e.type === "pemasukan" ? runningSaldo - e.amount : runningSaldo + e.amount;
-    return { ...e, runningSaldo: runningSaldo + (e.type === "pemasukan" ? e.amount : -e.amount) };
-  }).reverse();
+  let running = saldoAwalPeriode;
+  const entriesWithSaldo = [...entries]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at))
+    .map((e) => {
+      running += entryDelta(e);
+      return { ...e, runningSaldo: running };
+    })
+    .reverse();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +131,13 @@ export default function KeuanganPage() {
     }
     setShowForm(false);
     setEditId(null);
-    setForm({ type: "pemasukan", amount: "", description: "", category: "Iuran", date: new Date().toISOString().split("T")[0] });
+    setForm({
+      type: "pemasukan",
+      amount: "",
+      description: "",
+      category: "Iuran",
+      date: new Date().toISOString().split("T")[0],
+    });
     fetchData();
   }
 
@@ -171,34 +226,69 @@ export default function KeuanganPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className={`grid gap-4 ${saldoAwal > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
-        {saldoAwal > 0 && (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+        {saldoAwalTampil !== 0 && (
           <div className="glass-card">
             <p className="text-xs text-slate-500">Saldo Awal</p>
             <p className="mt-1 font-display text-2xl font-bold text-slate-900">
-              {formatCurrency(saldoAwal)}
+              {formatCurrency(saldoAwalTampil)}
             </p>
           </div>
         )}
         <div className="glass-card">
-          <p className="text-xs text-slate-500">Saldo</p>
-          <p className="mt-1 font-display text-2xl font-bold text-slate-900">{formatCurrency(saldo)}</p>
-        </div>
-        <div className="glass-card">
           <p className="text-xs text-slate-500">Total Pemasukan</p>
-          <p className="mt-1 font-display text-2xl font-bold text-gold-dark">{formatCurrency(totalPemasukan)}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-gold-dark">
+            {formatCurrency(totalPemasukan)}
+          </p>
         </div>
         <div className="glass-card">
           <p className="text-xs text-slate-500">Total Pengeluaran</p>
-          <p className="mt-1 font-display text-2xl font-bold text-red-600">{formatCurrency(totalPengeluaran)}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-red-600">
+            {formatCurrency(totalPengeluaran)}
+          </p>
+        </div>
+        {monthFilter && (
+          <div className="glass-card">
+            <p className="text-xs text-slate-500">Saldo Bulan Ini</p>
+            <p
+              className={`mt-1 font-display text-2xl font-bold ${
+                saldoBulanIni < 0 ? "text-red-600" : "text-slate-900"
+              }`}
+            >
+              {formatCurrency(saldoBulanIni)}
+            </p>
+          </div>
+        )}
+        <div className="glass-card">
+          <p className="text-xs text-slate-500">{monthFilter ? "Saldo Akhir" : "Saldo"}</p>
+          <p
+            className={`mt-1 font-display text-2xl font-bold ${
+              saldoAkhir < 0 ? "text-red-600" : "text-slate-900"
+            }`}
+          >
+            {formatCurrency(saldoAkhir)}
+          </p>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <input type="month" className="input w-auto" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} />
-        <select className="input w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+        <input
+          type="month"
+          className="input w-auto"
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+        />
+        <select
+          className="input w-auto"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
           <option value="">Semua Kategori</option>
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -218,45 +308,80 @@ export default function KeuanganPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Tipe</label>
-              <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "pemasukan" | "pengeluaran" })}>
+              <select
+                className="input"
+                value={form.type}
+                onChange={(e) =>
+                  setForm({ ...form, type: e.target.value as "pemasukan" | "pengeluaran" })
+                }
+              >
                 <option value="pemasukan">Pemasukan</option>
                 <option value="pengeluaran">Pengeluaran</option>
               </select>
             </div>
             <div>
               <label className="label">Nominal</label>
-              <input type="number" className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+              <input
+                type="number"
+                className="input"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                required
+              />
             </div>
             <div>
               <label className="label">Kategori</label>
-              <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <select
+                className="input"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="label">Tanggal</label>
-              <input type="date" className="input" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+              <input
+                type="date"
+                className="input"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                required
+              />
             </div>
           </div>
           <div>
             <label className="label">Keterangan</label>
-            <input className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+            <input
+              className="input"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
+            />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary">Simpan</button>
-            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Batal</button>
+            <button type="submit" className="btn-primary">
+              Simpan
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>
+              Batal
+            </button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner className="h-8 w-8" /></div>
+        <div className="flex justify-center py-12">
+          <LoadingSpinner className="h-8 w-8" />
+        </div>
       ) : entries.length === 0 ? (
         <div className="glass-card space-y-2 text-sm text-slate-600">
           <p className="font-medium text-slate-800">Belum ada transaksi kas.</p>
-          <p>
-            Import rekap bendahara dengan menjalankan file SQL di Supabase:
-          </p>
+          <p>Import rekap bendahara dengan menjalankan file SQL di Supabase:</p>
           <code className="block rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
             supabase/seeds/202606_arus_kas_jun2026.sql
             {"\n"}
@@ -285,15 +410,34 @@ export default function KeuanganPage() {
                   <td className="px-4 py-3 text-slate-400">{formatDate(entry.date)}</td>
                   <td className="px-4 py-3 text-slate-700">{entry.description}</td>
                   <td className="px-4 py-3 text-slate-400">{entry.category}</td>
-                  <td className={`px-4 py-3 font-medium ${entry.type === "pemasukan" ? "text-gold-dark" : "text-red-600"}`}>
-                    {entry.type === "pemasukan" ? "+" : "-"}{formatCurrency(entry.amount)}
+                  <td
+                    className={`px-4 py-3 font-medium ${
+                      entry.type === "pemasukan" ? "text-gold-dark" : "text-red-600"
+                    }`}
+                  >
+                    {entry.type === "pemasukan" ? "+" : "-"}
+                    {formatCurrency(entry.amount)}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatCurrency(entry.runningSaldo)}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {formatCurrency(entry.runningSaldo)}
+                  </td>
                   {isAdmin && (
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => startEdit(entry)} className="text-slate-400 hover:text-gold-dark"><Pencil className="h-4 w-4" /></button>
-                        <button type="button" onClick={() => handleDelete(entry.id)} className="text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                        <button
+                          type="button"
+                          onClick={() => startEdit(entry)}
+                          className="text-slate-400 hover:text-gold-dark"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(entry.id)}
+                          className="text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   )}
