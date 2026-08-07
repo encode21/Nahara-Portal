@@ -4,11 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { KasEntry } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
+import { KasToDonasiForm } from "@/components/KasToDonasiForm";
+import { parseKasToDonasiCampaignId } from "@/lib/kas-donasi";
 
 const CATEGORIES = ["Saldo Awal", "Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
 
@@ -21,6 +23,7 @@ export default function KeuanganPage() {
   const [monthFilter, setMonthFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     type: "pemasukan" as "pemasukan" | "pengeluaran",
@@ -85,7 +88,26 @@ export default function KeuanganPage() {
   }
 
   async function handleDelete(id: string) {
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) return;
     if (!confirm("Hapus transaksi ini?")) return;
+
+    const campaignId = parseKasToDonasiCampaignId(entry.description);
+    if (campaignId && entry.type === "pengeluaran") {
+      const { data: campaign } = await supabase
+        .from("donasi_campaign")
+        .select("id, collected_amount")
+        .eq("id", campaignId)
+        .maybeSingle();
+      if (campaign) {
+        const next = Math.max(0, (campaign.collected_amount ?? 0) - entry.amount);
+        await supabase
+          .from("donasi_campaign")
+          .update({ collected_amount: next })
+          .eq("id", campaignId);
+      }
+    }
+
     await supabase.from("kas_entries").delete().eq("id", id);
     fetchData();
   }
@@ -109,9 +131,34 @@ export default function KeuanganPage() {
           <h1 className="font-display text-2xl font-bold text-slate-900">Keuangan</h1>
           <p className="mt-1 text-sm text-slate-400">Pencatatan pemasukan dan pengeluaran</p>
         </div>
-        <button type="button" onClick={() => { if (isAdmin) { setShowForm(true); setEditId(null); } }} className="btn-primary" disabled={!isAdmin}>
-          <Plus className="mr-1.5 h-4 w-4" /> Tambah
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (!isAdmin) return;
+              setShowTransfer(true);
+              setShowForm(false);
+              setEditId(null);
+            }}
+            className="btn-secondary"
+            disabled={!isAdmin}
+          >
+            <ArrowRightLeft className="mr-1.5 h-4 w-4" /> Kas → Donasi
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!isAdmin) return;
+              setShowForm(true);
+              setShowTransfer(false);
+              setEditId(null);
+            }}
+            className="btn-primary"
+            disabled={!isAdmin}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Tambah
+          </button>
+        </div>
       </div>
 
       {!isAdmin && (
@@ -147,6 +194,16 @@ export default function KeuanganPage() {
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
+
+      {showTransfer && isAdmin && (
+        <KasToDonasiForm
+          onDone={() => {
+            setShowTransfer(false);
+            fetchData();
+          }}
+          onCancel={() => setShowTransfer(false)}
+        />
+      )}
 
       {showForm && isAdmin && (
         <form onSubmit={handleSubmit} className="glass-card space-y-4">

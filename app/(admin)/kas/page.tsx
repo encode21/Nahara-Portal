@@ -8,12 +8,15 @@ import { KasTable } from "@/components/KasTable";
 import { StatCard } from "@/components/ui/StatCard";
 import { EmptyState, LoadingSpinner } from "@/components/ui/Loading";
 import { KasFormModal } from "@/components/KasFormModal";
+import { KasToDonasiForm } from "@/components/KasToDonasiForm";
+import { parseKasToDonasiCampaignId } from "@/lib/kas-donasi";
 
 export default function KasPage() {
   const supabase = createClient();
   const [entries, setEntries] = useState<KasEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
 
   async function loadData() {
     setLoading(true);
@@ -40,7 +43,26 @@ export default function KasPage() {
   const saldo = totalPemasukan - totalPengeluaran;
 
   async function handleDelete(id: string) {
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) return;
     if (!confirm("Hapus transaksi ini?")) return;
+
+    const campaignId = parseKasToDonasiCampaignId(entry.description);
+    if (campaignId && entry.type === "pengeluaran") {
+      const { data: campaign } = await supabase
+        .from("donasi_campaign")
+        .select("id, collected_amount")
+        .eq("id", campaignId)
+        .maybeSingle();
+      if (campaign) {
+        const next = Math.max(0, (campaign.collected_amount ?? 0) - entry.amount);
+        await supabase
+          .from("donasi_campaign")
+          .update({ collected_amount: next })
+          .eq("id", campaignId);
+      }
+    }
+
     await supabase.from("kas_entries").delete().eq("id", id);
     loadData();
   }
@@ -57,13 +79,28 @@ export default function KasPage() {
           <h1 className="text-2xl font-bold text-slate-900">Kas Komunitas</h1>
           <p className="mt-1 text-slate-500">Catat pemasukan dan pengeluaran</p>
         </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => setShowForm(true)}
-        >
-          + Tambah Transaksi
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setShowTransfer(true);
+              setShowForm(false);
+            }}
+          >
+            Kas → Donasi
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setShowForm(true);
+              setShowTransfer(false);
+            }}
+          >
+            + Tambah Transaksi
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -96,6 +133,16 @@ export default function KasPage() {
         />
       ) : (
         <KasTable entries={entries} onDelete={handleDelete} />
+      )}
+
+      {showTransfer && (
+        <KasToDonasiForm
+          onDone={() => {
+            setShowTransfer(false);
+            loadData();
+          }}
+          onCancel={() => setShowTransfer(false)}
+        />
       )}
 
       {showForm && <KasFormModal entry={null} onClose={handleFormClose} />}
