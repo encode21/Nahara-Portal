@@ -10,18 +10,50 @@ type Props = {
   edition: Pick<EventEdition, "id" | "year" | "title" | "status" | "starts_on" | "ends_on">;
 };
 
-const CONFETTI = Array.from({ length: 28 }, (_, i) => {
-  const shapes = ["rect", "square", "dot"] as const;
+const COLORS = [
+  "#ffd166",
+  "#06d6a0",
+  "#118ab2",
+  "#ef476f",
+  "#f7fff7",
+  "#ff9f1c",
+  "#9b5de5",
+  "#00bbf9",
+  "#fee440",
+  "#f15bb5",
+  "#c9a84c",
+  "#ffffff",
+];
+
+const SHAPES = ["rect", "square", "dot"] as const;
+
+/** One-shot burst: left & right bottom → up (deterministic, no loop) */
+const CONFETTI = Array.from({ length: 36 }, (_, i) => {
+  const side: "left" | "right" = i % 2 === 0 ? "left" : "right";
+  const n = Math.floor(i / 2);
+  // fan upward into the card from each corner
+  const angleDeg = side === "left" ? -75 + (n % 9) * 9 : -105 - (n % 9) * 9;
+  const dist = 110 + (n % 6) * 28; // px travel
+  const rad = (angleDeg * Math.PI) / 180;
+  const dx = Math.round(Math.cos(rad) * dist);
+  const dy = Math.round(Math.sin(rad) * dist); // sin negative = up
+  const shape = SHAPES[i % 3];
+  const size = 7 + (i % 5) * 2;
+
   return {
     id: i,
-    left: `${(i * 13 + 5) % 96}%`,
-    delay: `${(i % 8) * 0.28}s`,
-    duration: `${3.2 + (i % 6) * 0.4}s`,
-    // white / gold / soft pink — contrast on red bg (no solid red)
-    color: i % 3 === 0 ? "#fff8e7" : i % 3 === 1 ? "#f0d78c" : "#ffc9ce",
-    shape: shapes[i % 3],
-    drift: `${(i % 2 === 0 ? 1 : -1) * (18 + (i % 5) * 8)}px`,
-    size: 6 + (i % 5) * 2,
+    side,
+    color: COLORS[i % COLORS.length],
+    shape,
+    size,
+    delay: `${0.05 + (n % 8) * 0.04}s`,
+    duration: `${1.15 + (n % 5) * 0.12}s`,
+    dx: `${dx}px`,
+    dy: `${dy}px`,
+    spin: `${(i % 2 === 0 ? 1 : -1) * (220 + (i % 4) * 80)}deg`,
+    width: shape === "dot" ? size : shape === "square" ? size : Math.round(size * 0.5),
+    height: shape === "dot" ? size : shape === "square" ? size : Math.round(size * 1.5),
+    radius: shape === "dot" ? "9999px" : "1px",
   };
 });
 
@@ -30,17 +62,30 @@ function CardConfetti() {
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl" aria-hidden>
       {CONFETTI.map((p) => {
         const style: CSSProperties = {
-          left: p.left,
           backgroundColor: p.color,
-          width: p.shape === "dot" ? p.size : p.shape === "square" ? p.size : Math.round(p.size * 0.55),
-          height: p.shape === "dot" ? p.size : p.shape === "square" ? p.size : Math.round(p.size * 1.4),
-          borderRadius: p.shape === "dot" ? "9999px" : "1px",
+          width: p.width,
+          height: p.height,
+          borderRadius: p.radius,
           animationDelay: p.delay,
           animationDuration: p.duration,
-          // custom property used by keyframes for horizontal drift
-          ["--confetti-drift" as string]: p.drift,
+          ["--c-dx" as string]: p.dx,
+          ["--c-dy" as string]: p.dy,
+          ["--c-spin" as string]: p.spin,
+          ...(p.side === "left"
+            ? { left: "4%", bottom: "6%" }
+            : { right: "4%", bottom: "6%" }),
         };
-        return <span key={p.id} className="agustusan-confetti absolute" style={style} />;
+        return (
+          <span
+            key={p.id}
+            className={
+              p.side === "left"
+                ? "agustusan-confetti agustusan-confetti--left absolute"
+                : "agustusan-confetti agustusan-confetti--right absolute"
+            }
+            style={style}
+          />
+        );
       })}
     </div>
   );
@@ -53,7 +98,6 @@ export function AgustusanDashboardCard({ edition }: Props) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-[#9b1b23]/20 bg-gradient-to-br from-[#7a1218] via-[#9b1b23] to-[#5c0e14] p-6 text-white shadow-sm">
       <CardConfetti />
-      {/* soft highlight so motion pops a bit more */}
       <div
         className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-[#f0d78c]/15 blur-2xl"
         aria-hidden
