@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Drawer } from "vaul";
 import { Home, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Iuran, WargaWithIuran } from "@/lib/types";
-import { formatCurrency, getCurrentMonthStart, normalizeMonthDate } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatMonthShort,
+  getCurrentMonthStart,
+  normalizeMonthDate,
+  toMonthStart,
+} from "@/lib/utils";
 import { StatusBadge, getHunianVariant, getIuranVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
 
@@ -17,20 +23,43 @@ type HouseModalProps = {
   onIuranUpdated?: () => void;
 };
 
-function formatBulanLabel(bulan: string): string {
-  const date = new Date(bulan);
-  return new Intl.DateTimeFormat("id-ID", { month: "short", year: "numeric" }).format(date);
+type HistoryRow = {
+  bulan: string;
+  nominal: number;
+  status: boolean;
+  id?: string;
+};
+
+/** Last N calendar months ending at focusMonth (YYYY-MM-01), newest first. */
+function trailingMonths(focusMonth: string, count: number): string[] {
+  const [y0, m0] = normalizeMonthDate(focusMonth).slice(0, 7).split("-").map(Number);
+  const out: string[] = [];
+  let y = y0;
+  let m = m0 - 1; // 0-based
+  for (let i = 0; i < count; i++) {
+    out.push(toMonthStart(y, m));
+    m -= 1;
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    }
+  }
+  return out;
 }
 
 export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: HouseModalProps) {
   const supabase = createClient();
-  const [iuranHistory, setIuranHistory] = useState<Iuran[]>([]);
+  const [iuranByMonth, setIuranByMonth] = useState<Map<string, Iuran>>(new Map());
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
 
+  const bulanIni = getCurrentMonthStart();
+  const months = useMemo(() => trailingMonths(bulanIni, 6), [bulanIni]);
+  const oldest = months[months.length - 1];
+
   const fetchHistory = useCallback(async () => {
     if (!warga?.id) {
-      setIuranHistory([]);
+      setIuranByMonth(new Map());
       return;
     }
     setLoading(true);
@@ -38,20 +67,34 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
       .from("iuran")
       .select("*")
       .eq("warga_id", warga.id)
-      .order("bulan", { ascending: false })
-      .limit(6);
-    setIuranHistory((data ?? []) as Iuran[]);
+      .gte("bulan", oldest)
+      .lte("bulan", bulanIni)
+      .order("bulan", { ascending: false });
+
+    const map = new Map<string, Iuran>();
+    for (const row of (data ?? []) as Iuran[]) {
+      map.set(normalizeMonthDate(row.bulan), row);
+    }
+    setIuranByMonth(map);
     setLoading(false);
-  }, [supabase, warga?.id]);
+  }, [supabase, warga?.id, oldest, bulanIni]);
 
   useEffect(() => {
     if (open) fetchHistory();
   }, [open, fetchHistory]);
 
-  const bulanIni = getCurrentMonthStart();
-  const currentIuran = iuranHistory.find(
-    (i) => normalizeMonthDate(i.bulan) === bulanIni,
-  );
+  const historyRows: HistoryRow[] = months.map((bulan) => {
+    const row = iuranByMonth.get(bulan);
+    return {
+      bulan,
+      nominal: row?.nominal ?? 50000,
+      status: row?.status ?? false,
+      id: row?.id,
+    };
+  });
+
+  const currentIuran = iuranByMonth.get(bulanIni);
+  const currentLunas = currentIuran?.status ?? false;
 
   async function handleTandaiLunas() {
     if (!warga?.id) return;
@@ -117,10 +160,6 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                     <div className="flex justify-center py-6">
                       <LoadingSpinner className="h-6 w-6" />
                     </div>
-                  ) : iuranHistory.length === 0 ? (
-                    <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
-                      Belum ada riwayat iuran.
-                    </p>
                   ) : (
                     <div className="overflow-hidden rounded-lg border border-slate-200">
                       <table className="w-full text-sm">
@@ -132,10 +171,14 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                           </tr>
                         </thead>
                         <tbody>
-                          {iuranHistory.map((row) => (
-                            <tr key={row.id} className="border-b border-slate-100">
-                              <td className="px-3 py-2 text-slate-600">{formatBulanLabel(row.bulan)}</td>
-                              <td className="px-3 py-2 text-slate-400">{formatCurrency(row.nominal)}</td>
+                          {historyRows.map((row) => (
+                            <tr key={row.bulan} className="border-b border-slate-100">
+                              <td className="px-3 py-2 text-slate-600">
+                                {formatMonthShort(row.bulan)}
+                              </td>
+                              <td className="px-3 py-2 text-slate-400">
+                                {formatCurrency(row.nominal)}
+                              </td>
                               <td className="px-3 py-2">
                                 <StatusBadge
                                   status={row.status ? "Lunas" : "Belum Bayar"}
@@ -150,7 +193,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                   )}
                 </div>
 
-                {warga.status_hunian !== "Kosong" && !currentIuran?.status && (
+                {warga.status_hunian !== "Kosong" && !currentLunas && (
                   <button
                     type="button"
                     onClick={handleTandaiLunas}
