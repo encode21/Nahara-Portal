@@ -10,8 +10,10 @@ import {
   safeInternalPath,
 } from "@/lib/auth/roles";
 import {
+  buildOpsUrl,
   buildPortalUrl,
   getAppSurface,
+  isLandingPath,
   isOpsPublicPath,
 } from "@/lib/host";
 
@@ -49,14 +51,38 @@ export async function updateSession(request: NextRequest) {
   const admin = isPortalAdmin(user);
   const staff = isPortalStaff(user);
 
-  // --- Ops host ---
-  if (surface === "ops") {
-    // Anon: hard-redirect to portal except /login
-    if (!user && !isOpsPublicPath(pathname)) {
+  // --- Landing: nahara.id ---
+  if (surface === "landing") {
+    if (pathname === "/login" || pathname.startsWith("/login/")) {
+      return NextResponse.redirect(buildOpsUrl("/login", search));
+    }
+    // Landing: pengaduan hanya lihat — form buat tidak dibuka di sini
+    if (pathname === "/pengaduan/baru" || pathname.startsWith("/pengaduan/baru/")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/pengaduan";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    if (!isLandingPath(pathname)) {
+      // Deep links → portal warga
       return NextResponse.redirect(buildPortalUrl(pathname, search));
     }
+    return supabaseResponse;
+  }
 
-    // Already logged in on /login → role home
+  // --- Ops: ops.nahara.id ---
+  if (surface === "ops") {
+    if (!user && !isOpsPublicPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      if (pathname !== "/") {
+        url.searchParams.set("redirect", safeInternalPath(pathname));
+      } else {
+        url.search = "";
+      }
+      return NextResponse.redirect(url);
+    }
+
     if (pathname === "/login" && user) {
       const url = request.nextUrl.clone();
       url.pathname = postLoginPath(user);
@@ -64,7 +90,6 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Staff: only allowlisted paths
     if (user && isFinanceRestricted(user) && !isStaffAllowedPath(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/pengumuman";
@@ -72,7 +97,6 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Admin-only manage/finance paths
     if (isAdminOnlyPath(pathname) && !admin) {
       const url = request.nextUrl.clone();
       if (!user) {
@@ -91,13 +115,9 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // --- Portal host ---
-  // Optional: staff/admin hitting portal /login → send to ops login via page link; keep portal open
-  if (pathname === "/login" && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = postLoginPath(user);
-    url.search = "";
-    return NextResponse.redirect(url);
+  // --- Portal: portal.nahara.id ---
+  if (pathname === "/login" || pathname.startsWith("/login/")) {
+    return NextResponse.redirect(buildOpsUrl("/login", search));
   }
 
   return supabaseResponse;

@@ -50,7 +50,7 @@ export default function AdminAgustusanPage() {
       setError("Tahun tidak valid.");
       return;
     }
-    const title = form.title.trim() || `Agustusan HUT RI ${year}`;
+    const title = form.title.trim() || `Agustusan HUT ke-${year - 1945} RI`;
     const slug = `hut-ri-${year}`;
 
     setSaving(true);
@@ -128,7 +128,7 @@ export default function AdminAgustusanPage() {
         <form onSubmit={handleCreate} className="glass-card space-y-4">
           <h2 className="font-semibold text-slate-900">Buat edisi tahunan</h2>
           <p className="text-sm text-slate-500">
-            Contoh: 2027 untuk HUT RI ke-82. Setelah dibuat, isi lomba/galeri di halaman edisi.
+            Contoh: 2027 untuk HUT ke-82 RI. Setelah dibuat, isi lomba/galeri di halaman edisi.
           </p>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -148,7 +148,7 @@ export default function AdminAgustusanPage() {
               <label className="label">Judul</label>
               <input
                 className="input"
-                placeholder={`Agustusan HUT RI ${form.year}`}
+                placeholder={`Agustusan HUT ke-${Number(form.year) - 1945 || "…"} RI`}
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />

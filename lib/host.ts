@@ -1,4 +1,4 @@
-export type AppSurface = "portal" | "ops";
+export type AppSurface = "landing" | "portal" | "ops";
 
 function stripPort(host: string): string {
   return host.split(":")[0]?.toLowerCase() ?? "";
@@ -11,59 +11,82 @@ function cleanHostEnv(value: string | undefined, fallback: string): string {
   );
 }
 
+export function getLandingHost(): string {
+  return cleanHostEnv(process.env.NEXT_PUBLIC_LANDING_HOST, "nahara.id");
+}
+
 export function getPortalHost(): string {
   return cleanHostEnv(process.env.NEXT_PUBLIC_PORTAL_HOST, "portal.nahara.id");
 }
 
 export function getOpsHost(): string {
-  return cleanHostEnv(process.env.NEXT_PUBLIC_OPS_HOST, "nahara.id");
+  return cleanHostEnv(process.env.NEXT_PUBLIC_OPS_HOST, "ops.nahara.id");
 }
 
 function originForHost(host: string): string {
   if (host.includes("localhost") || host.startsWith("127.")) {
-    const withPort = process.env.NEXT_PUBLIC_DEV_PORTAL_ORIGIN;
-    if (host === stripPort(getPortalHost()) && withPort) return withPort.replace(/\/$/, "");
+    const landingOrigin = process.env.NEXT_PUBLIC_DEV_LANDING_ORIGIN;
+    if (host === stripPort(getLandingHost()) && landingOrigin) {
+      return landingOrigin.replace(/\/$/, "");
+    }
+    const portalOrigin = process.env.NEXT_PUBLIC_DEV_PORTAL_ORIGIN;
+    if (host === stripPort(getPortalHost()) && portalOrigin) {
+      return portalOrigin.replace(/\/$/, "");
+    }
     const opsOrigin = process.env.NEXT_PUBLIC_DEV_OPS_ORIGIN;
-    if (host === stripPort(getOpsHost()) && opsOrigin) return opsOrigin.replace(/\/$/, "");
+    if (host === stripPort(getOpsHost()) && opsOrigin) {
+      return opsOrigin.replace(/\/$/, "");
+    }
     return `http://${host}`;
   }
   return `https://${host}`;
 }
 
-/** Absolute origin for portal warga (no trailing slash). */
+export function getLandingOrigin(): string {
+  return originForHost(getLandingHost());
+}
+
 export function getPortalOrigin(): string {
   return originForHost(getPortalHost());
 }
 
-/** Absolute origin for ops (no trailing slash). */
 export function getOpsOrigin(): string {
   return originForHost(getOpsHost());
 }
 
 /**
- * Resolve app surface from Host header.
+ * - nahara.id / www → landing
  * - portal.nahara.id → portal
- * - nahara.id / www.nahara.id → ops
+ * - ops.nahara.id → ops
  * - localhost / preview → NEXT_PUBLIC_APP_SURFACE or portal
  */
 export function getAppSurface(hostHeader: string | null | undefined): AppSurface {
   const host = stripPort(hostHeader ?? "");
+  const landingHost = stripPort(getLandingHost());
   const portalHost = stripPort(getPortalHost());
   const opsHost = stripPort(getOpsHost());
 
   if (host === portalHost || host.startsWith("portal.")) {
     return "portal";
   }
-  if (host === opsHost || host === `www.${opsHost}`) {
+  if (host === opsHost || host.startsWith("ops.")) {
     return "ops";
+  }
+  if (host === landingHost || host === `www.${landingHost}`) {
+    return "landing";
   }
 
   const forced = process.env.NEXT_PUBLIC_APP_SURFACE;
-  if (forced === "portal" || forced === "ops") {
+  if (forced === "landing" || forced === "portal" || forced === "ops") {
     return forced;
   }
 
   return "portal";
+}
+
+export function buildLandingUrl(pathname = "/", search = ""): string {
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return `${getLandingOrigin()}${path}${search}`;
 }
 
 export function buildPortalUrl(pathname: string, search = ""): string {
@@ -76,7 +99,18 @@ export function buildOpsUrl(pathname: string, search = ""): string {
   return `${getOpsOrigin()}${path}${search}`;
 }
 
-/** Paths that stay on ops without login (staff entry). */
+/** Paths that stay on ops without session. */
 export function isOpsPublicPath(pathname: string): boolean {
   return pathname === "/login" || pathname.startsWith("/login/");
+}
+
+/** Paths allowed on landing host without hop. */
+export function isLandingPath(pathname: string): boolean {
+  if (pathname === "/" || pathname === "") return true;
+  // Single-page hub Agustusan (tanpa shell portal warga)
+  if (pathname === "/agustusan" || pathname.startsWith("/agustusan/")) return true;
+  // Baca saja — buat/edit tetap di portal/ops
+  if (pathname === "/pengumuman" || pathname.startsWith("/pengumuman/")) return true;
+  if (pathname === "/pengaduan") return true;
+  return false;
 }

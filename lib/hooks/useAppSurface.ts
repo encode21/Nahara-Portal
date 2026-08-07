@@ -13,3 +13,12 @@ export function useAppSurface(): AppSurface {
 
   return surface;
 }
+
+/** True after client mount — use to avoid SSR/hydration flash for surface-gated UI. */
+export function useHasMounted(): boolean {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted;
+}

@@ -12,7 +12,7 @@ export const AGUSTUSAN_BANK = {
     "Sudah transfer? Mohon kirim bukti transfer via japri ke Fadilla Harika.",
 } as const;
 
-export const AGUSTUSAN_TITLE = "Agustusan HUT RI ke-81";
+export const AGUSTUSAN_TITLE = "Agustusan HUT ke-81 RI";
 
 export const AGUSTUSAN_TAGLINE =
   "Dari Kita untuk Kita Semua — E Pluribus Unum Annuit Coeptis";

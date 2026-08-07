@@ -6,6 +6,7 @@ import type { Pengumuman } from "@/lib/types";
 import { Plus } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useAppSurface, useHasMounted } from "@/lib/hooks/useAppSurface";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { PengumumanCardItem } from "@/components/pengumuman/PengumumanCardItem";
@@ -14,7 +15,12 @@ import { PengumumanFormModal } from "@/components/pengumuman/PengumumanFormModal
 
 export default function PengumumanPage() {
   const supabase = createClient();
+  const surface = useAppSurface();
+  const mounted = useHasMounted();
   const { isAdmin, user } = useAuth();
+  // Landing = baca saja; sebelum mount treated as read-only agar tidak flash tombol kelola
+  const readOnly = !mounted || surface === "landing";
+  const canManage = mounted && isAdmin && surface !== "landing";
   const [list, setList] = useState<Pengumuman[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +41,9 @@ export default function PengumumanPage() {
     setLoading(false);
   }, [supabase]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   function openCreate() {
     setEditId(null);
@@ -55,6 +63,7 @@ export default function PengumumanPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canManage) return;
     setError(null);
     const payload = {
       judul: form.judul.trim(),
@@ -81,6 +90,7 @@ export default function PengumumanPage() {
   }
 
   async function handleDelete(id: string) {
+    if (!canManage) return;
     if (!confirm("Hapus pengumuman ini?")) return;
     const { error: delError } = await supabase.from("pengumuman").delete().eq("id", id);
     const err = getSupabaseErrorMessage(delError);
@@ -98,33 +108,41 @@ export default function PengumumanPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-slate-900">Pengumuman</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Informasi resmi komunitas — ketuk kartu untuk detail
+            {readOnly
+              ? "Informasi resmi komunitas Cluster Nahara"
+              : "Informasi resmi komunitas — ketuk kartu untuk detail"}
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <button type="button" onClick={openCreate} className="btn-primary">
             <Plus className="mr-1.5 h-4 w-4" /> Tambah Pengumuman
           </button>
         )}
       </div>
 
-      {!isAdmin && (
+      {!canManage && !readOnly && (
         <div className="glass-card flex items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">Login admin untuk menambah atau mengedit pengumuman.</p>
+          <p className="text-sm text-slate-500">
+            Login admin untuk menambah atau mengedit pengumuman.
+          </p>
           <AdminLoginPrompt message="Login Admin" />
         </div>
       )}
 
       {error && !showForm && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner className="h-8 w-8" /></div>
+        <div className="flex justify-center py-12">
+          <LoadingSpinner className="h-8 w-8" />
+        </div>
       ) : list.length === 0 ? (
         <div className="glass-card text-center text-sm text-slate-500">
-          {isAdmin
-            ? "Belum ada pengumuman. Klik \"Tambah Pengumuman\" untuk membuat yang pertama."
+          {canManage
+            ? 'Belum ada pengumuman. Klik "Tambah Pengumuman" untuk membuat yang pertama.'
             : "Belum ada pengumuman dari pengurus."}
         </div>
       ) : (
@@ -133,7 +151,7 @@ export default function PengumumanPage() {
             <PengumumanCardItem
               key={p.id}
               item={p}
-              isAdmin={isAdmin}
+              isAdmin={canManage}
               onOpen={() => setSelected(p)}
               onEdit={() => openEdit(p)}
               onDelete={() => handleDelete(p.id)}
@@ -145,7 +163,7 @@ export default function PengumumanPage() {
       <PengumumanDetailModal
         item={selected}
         open={!!selected}
-        isAdmin={isAdmin}
+        isAdmin={canManage}
         onClose={() => setSelected(null)}
         onEdit={() => {
           if (selected) openEdit(selected);
@@ -156,7 +174,7 @@ export default function PengumumanPage() {
       />
 
       <PengumumanFormModal
-        open={showForm && isAdmin}
+        open={showForm && canManage}
         editId={editId}
         form={form}
         error={error}

@@ -22,9 +22,9 @@ INSERT INTO event_editions (
   'a0812026-0000-4000-8000-000000000010',
   2026,
   'hut-ri-81',
-  'Agustusan HUT RI ke-81',
+  'Agustusan HUT ke-81 RI',
   'Perayaan kemerdekaan Cluster Nahara — donasi, lomba, dan malam puncak.',
-  E'*SOP UMUM PELAKSANAAN LOMBA HUT RI KE-81 CLUSTER NAHARA*
+  E'*SOP UMUM PELAKSANAAN LOMBA HUT KE-81 RI CLUSTER NAHARA*
 
 A. Tujuan
 1. Memeriahkan Hari Kemerdekaan Republik Indonesia.

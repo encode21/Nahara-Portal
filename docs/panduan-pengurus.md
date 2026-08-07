@@ -10,12 +10,12 @@ Warga memakai portal **tanpa akun**. Akun login hanya untuk pengurus (dan petuga
 
 ### Login
 
-1. Buka **`https://nahara.id/login`** (area operasional — bukan `portal.nahara.id`).
+1. Buka **`https://ops.nahara.id/login`** (atau dari beranda `nahara.id` → Masuk Pengurus).
 2. Masukkan **email** dan **kata sandi** yang sudah diberikan admin sistem.
 3. Hak akses mengikuti **App Metadata** di Supabase:
    - `admin` — kelola penuh (termasuk kas/iuran)
    - `estate` atau `rtrw` — lihat pengaduan, pengumuman, kegiatan (tanpa keuangan)
-4. Warga memakai [portal.nahara.id](https://portal.nahara.id) **tanpa login**.
+4. Warga memakai [portal.nahara.id](https://portal.nahara.id) **tanpa login**; beranda publik di [nahara.id](https://nahara.id).
 
 ### Logout
 
@@ -27,8 +27,9 @@ Warga memakai portal **tanpa akun**. Akun login hanya untuk pengurus (dan petuga
 
 ## 2. Cara kerja setelah login
 
-Portal warga (`portal.nahara.id`) dan area ops (`nahara.id`) memakai aplikasi yang sama, dipisah domain.
+Portal warga (`portal.nahara.id`), beranda (`nahara.id`), dan area ops (`ops.nahara.id`) memakai aplikasi yang sama, dipisah domain.
 
+- **Beranda `nahara.id`:** pilih Portal Warga atau Masuk Pengurus (tidak menebak peran).
 - **Tanpa login di portal:** melihat informasi warga (termasuk keuangan di portal).
 - **Login admin di ops:** tombol kelola + kas/iuran.
 - **Login estate / RT-RW di ops:** menu operasional terbatas; tanpa kas/iuran.

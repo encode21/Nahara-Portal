@@ -87,7 +87,7 @@ export default function AgustusanEditionPage() {
         const { data: byTitle } = await supabase
           .from("donasi_campaign")
           .select("*")
-          .ilike("judul", "%Agustusan%HUT RI%")
+          .ilike("judul", "%Agustusan%HUT%")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -99,7 +99,7 @@ export default function AgustusanEditionPage() {
         const { data: byTitle } = await supabase
           .from("activities")
           .select("*")
-          .ilike("title", "%Agustusan%HUT RI%")
+          .ilike("title", "%Agustusan%HUT%")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();

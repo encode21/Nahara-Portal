@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getNavItemsForAccess } from "@/lib/constants/nav";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
-import { buildOpsUrl, buildPortalUrl } from "@/lib/host";
+import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 
 function UserMenu({
@@ -117,6 +117,10 @@ export function HeaderNav() {
 
   const opsLoginHref = buildOpsUrl("/login");
   const portalHomeHref = buildPortalUrl("/dashboard");
+  /** Overlay gelap hanya di beranda / Agustusan; halaman baca pakai header putih. */
+  const landingOverlay =
+    surface === "landing" &&
+    (pathname === "/" || pathname.startsWith("/agustusan"));
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -148,9 +152,24 @@ export function HeaderNav() {
     );
 
   return (
-    <header className="sticky top-0 z-50 w-full max-w-[100%] overflow-x-clip border-b border-gold/20 bg-white shadow-sm">
+    <header
+      className={cn(
+        "z-50 w-full max-w-[100%] overflow-x-clip",
+        landingOverlay
+          ? "absolute inset-x-0 top-0 border-b border-white/10 bg-slate-950/25 backdrop-blur-sm"
+          : "sticky top-0 border-b border-gold/20 bg-white shadow-sm",
+      )}
+    >
+      {/* Bar 1: logo + user */}
       <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2 px-4 py-2 sm:gap-3 lg:px-6">
-        <NaharaLogo className="min-w-0" />
+        <span
+          className={cn(
+            landingOverlay &&
+              "[&_img:last-child]:brightness-0 [&_img:last-child]:invert",
+          )}
+        >
+          <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
+        </span>
 
         <div className="flex items-center gap-2">
           {!loading &&
@@ -161,54 +180,75 @@ export function HeaderNav() {
                 isAdmin={isAdmin}
                 onLogout={handleLogout}
               />
+            ) : surface === "landing" ? (
+              <a
+                href={opsLoginHref}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition",
+                  landingOverlay
+                    ? "text-white/90 hover:bg-white/10 hover:text-white"
+                    : "text-slate-600 hover:bg-gold/5 hover:text-gold-dark",
+                )}
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                Masuk
+              </a>
             ) : surface === "portal" ? (
               <a href={opsLoginHref} className="btn-primary py-2 text-xs">
                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Masuk Pengurus</span>
+                <span className="hidden sm:inline">Masuk</span>
                 <span className="sm:hidden">Masuk</span>
               </a>
             ) : (
               <Link href="/login" className="btn-primary py-2 text-xs">
                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Masuk</span>
-                <span className="sm:hidden">Masuk</span>
+                Masuk
               </Link>
             ))}
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="rounded-lg p-2 text-slate-600 hover:bg-gold/5 md:hidden"
-            aria-label="Menu"
-          >
-            {mobileOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
+          {navItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className={cn(
+                "rounded-lg p-2 md:hidden",
+                landingOverlay
+                  ? "text-white/90 hover:bg-white/10"
+                  : "text-slate-600 hover:bg-gold/5",
+              )}
+              aria-label="Menu"
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
-      <nav className="hidden border-t border-gold/10 md:block">
-        <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
-          <div className="flex w-max max-w-none gap-0.5 py-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={navLinkClass(isActive(item.href))}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">{item.label}</span>
-                </Link>
-              );
-            })}
+      {navItems.length > 0 && (
+        <nav className="hidden border-t border-gold/10 md:block">
+          <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
+            <div className="flex w-max max-w-none gap-0.5 py-1.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={navLinkClass(isActive(item.href))}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="whitespace-nowrap">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {mobileOpen && (
         <>
@@ -301,11 +341,28 @@ export function Footer() {
   const surface = useAppSurface();
   const portalHome = buildPortalUrl("/dashboard");
   const opsLogin = buildOpsUrl("/login");
+  const landingHome = buildLandingUrl("/");
+
+  if (surface === "landing") {
+    return (
+      <footer className="border-t border-white/10 bg-[#0f1419] py-6 text-center text-xs text-white/50">
+        <p>© {new Date().getFullYear()} Paguyuban · Nahara</p>
+      </footer>
+    );
+  }
 
   return (
     <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-slate-500">
-      <p>© 2026 Nahara Portal Warga. All rights reserved.</p>
+      <p>
+        © {new Date().getFullYear()} Nahara Portal Warga. All rights reserved.
+      </p>
       <p className="mt-1 space-x-3">
+        <a
+          href={landingHome}
+          className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
+        >
+          Beranda
+        </a>
         <Link
           href="/panduan"
           className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
@@ -317,14 +374,14 @@ export function Footer() {
             href={opsLogin}
             className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
           >
-            Masuk Pengurus
+            Masuk
           </a>
         ) : (
           <a
             href={portalHome}
             className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
           >
-            Portal Warga
+            Info warga
           </a>
         )}
       </p>

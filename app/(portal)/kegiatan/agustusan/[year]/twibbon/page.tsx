@@ -53,7 +53,7 @@ export default function TwibbonPage() {
           Buat Twibbon
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Pakai frame HUT RI ke-81 Nahara. Unggah foto, atur posisi, lalu unduh atau bagikan.
+          Pakai frame HUT ke-81 RI Nahara. Unggah foto, atur posisi, lalu unduh atau bagikan.
         </p>
       </div>
 

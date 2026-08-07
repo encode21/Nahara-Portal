@@ -44,6 +44,10 @@ export function getNavItemsForAccess(opts: {
 }): NavItem[] {
   const { surface, isAdmin, isStaff } = opts;
 
+  if (surface === "landing") {
+    return [];
+  }
+
   if (surface === "ops" && isStaff && !isAdmin) {
     return portalNavItems.filter((item) => STAFF_NAV_HREFS.has(item.href));
   }
@@ -52,11 +56,9 @@ export function getNavItemsForAccess(opts: {
     return portalNavItems;
   }
 
-  // Portal (warga) — full citizen nav including finance
   if (surface === "portal") {
     return portalNavItems;
   }
 
-  // Ops + anon should rarely render nav (redirected); fallback public ops-ish
   return portalNavItems.filter((item) => !FINANCE_HREFS.has(item.href));
 }

@@ -1,4 +1,4 @@
--- Seed: Agustusan HUT RI ke-81 + daftar donatur (open donation)
+-- Seed: Agustusan HUT ke-81 RI + daftar donatur (open donation)
 -- Fixed IDs match lib/constants/agustusan.ts
 -- Run in Supabase SQL Editor or via supabase db push / migration.
 -- Source of truth: List Donatur HUT RI 81 (55 nama, semua sudah bayar).
@@ -26,8 +26,8 @@ INSERT INTO activities (
   image_url
 ) VALUES (
   'a0812026-0000-4000-8000-000000000001',
-  'Agustusan HUT RI ke-81',
-  E'Donasi terbuka warga Cluster Nahara untuk acara perayaan HUT RI ke-81.\n\nSemoga donasi menjadi berkah bagi kita semua. Aamiin.\n\nDari Kita untuk Kita Semua — E Pluribus Unum Annuit Coeptis\n\nTransfer: BCA 4580329328 a.n. Fadilla Harika Wijaya\nBukti transfer japri ke Fadilla Harika.\n\nCatatan: tanggal acara bisa diedit di Admin → Kegiatan.',
+  'Agustusan HUT ke-81 RI',
+  E'Donasi terbuka warga Cluster Nahara untuk acara perayaan HUT ke-81 RI.\n\nSemoga donasi menjadi berkah bagi kita semua. Aamiin.\n\nDari Kita untuk Kita Semua — E Pluribus Unum Annuit Coeptis\n\nTransfer: BCA 4580329328 a.n. Fadilla Harika Wijaya\nBukti transfer japri ke Fadilla Harika.\n\nCatatan: tanggal acara bisa diedit di Admin → Kegiatan.',
   '2026-08-17T08:00:00+07:00',
   'Cluster Nahara',
   NULL,
@@ -45,8 +45,8 @@ INSERT INTO donasi_campaign (
   is_active
 ) VALUES (
   'a0812026-0000-4000-8000-000000000002',
-  'Donasi Agustusan HUT RI ke-81',
-  'Dana donasi acara Hut RI ke-81 — Cluster Nahara. Open donation. Rek BCA 4580329328 a.n. Fadilla Harika Wijaya.',
+  'Donasi Agustusan HUT ke-81 RI',
+  'Dana donasi acara Hut ke-81 RI — Cluster Nahara. Open donation. Rek BCA 4580329328 a.n. Fadilla Harika Wijaya.',
   30000000,
   25400500,
   '2026-08-17',

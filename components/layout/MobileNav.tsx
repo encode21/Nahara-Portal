@@ -21,6 +21,8 @@ export function MobileNav() {
   // Bottom bar: show a short subset (max ~5) for mobile thumb reach
   const bottomItems = items.slice(0, 5);
 
+  if (bottomItems.length === 0) return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white lg:hidden">
       <div className="flex justify-around overflow-x-auto py-1.5">

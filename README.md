@@ -37,7 +37,7 @@ npm install
    - Set **App Metadata** sesuai peran: `{ "role": "admin" }` | `"estate"` | `"rtrw"`
    - User security (notifikasi saja): tanpa role admin
    - Aktifkan batasan password + rate limit Auth
-4. Dual-host: di Vercel tambah `portal.nahara.id` + `nahara.id`; lihat [`docs/auth-security-checklist.md`](docs/auth-security-checklist.md)
+4. Tiga host: di Vercel tambah `nahara.id`, `portal.nahara.id`, `ops.nahara.id`; lihat [`docs/auth-security-checklist.md`](docs/auth-security-checklist.md)
 
 ### 3. Environment Variables
 

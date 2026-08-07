@@ -1,4 +1,4 @@
--- Rekap peserta Agustusan HUT RI ke-81 dari list WhatsApp (7 Agu 2026)
+-- Rekap peserta Agustusan HUT ke-81 RI dari list WhatsApp (7 Agu 2026)
 -- Aturan:
 --   1) Hapus HANYA entri yang cocok nama (case-insensitive / alias) dengan list di lomba yang sama
 --   2) Insert ulang isi list
