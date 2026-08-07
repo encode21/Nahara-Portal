@@ -11,6 +11,7 @@ import { StoredImage } from "@/components/ui/StoredImage";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
+import { isPortalStorageUrl } from "@/lib/supabase/storage";
 
 const STATUSES = ["Baru", "Diproses", "Selesai"] as const;
 const KATEGORI = ["Keamanan", "Kebersihan", "Infrastruktur", "Lainnya"];
@@ -82,7 +83,7 @@ export default function PengaduanPage() {
           {list.map((p) => (
             <article key={p.id} className="glass-card overflow-hidden">
               <div className="flex flex-col gap-4 sm:flex-row">
-                {p.foto_url && (
+                {p.foto_url && isPortalStorageUrl(p.foto_url) && (
                   <a
                     href={p.foto_url}
                     target="_blank"

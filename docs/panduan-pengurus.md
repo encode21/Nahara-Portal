@@ -13,13 +13,13 @@ Warga memakai portal **tanpa akun**. Akun login hanya untuk pengurus (dan petuga
 1. Buka `/login`.
 2. Masukkan **email** dan **kata sandi** yang sudah diberikan admin sistem.
 3. Setelah berhasil, Anda diarahkan ke Dashboard.
-4. Tombol dan formulir **kelola** akan muncul di halaman-halaman portal.
+4. Tombol dan formulir **kelola** hanya muncul jika akun memiliki peran admin portal (`app_metadata.role = admin`).
 
 ### Logout
 
 - Buka menu profil/pengguna di header, lalu pilih keluar / logout.
 
-**Penting:** Jangan bagikan akun login ke warga. Warga tidak memerlukan akun untuk melihat data atau membuat pengaduan.
+**Penting:** Jangan bagikan akun login ke warga. Warga tidak memerlukan akun untuk melihat data atau membuat pengaduan. Akun admin hanya dibuat manual di Supabase (tidak ada daftar publik).
 
 ---
 
@@ -28,7 +28,8 @@ Warga memakai portal **tanpa akun**. Akun login hanya untuk pengurus (dan petuga
 Portal warga dan pengurus memakai halaman yang sama (Dashboard, Pengumuman, Iuran, dll.).
 
 - **Tanpa login:** hanya bisa melihat (dan beberapa aksi warga seperti buat pengaduan).
-- **Setelah login:** tombol tambah / edit / hapus / ubah status muncul.
+- **Setelah login sebagai admin:** tombol tambah / edit / hapus / ubah status muncul.
+- **Login security (tanpa role admin):** bisa melihat notifikasi di Info Security; tidak bisa mengubah kas/warga/iuran.
 
 Halaman khusus pengurus (wajib login):
 
@@ -149,7 +150,9 @@ Sebagai pengurus (login):
 
 ### Catatan untuk petugas security
 
-Jika email petugas sudah didaftarkan di daftar security users, petugas itu bisa login dan melihat **notifikasi** di halaman Info Security (menandai sudah dibaca), tanpa harus mengelola seluruh data portal.
+Jika email petugas sudah didaftarkan di daftar security users **tanpa** `role: admin`, petugas itu bisa login dan melihat **notifikasi** di halaman Info Security (menandai sudah dibaca), tanpa hak mengelola seluruh data portal.
+
+Untuk admin sistem yang mengelola Supabase: ikuti checklist di file repo `docs/auth-security-checklist.md` (disable signup, set `app_metadata.role`).
 
 ---
 

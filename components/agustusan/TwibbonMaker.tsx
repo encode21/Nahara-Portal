@@ -303,7 +303,7 @@ export function TwibbonMaker({
           {hasPhoto ? "Ganti foto" : "Unggah foto"}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
           />

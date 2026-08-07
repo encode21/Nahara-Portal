@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isPortalAdmin } from "@/lib/auth/roles";
 import type { User } from "@supabase/supabase-js";
 
 export function useAuth() {
@@ -45,5 +46,10 @@ export function useAuth() {
     };
   }, []);
 
-  return { user, isAdmin: !!user, isSecurity, loading };
+  return {
+    user,
+    isAdmin: isPortalAdmin(user),
+    isSecurity,
+    loading,
+  };
 }

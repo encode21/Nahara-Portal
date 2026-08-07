@@ -34,6 +34,7 @@ export default function PengaduanBaruPage() {
       kategori: form.kategori,
       deskripsi: form.deskripsi,
       foto_url: fotoUrl,
+      status: "Baru",
     });
 
     setLoading(false);

@@ -1,8 +1,10 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-/** Routes that require admin login (edit/manage only) */
-const ADMIN_ONLY_ROUTES = ["/activities", "/kas"];
+import {
+  isAdminOnlyPath,
+  isPortalAdmin,
+  safeInternalPath,
+} from "@/lib/auth/roles";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,21 +35,24 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const admin = isPortalAdmin(user);
 
-  const isAdminOnlyRoute = ADMIN_ONLY_ROUTES.some(
-    (r) => pathname === r || pathname.startsWith(`${r}/`)
-  );
-
-  if (isAdminOnlyRoute && !user) {
+  if (isAdminOnlyPath(pathname) && !admin) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
+    if (!user) {
+      url.pathname = "/login";
+      url.searchParams.set("redirect", safeInternalPath(pathname));
+    } else {
+      url.pathname = "/dashboard";
+      url.search = "";
+    }
     return NextResponse.redirect(url);
   }
 
   if (pathname === "/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

@@ -30,8 +30,14 @@ npm install
 ### 2. Supabase Project
 
 1. Buat project baru di [supabase.com](https://supabase.com)
-2. Buka **SQL Editor** dan jalankan isi file `supabase/schema.sql`
-3. Buat admin user di **Authentication → Users → Add user** (email + password)
+2. Buka **SQL Editor** dan jalankan migration di `supabase/migrations/` (termasuk harden security)
+3. **Authentication (wajib untuk keamanan):**
+   - Nonaktifkan public email signup (invite-only / Add user manual)
+   - Buat user pengurus di **Authentication → Users → Add user**
+   - Edit user → **Raw App Meta Data** set: `{ "role": "admin" }`
+   - User security (notifikasi saja): **jangan** set `role: admin`
+   - Aktifkan batasan password + rate limit Auth di project settings
+4. Tanpa `app_metadata.role = "admin"`, login tidak mendapat hak kelola (RLS + UI)
 
 ### 3. Environment Variables
 

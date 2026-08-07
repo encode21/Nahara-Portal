@@ -14,6 +14,7 @@ import {
 } from "@/lib/utils";
 import { StatusBadge, getHunianVariant, getIuranVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 type HouseModalProps = {
   warga?: WargaWithIuran;
@@ -48,6 +49,7 @@ function trailingMonths(focusMonth: string, count: number): string[] {
 }
 
 export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: HouseModalProps) {
+  const { isAdmin } = useAuth();
   const supabase = createClient();
   const [iuranByMonth, setIuranByMonth] = useState<Map<string, Iuran>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -97,7 +99,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
   const currentLunas = currentIuran?.status ?? false;
 
   async function handleTandaiLunas() {
-    if (!warga?.id) return;
+    if (!warga?.id || !isAdmin) return;
     setUpdating(true);
 
     if (currentIuran) {
@@ -193,7 +195,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                   )}
                 </div>
 
-                {warga.status_hunian !== "Kosong" && !currentLunas && (
+                {isAdmin && warga.status_hunian !== "Kosong" && !currentLunas && (
                   <button
                     type="button"
                     onClick={handleTandaiLunas}

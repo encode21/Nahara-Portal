@@ -4,13 +4,14 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { isAdminOnlyPath, isPortalAdmin, safeInternalPath } from "@/lib/auth/roles";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { NaharaLogo } from "@/components/layout/NaharaLogo";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/dashboard";
+  const redirectParam = searchParams.get("redirect");
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -35,7 +36,13 @@ function LoginForm() {
       return;
     }
 
-    router.push(redirect);
+    const next = safeInternalPath(redirectParam);
+    const user = data.user;
+    if (isAdminOnlyPath(next) && !isPortalAdmin(user)) {
+      router.push("/dashboard");
+    } else {
+      router.push(next);
+    }
     router.refresh();
   }
 
@@ -68,6 +75,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
+                autoComplete="username"
               />
             </div>
 
@@ -81,6 +89,7 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
               />
             </div>
 

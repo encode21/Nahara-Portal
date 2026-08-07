@@ -3,7 +3,11 @@
 import { useRef, useState } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { uploadPortalImage, type UploadFolder } from "@/lib/supabase/storage";
+import {
+  removePortalImage,
+  uploadPortalImage,
+  type UploadFolder,
+} from "@/lib/supabase/storage";
 import { StoredImage } from "@/components/ui/StoredImage";
 
 type ImageUploadProps = {
@@ -27,11 +31,20 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function clearImage() {
+    if (disabled) return;
+    const supabase = createClient();
+    const prev = value;
+    onChange(null);
+    await removePortalImage(supabase, prev);
+  }
+
   async function handleFile(file: File | null) {
     if (!file || disabled) return;
     setError(null);
     setUploading(true);
     const supabase = createClient();
+    const prev = value;
     const { url, error: uploadError } = await uploadPortalImage(supabase, file, folder);
     setUploading(false);
     if (uploadError || !url) {
@@ -39,6 +52,9 @@ export function ImageUpload({
       return;
     }
     onChange(url);
+    if (prev && prev !== url) {
+      await removePortalImage(supabase, prev);
+    }
   }
 
   return (
@@ -54,7 +70,7 @@ export function ImageUpload({
           {!disabled && (
             <button
               type="button"
-              onClick={() => onChange(null)}
+              onClick={() => void clearImage()}
               className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-slate-600 shadow hover:text-red-600"
               aria-label="Hapus gambar"
             >
