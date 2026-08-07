@@ -22,6 +22,10 @@ import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { uploadPortalImage, removePortalImage } from "@/lib/supabase/storage";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
+import {
+  ContestEditForm,
+  type ContestEditPayload,
+} from "@/components/agustusan/ContestEditForm";
 
 type Tab = "lomba" | "peserta" | "juara" | "galeri" | "sop";
 
@@ -34,6 +38,8 @@ export default function AdminEditionPage() {
   const [edition, setEdition] = useState<EventEdition | null>(null);
   const [contests, setContests] = useState<EventContest[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingContest, setSavingContest] = useState(false);
   const [entries, setEntries] = useState<EventContestEntry[]>([]);
   const [results, setResults] = useState<EventContestResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +63,7 @@ export default function AdminEditionPage() {
   const [galleryUploading, setGalleryUploading] = useState(false);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
+  const editing = contests.find((c) => c.id === editingId) ?? null;
 
   const loadGallery = useCallback(
     async (editionId: string) => {
@@ -145,6 +152,24 @@ export default function AdminEditionPage() {
     }
     await loadEdition();
     setMessage("Status pendaftaran diperbarui.");
+  }
+
+  async function saveContest(payload: ContestEditPayload) {
+    if (!editingId) return;
+    setSavingContest(true);
+    setError(null);
+    const { error: err } = await supabase
+      .from("event_contests")
+      .update(payload)
+      .eq("id", editingId);
+    setSavingContest(false);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal menyimpan lomba");
+      return;
+    }
+    setMessage("Lomba diperbarui.");
+    setEditingId(null);
+    await loadEdition();
   }
 
   async function saveSop() {
@@ -388,6 +413,7 @@ export default function AdminEditionPage() {
               setTab(t.id);
               setMessage(null);
               setError(null);
+              if (t.id !== "lomba") setEditingId(null);
             }}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
               tab === t.id ? "bg-gold/15 text-gold-dark" : "text-slate-600 hover:bg-slate-50"
@@ -416,53 +442,86 @@ export default function AdminEditionPage() {
       )}
 
       {tab === "lomba" && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 font-medium text-slate-600">Lomba</th>
-                <th className="px-4 py-3 font-medium text-slate-600">Jadwal</th>
-                <th className="px-4 py-3 font-medium text-slate-600">Daftar</th>
-                <th className="px-4 py-3 font-medium text-slate-600" />
-              </tr>
-            </thead>
-            <tbody>
-              {contests.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-slate-900">{c.title}</p>
-                    <p className="text-xs text-slate-500">
-                      {CONTEST_CATEGORY_LABELS[c.category]}
-                      {c.location ? ` · ${c.location}` : ""}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {c.starts_at ? formatDateTime(c.starts_at) : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {!c.is_competition ? (
-                      <span className="text-xs text-slate-400">N/A</span>
-                    ) : c.registration_open ? (
-                      <span className="text-xs font-medium text-green-700">Terbuka</span>
-                    ) : (
-                      <span className="text-xs font-medium text-red-600">Tutup</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {c.is_competition && (
-                      <button
-                        type="button"
-                        className="btn-secondary text-xs"
-                        onClick={() => toggleRegistration(c)}
-                      >
-                        {c.registration_open ? "Tutup daftar" : "Buka daftar"}
-                      </button>
-                    )}
-                  </td>
+        <div className="space-y-4">
+          {editing && (
+            <ContestEditForm
+              contest={editing}
+              saving={savingContest}
+              onCancel={() => setEditingId(null)}
+              onSave={saveContest}
+            />
+          )}
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 font-medium text-slate-600">Lomba</th>
+                  <th className="px-4 py-3 font-medium text-slate-600">Jadwal</th>
+                  <th className="px-4 py-3 font-medium text-slate-600">Daftar</th>
+                  <th className="px-4 py-3 font-medium text-slate-600" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {contests.map((c) => (
+                  <tr
+                    key={c.id}
+                    className={`border-b border-slate-100 ${
+                      editingId === c.id ? "bg-gold/5" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{c.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {CONTEST_CATEGORY_LABELS[c.category]}
+                        {c.location ? ` · ${c.location}` : ""}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {c.starts_at ? formatDateTime(c.starts_at) : "—"}
+                      {c.ends_at ? (
+                        <span className="block text-xs text-slate-400">
+                          s/d {formatDateTime(c.ends_at)}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3">
+                      {!c.is_competition ? (
+                        <span className="text-xs text-slate-400">N/A</span>
+                      ) : c.registration_open ? (
+                        <span className="text-xs font-medium text-green-700">Terbuka</span>
+                      ) : (
+                        <span className="text-xs font-medium text-red-600">Tutup</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs"
+                          onClick={() => {
+                            setEditingId(c.id);
+                            setMessage(null);
+                            setError(null);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        {c.is_competition && (
+                          <button
+                            type="button"
+                            className="btn-secondary text-xs"
+                            onClick={() => toggleRegistration(c)}
+                          >
+                            {c.registration_open ? "Tutup daftar" : "Buka daftar"}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
