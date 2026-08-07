@@ -10,21 +10,26 @@ import {
   Menu,
   X,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
-import { portalNavItems } from "@/lib/constants/nav";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getNavItemsForAccess } from "@/lib/constants/nav";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useAppSurface } from "@/lib/hooks/useAppSurface";
+import { buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 
 function UserMenu({
   userName,
   userEmail,
+  isAdmin,
   onLogout,
 }: {
   userName: string;
   userEmail: string;
+  isAdmin: boolean;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -70,14 +75,16 @@ function UserMenu({
               <p className="truncate text-xs text-slate-500">{userEmail}</p>
             )}
           </div>
-          <Link
-            href="/activities"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
-          >
-            <Settings className="h-4 w-4 text-slate-400" />
-            Kelola Kegiatan
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/activities"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+            >
+              <Settings className="h-4 w-4 text-slate-400" />
+              Kelola Kegiatan
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -99,18 +106,32 @@ export function HeaderNav() {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
-  const { isAdmin, user, loading } = useAuth();
+  const surface = useAppSurface();
+  const { isAdmin, isStaff, user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = useMemo(
+    () => getNavItemsForAccess({ surface, isAdmin, isStaff }),
+    [surface, isAdmin, isStaff],
+  );
+
+  const opsLoginHref = buildOpsUrl("/login");
+  const portalHomeHref = buildPortalUrl("/dashboard");
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.refresh();
     setMobileOpen(false);
+    if (surface === "ops") {
+      window.location.href = buildOpsUrl("/login");
+      return;
+    }
+    router.refresh();
   }
 
   const userName =
-    user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Admin";
+    user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Pengurus";
   const userEmail = user?.email ?? "";
+  const signedIn = isAdmin || isStaff;
 
   function isActive(href: string) {
     return (
@@ -128,22 +149,28 @@ export function HeaderNav() {
 
   return (
     <header className="sticky top-0 z-50 w-full max-w-[100%] overflow-x-clip border-b border-gold/20 bg-white shadow-sm">
-      {/* Bar 1: logo + user */}
       <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2 px-4 py-2 sm:gap-3 lg:px-6">
         <NaharaLogo className="min-w-0" />
 
         <div className="flex items-center gap-2">
           {!loading &&
-            (isAdmin ? (
+            (signedIn ? (
               <UserMenu
                 userName={userName}
                 userEmail={userEmail}
+                isAdmin={isAdmin}
                 onLogout={handleLogout}
               />
+            ) : surface === "portal" ? (
+              <a href={opsLoginHref} className="btn-primary py-2 text-xs">
+                <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Masuk Pengurus</span>
+                <span className="sm:hidden">Masuk</span>
+              </a>
             ) : (
               <Link href="/login" className="btn-primary py-2 text-xs">
                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Masuk Admin</span>
+                <span className="hidden sm:inline">Masuk</span>
                 <span className="sm:hidden">Masuk</span>
               </Link>
             ))}
@@ -163,11 +190,10 @@ export function HeaderNav() {
         </div>
       </div>
 
-      {/* Bar 2: nav — scroll horizontal di desktop/tablet */}
       <nav className="hidden border-t border-gold/10 md:block">
         <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
           <div className="flex w-max max-w-none gap-0.5 py-1.5">
-            {portalNavItems.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
@@ -184,7 +210,6 @@ export function HeaderNav() {
         </div>
       </nav>
 
-      {/* Mobile menu (drawer) */}
       {mobileOpen && (
         <>
           <div
@@ -193,7 +218,7 @@ export function HeaderNav() {
           />
 
           <aside className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white px-4 py-6 shadow-lg md:hidden">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <NaharaLogo />
               <button
                 type="button"
@@ -206,7 +231,7 @@ export function HeaderNav() {
             </div>
 
             <nav className="space-y-1">
-              {portalNavItems.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -226,17 +251,32 @@ export function HeaderNav() {
                 );
               })}
 
-              {isAdmin && (
+              {surface === "ops" && (
                 <>
                   <div className="my-2 border-t border-slate-100" />
-                  <Link
-                    href="/activities"
-                    onClick={() => setMobileOpen(false)}
+                  <a
+                    href={portalHomeHref}
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
                   >
-                    <Settings className="h-5 w-5" />
-                    Kelola Kegiatan
-                  </Link>
+                    <ExternalLink className="h-5 w-5" />
+                    Portal Warga
+                  </a>
+                </>
+              )}
+
+              {signedIn && (
+                <>
+                  <div className="my-2 border-t border-slate-100" />
+                  {isAdmin && (
+                    <Link
+                      href="/activities"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                    >
+                      <Settings className="h-5 w-5" />
+                      Kelola Kegiatan
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -258,13 +298,35 @@ export function HeaderNav() {
 }
 
 export function Footer() {
+  const surface = useAppSurface();
+  const portalHome = buildPortalUrl("/dashboard");
+  const opsLogin = buildOpsUrl("/login");
+
   return (
     <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-slate-500">
       <p>© 2026 Nahara Portal Warga. All rights reserved.</p>
-      <p className="mt-1">
-        <Link href="/panduan" className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold">
+      <p className="mt-1 space-x-3">
+        <Link
+          href="/panduan"
+          className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
+        >
           Panduan Penggunaan
         </Link>
+        {surface === "portal" ? (
+          <a
+            href={opsLogin}
+            className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
+          >
+            Masuk Pengurus
+          </a>
+        ) : (
+          <a
+            href={portalHome}
+            className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
+          >
+            Portal Warga
+          </a>
+        )}
       </p>
     </footer>
   );

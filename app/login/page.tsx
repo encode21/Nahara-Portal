@@ -2,9 +2,9 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { isAdminOnlyPath, isPortalAdmin, safeInternalPath } from "@/lib/auth/roles";
+import { resolveOpsPostLoginRedirect } from "@/lib/auth/roles";
+import { buildPortalUrl } from "@/lib/host";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { NaharaLogo } from "@/components/layout/NaharaLogo";
 
@@ -36,13 +36,8 @@ function LoginForm() {
       return;
     }
 
-    const next = safeInternalPath(redirectParam);
-    const user = data.user;
-    if (isAdminOnlyPath(next) && !isPortalAdmin(user)) {
-      router.push("/dashboard");
-    } else {
-      router.push(next);
-    }
+    const next = resolveOpsPostLoginRedirect(data.user, redirectParam);
+    router.push(next);
     router.refresh();
   }
 
@@ -54,8 +49,12 @@ function LoginForm() {
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <h1 className="font-display text-2xl font-bold text-slate-900">Masuk Admin</h1>
-            <p className="mt-1 text-sm text-slate-500">Panel pengurus komunitas</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900">
+              Masuk Pengurus
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Admin, Estate, atau RT/RW — area operasional Nahara
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="glass-card space-y-4">
@@ -66,21 +65,25 @@ function LoginForm() {
             )}
 
             <div>
-              <label htmlFor="email" className="label">Email</label>
+              <label htmlFor="email" className="label">
+                Email
+              </label>
               <input
                 id="email"
                 type="email"
                 className="input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
+                placeholder="pengurus@example.com"
                 required
                 autoComplete="username"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="label">Password</label>
+              <label htmlFor="password" className="label">
+                Password
+              </label>
               <input
                 id="password"
                 type="password"
@@ -106,9 +109,12 @@ function LoginForm() {
           </form>
 
           <p className="mt-4 text-center text-sm text-slate-500">
-            <Link href="/dashboard" className="text-gold-dark hover:underline">
-              Kembali ke dashboard
-            </Link>
+            <a
+              href={buildPortalUrl("/dashboard")}
+              className="text-gold-dark hover:underline"
+            >
+              Ke Portal Warga
+            </a>
           </p>
         </div>
       </div>

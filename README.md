@@ -33,11 +33,11 @@ npm install
 2. Buka **SQL Editor** dan jalankan migration di `supabase/migrations/` (termasuk harden security)
 3. **Authentication (wajib untuk keamanan):**
    - Nonaktifkan public email signup (invite-only / Add user manual)
-   - Buat user pengurus di **Authentication → Users → Add user**
-   - Edit user → **Raw App Meta Data** set: `{ "role": "admin" }`
-   - User security (notifikasi saja): **jangan** set `role: admin`
-   - Aktifkan batasan password + rate limit Auth di project settings
-4. Tanpa `app_metadata.role = "admin"`, login tidak mendapat hak kelola (RLS + UI)
+   - Buat user di **Authentication → Users → Add user**
+   - Set **App Metadata** sesuai peran: `{ "role": "admin" }` | `"estate"` | `"rtrw"`
+   - User security (notifikasi saja): tanpa role admin
+   - Aktifkan batasan password + rate limit Auth
+4. Dual-host: di Vercel tambah `portal.nahara.id` + `nahara.id`; lihat [`docs/auth-security-checklist.md`](docs/auth-security-checklist.md)
 
 ### 3. Environment Variables
 

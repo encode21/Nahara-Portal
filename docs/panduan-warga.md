@@ -2,6 +2,9 @@
 
 Panduan ini untuk **warga biasa**. Anda **tidak perlu membuat akun** atau login untuk memakai fitur di bawah.
 
+**Alamat portal warga:** [https://portal.nahara.id](https://portal.nahara.id)  
+Jika Anda membuka `nahara.id` tanpa login, Anda akan diarahkan ke portal warga. Halaman masuk pengurus ada di `nahara.id/login` (bukan untuk warga).
+
 ---
 
 ## Apa itu Nahara Portal?

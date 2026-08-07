@@ -4,9 +4,10 @@ export const LOGO_BADGE_SRC = "/assets/nahara-badge.png";
 /** Tulisan NAHARA saja (tanpa ikon kuning) */
 export const LOGO_WORDMARK_SRC = "/assets/nahara-wordmark.png";
 
-/** Canonical production URL (override via NEXT_PUBLIC_SITE_URL) */
+/** Canonical production URL (override via NEXT_PUBLIC_SITE_URL) — prefer portal warga */
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://nahara.id";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "https://portal.nahara.id";
 
 export const SITE_TITLE = "Nahara Portal Warga";
 

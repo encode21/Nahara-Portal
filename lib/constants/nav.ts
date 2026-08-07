@@ -11,6 +11,7 @@ import {
   Shield,
   type LucideIcon,
 } from "lucide-react";
+import type { AppSurface } from "@/lib/host";
 
 export type NavItem = {
   href: string;
@@ -31,3 +32,31 @@ export const portalNavItems: NavItem[] = [
   { href: "/pengaduan", label: "Pengaduan", icon: Megaphone },
   { href: "/cctv", label: "CCTV", icon: Camera },
 ];
+
+const STAFF_NAV_HREFS = new Set(["/pengumuman", "/kegiatan", "/pengaduan"]);
+
+const FINANCE_HREFS = new Set(["/iuran", "/keuangan"]);
+
+export function getNavItemsForAccess(opts: {
+  surface: AppSurface;
+  isAdmin: boolean;
+  isStaff: boolean;
+}): NavItem[] {
+  const { surface, isAdmin, isStaff } = opts;
+
+  if (surface === "ops" && isStaff && !isAdmin) {
+    return portalNavItems.filter((item) => STAFF_NAV_HREFS.has(item.href));
+  }
+
+  if (surface === "ops" && isAdmin) {
+    return portalNavItems;
+  }
+
+  // Portal (warga) — full citizen nav including finance
+  if (surface === "portal") {
+    return portalNavItems;
+  }
+
+  // Ops + anon should rarely render nav (redirected); fallback public ops-ish
+  return portalNavItems.filter((item) => !FINANCE_HREFS.has(item.href));
+}

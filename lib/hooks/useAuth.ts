@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isPortalAdmin } from "@/lib/auth/roles";
+import {
+  getPortalRole,
+  isFinanceRestricted,
+  isPortalAdmin,
+  isPortalStaff,
+  type PortalRole,
+} from "@/lib/auth/roles";
 import type { User } from "@supabase/supabase-js";
 
 export function useAuth() {
@@ -36,7 +42,9 @@ export function useAuth() {
       syncUser(u);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       syncUser(session?.user ?? null);
     });
 
@@ -46,9 +54,14 @@ export function useAuth() {
     };
   }, []);
 
+  const role: PortalRole | null = getPortalRole(user);
+
   return {
     user,
+    role,
     isAdmin: isPortalAdmin(user),
+    isStaff: isPortalStaff(user),
+    isFinanceRestricted: isFinanceRestricted(user),
     isSecurity,
     loading,
   };
