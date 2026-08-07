@@ -11,6 +11,7 @@ import { AdminLoginPrompt } from "@/components/AdminOnly";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { KasToDonasiForm } from "@/components/KasToDonasiForm";
 import { parseKasToDonasiCampaignId } from "@/lib/kas-donasi";
+import { summarizeKas } from "@/lib/kas-summary";
 
 const CATEGORIES = ["Saldo Awal", "Iuran", "Donasi", "Operasional", "Perbaikan", "Lainnya"];
 
@@ -57,9 +58,7 @@ export default function KeuanganPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const totalPemasukan = entries.filter((e) => e.type === "pemasukan").reduce((s, e) => s + e.amount, 0);
-  const totalPengeluaran = entries.filter((e) => e.type === "pengeluaran").reduce((s, e) => s + e.amount, 0);
-  const saldo = totalPemasukan - totalPengeluaran;
+  const { saldoAwal, totalPemasukan, totalPengeluaran, saldo } = summarizeKas(entries);
 
   let runningSaldo = saldo;
   const entriesWithSaldo = [...entries].reverse().map((e) => {
@@ -172,7 +171,15 @@ export default function KeuanganPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className={`grid gap-4 ${saldoAwal > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
+        {saldoAwal > 0 && (
+          <div className="glass-card">
+            <p className="text-xs text-slate-500">Saldo Awal</p>
+            <p className="mt-1 font-display text-2xl font-bold text-slate-900">
+              {formatCurrency(saldoAwal)}
+            </p>
+          </div>
+        )}
         <div className="glass-card">
           <p className="text-xs text-slate-500">Saldo</p>
           <p className="mt-1 font-display text-2xl font-bold text-slate-900">{formatCurrency(saldo)}</p>
@@ -252,9 +259,11 @@ export default function KeuanganPage() {
           </p>
           <code className="block rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
             supabase/seeds/202606_arus_kas_jun2026.sql
+            {"\n"}
+            supabase/seeds/202607_arus_kas_jul2026.sql
           </code>
           <p className="text-xs text-slate-500">
-            Setelah Run berhasil, refresh halaman ini — saldo seharusnya ± Rp 12.773.817.
+            Jalankan Juni dulu lalu Juli. Saldo akhir Juli: Rp 14.341.817.
           </p>
         </div>
       ) : (

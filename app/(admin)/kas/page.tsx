@@ -10,6 +10,7 @@ import { EmptyState, LoadingSpinner } from "@/components/ui/Loading";
 import { KasFormModal } from "@/components/KasFormModal";
 import { KasToDonasiForm } from "@/components/KasToDonasiForm";
 import { parseKasToDonasiCampaignId } from "@/lib/kas-donasi";
+import { summarizeKas } from "@/lib/kas-summary";
 
 export default function KasPage() {
   const supabase = createClient();
@@ -34,13 +35,7 @@ export default function KasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalPemasukan = entries
-    .filter((e) => e.type === "pemasukan")
-    .reduce((sum, e) => sum + e.amount, 0);
-  const totalPengeluaran = entries
-    .filter((e) => e.type === "pengeluaran")
-    .reduce((sum, e) => sum + e.amount, 0);
-  const saldo = totalPemasukan - totalPengeluaran;
+  const { saldoAwal, totalPemasukan, totalPengeluaran, saldo } = summarizeKas(entries);
 
   async function handleDelete(id: string) {
     const entry = entries.find((e) => e.id === id);
@@ -103,7 +98,10 @@ export default function KasPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className={`grid gap-4 ${saldoAwal > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
+        {saldoAwal > 0 && (
+          <StatCard label="Saldo Awal" value={formatCurrency(saldoAwal)} />
+        )}
         <StatCard
           label="Total Pemasukan"
           value={formatCurrency(totalPemasukan)}
