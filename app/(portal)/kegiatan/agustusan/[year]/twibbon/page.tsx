@@ -57,7 +57,7 @@ export default function TwibbonPage() {
         </p>
       </div>
 
-      <TwibbonMaker year={year} shareTitle={edition.title} />
+      <TwibbonMaker year={year} shareTitle={edition.title} editionId={edition.id} />
     </div>
   );
 }

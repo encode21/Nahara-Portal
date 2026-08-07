@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { KasEntry, Pengaduan, Pengumuman, Warga, Iuran, WargaWithIuran } from "@/lib/types";
+import { KasEntry, Pengaduan, Pengumuman, Warga, Iuran, WargaWithIuran, EventEdition } from "@/lib/types";
 import { getCurrentMonthStart, normalizeMonthDate } from "@/lib/utils";
 import { SaldoCard } from "@/components/dashboard/SaldoCard";
 import { PengaduanTerkini } from "@/components/dashboard/PengaduanTerkini";
 import { PengumumanCard } from "@/components/dashboard/PengumumanCard";
 import { PetaLingkunganCard } from "@/components/map/PetaLingkunganCard";
+import { AgustusanDashboardCard } from "@/components/dashboard/AgustusanDashboardCard";
 import { Users, Megaphone } from "lucide-react";
 
 type WargaWithIuranRows = Warga & { iuran: Pick<Iuran, "status" | "bulan">[] };
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const bulanIni = getCurrentMonthStart();
 
-  const [kasRes, wargaRes, pengaduanRes, pengumumanRes] = await Promise.all([
+  const [kasRes, wargaRes, pengaduanRes, pengumumanRes, editionRes] = await Promise.all([
     supabase.from("kas_entries").select("*"),
     supabase
       .from("warga")
@@ -37,12 +38,23 @@ export default async function DashboardPage() {
       .order("blok_row"),
     supabase.from("pengaduan").select("*").order("created_at", { ascending: false }).limit(3),
     supabase.from("pengumuman").select("*").order("created_at", { ascending: false }).limit(5),
+    supabase
+      .from("event_editions")
+      .select("id, year, title, status, starts_on, ends_on")
+      .eq("status", "active")
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const kasEntries = (kasRes.data ?? []) as KasEntry[];
   const wargaList = (wargaRes.data ?? []) as WargaWithIuranRows[];
   const pengaduanList = (pengaduanRes.data ?? []) as Pengaduan[];
   const pengumumanList = (pengumumanRes.data ?? []) as Pengumuman[];
+  const activeEdition = (editionRes.data ?? null) as Pick<
+    EventEdition,
+    "id" | "year" | "title" | "status" | "starts_on" | "ends_on"
+  > | null;
 
   const wargaData = mapWargaWithIuran(wargaList, bulanIni);
 
@@ -66,6 +78,8 @@ export default async function DashboardPage() {
         <h1 className="font-display text-2xl font-bold text-slate-900">Dashboard</h1>
         <p className="mt-1 text-sm text-slate-400">Ringkasan komunitas Cluster Nahara</p>
       </div>
+
+      {activeEdition && <AgustusanDashboardCard edition={activeEdition} />}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SaldoCard saldo={saldo} pemasukanBulan={pemasukanBulan} pengeluaranBulan={pengeluaranBulan} />
@@ -105,7 +119,6 @@ export default async function DashboardPage() {
         <h3 className="mb-4 font-display text-lg font-semibold text-slate-900">Peta Lingkungan</h3>
         <PetaLingkunganCard wargaData={wargaData} />
       </div>
-
     </div>
   );
 }

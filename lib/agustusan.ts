@@ -45,7 +45,12 @@ export function groupContestsByDay(contests: EventContest[]): {
               month: "long",
               year: "numeric",
             }).format(new Date(`${key}T12:00:00+07:00`)),
-      contests: list.sort((a, b) => a.sort_order - b.sort_order),
+      contests: list.sort((a, b) => {
+        const aStart = a.starts_at ? new Date(a.starts_at).getTime() : Number.POSITIVE_INFINITY;
+        const bStart = b.starts_at ? new Date(b.starts_at).getTime() : Number.POSITIVE_INFINITY;
+        if (aStart !== bStart) return aStart - bStart;
+        return a.sort_order - b.sort_order;
+      }),
     }));
 }
 

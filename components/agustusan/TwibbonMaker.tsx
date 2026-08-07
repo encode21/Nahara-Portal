@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Download,
   ImagePlus,
+  Images,
   Loader2,
   Share2,
   ZoomIn,
@@ -13,6 +14,9 @@ import {
   AGUSTUSAN_MEDIA,
   TWIBBON_PHOTO_CIRCLE,
 } from "@/lib/constants/agustusan";
+import { createClient } from "@/lib/supabase/client";
+import { uploadPortalImage } from "@/lib/supabase/storage";
+import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 const SIZE = 1024;
 const { cx: CIRCLE_CX, cy: CIRCLE_CY, r: CIRCLE_R } = TWIBBON_PHOTO_CIRCLE;
@@ -30,14 +34,18 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export function TwibbonMaker({
   year,
   shareTitle,
+  editionId,
 }: {
   year: number;
   shareTitle: string;
+  editionId: string;
 }) {
+  const supabase = createClient();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLImageElement | null>(null);
   const photoRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const lastBlobRef = useRef<Blob | null>(null);
 
   const [ready, setReady] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
@@ -45,6 +53,8 @@ export function TwibbonMaker({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [galleryPromptOpen, setGalleryPromptOpen] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -61,7 +71,6 @@ export function TwibbonMaker({
 
     const photo = photoRef.current;
     if (photo) {
-      // Cover-fit inside design circle (+small bleed supaya tidak ada celah di pinggir)
       const diam = CIRCLE_R * 2;
       const base = Math.max(diam / photo.width, diam / photo.height) * 1.08;
       const s = base * scale;
@@ -110,7 +119,6 @@ export function TwibbonMaker({
       setHasPhoto(true);
       setScale(1);
       setOffset({ x: 0, y: 0 });
-      // photoRef is not React state — redraw even when scale/offset unchanged
       draw();
     } catch {
       setMessage("File gambar tidak valid.");
@@ -150,6 +158,14 @@ export function TwibbonMaker({
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
   }
 
+  function triggerDownload(blob: Blob) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `twibbon-nahara-hut-ri-${year}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   async function download() {
     if (!hasPhoto) {
       setMessage("Unggah foto dulu.");
@@ -160,12 +176,10 @@ export function TwibbonMaker({
     const blob = await canvasToBlob();
     setBusy(false);
     if (!blob) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `twibbon-nahara-hut-ri-${year}.png`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    lastBlobRef.current = blob;
+    triggerDownload(blob);
     setMessage("Twibbon diunduh.");
+    setGalleryPromptOpen(true);
   }
 
   async function shareResult() {
@@ -178,6 +192,7 @@ export function TwibbonMaker({
     const blob = await canvasToBlob();
     setBusy(false);
     if (!blob) return;
+    lastBlobRef.current = blob;
 
     const file = new File([blob], `twibbon-nahara-${year}.png`, {
       type: "image/png",
@@ -187,6 +202,7 @@ export function TwibbonMaker({
         ? `${window.location.origin}/kegiatan/agustusan/${year}`
         : "";
 
+    let shared = false;
     try {
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
@@ -194,22 +210,67 @@ export function TwibbonMaker({
           title: shareTitle,
           text: `Twibbon ${shareTitle} — Cluster Nahara`,
         });
-        return;
-      }
-      if (navigator.share) {
+        shared = true;
+      } else if (navigator.share) {
         await navigator.share({
           title: shareTitle,
           text: `Twibbon ${shareTitle}`,
           url: pageUrl,
         });
-        return;
+        shared = true;
       }
     } catch {
-      /* user cancel */
       return;
     }
 
-    await download();
+    if (!shared) {
+      triggerDownload(blob);
+      setMessage("Twibbon diunduh.");
+    }
+    setGalleryPromptOpen(true);
+  }
+
+  async function uploadToGallery() {
+    const blob = lastBlobRef.current;
+    if (!blob) {
+      setGalleryPromptOpen(false);
+      setMessage("Buat ulang twibbon dulu, lalu unduh.");
+      return;
+    }
+    setUploadingGallery(true);
+    setMessage(null);
+    const file = new File([blob], `twibbon-nahara-${year}.png`, {
+      type: "image/png",
+    });
+    const { url, error: uploadError } = await uploadPortalImage(
+      supabase,
+      file,
+      "agustusan"
+    );
+    if (uploadError || !url) {
+      setUploadingGallery(false);
+      setMessage(uploadError ?? "Gagal mengunggah ke galeri.");
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("event_gallery_items").insert({
+      edition_id: editionId,
+      image_url: url,
+      caption: `Twibbon warga — ${shareTitle}`,
+      sort_order: Date.now() % 1_000_000,
+      is_published: true,
+    });
+
+    setUploadingGallery(false);
+    setGalleryPromptOpen(false);
+    if (insertError) {
+      setMessage(
+        getSupabaseErrorMessage(insertError) ??
+          "Gagal menyimpan ke galeri. Pastikan migrasi public insert sudah dijalankan."
+      );
+      return;
+    }
+    setMessage("Terima kasih! Twibbon masuk Galeri / Dokumentasi Agustusan.");
   }
 
   return (
@@ -288,6 +349,44 @@ export function TwibbonMaker({
           Bagikan hasil
         </button>
       </div>
+
+      {galleryPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#7a1218]/10 text-[#7a1218]">
+              <Images className="h-5 w-5" />
+            </div>
+            <h3 className="font-display text-lg font-semibold text-slate-900">
+              Masukkan ke Galeri Agustusan?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Twibbon-mu sudah siap. Mau ikut dipajang di Galeri / Dokumentasi{" "}
+              {shareTitle}?
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn-primary flex-1"
+                disabled={uploadingGallery}
+                onClick={uploadToGallery}
+              >
+                {uploadingGallery ? (
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                ) : null}
+                Ya, masukkan
+              </button>
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                disabled={uploadingGallery}
+                onClick={() => setGalleryPromptOpen(false)}
+              >
+                Tidak
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

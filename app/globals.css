@@ -52,3 +52,23 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 }
+
+@keyframes agustusan-confetti-fall {
+  0% {
+    transform: translate3d(0, -10%, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(12px, 120%, 0) rotate(280deg);
+    opacity: 0;
+  }
+}
+
+.agustusan-confetti {
+  animation-name: agustusan-confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
