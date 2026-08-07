@@ -4,8 +4,9 @@ import { MarkdownGuide } from "@/components/panduan/MarkdownGuide";
 import { loadGuideMarkdown } from "@/lib/panduan/loadGuide";
 
 export const metadata = {
-  title: "Panduan Warga | Nahara",
-  description: "Cara memakai Nahara Portal untuk warga tanpa login",
+  title: "Panduan Warga",
+  description:
+    "Cara memakai Nahara Portal untuk warga tanpa login: dashboard, pengaduan, kegiatan, Agustusan, CCTV, dan info lingkungan.",
 };
 
 export default async function PanduanWargaPage() {

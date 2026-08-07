@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Shield, Users } from "lucide-react";
 
+export const metadata = {
+  title: "Panduan Penggunaan",
+  description:
+    "Panduan memakai Nahara Portal — pilih Panduan Warga (tanpa login) atau Panduan Pengurus (kelola data setelah login).",
+};
+
 export default function PanduanHubPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">

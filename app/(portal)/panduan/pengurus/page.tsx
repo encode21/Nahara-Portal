@@ -4,8 +4,9 @@ import { MarkdownGuide } from "@/components/panduan/MarkdownGuide";
 import { loadGuideMarkdown } from "@/lib/panduan/loadGuide";
 
 export const metadata = {
-  title: "Panduan Pengurus | Nahara",
-  description: "Cara mengelola Nahara Portal untuk pengurus RT/RW",
+  title: "Panduan Pengurus",
+  description:
+    "Cara mengelola Nahara Portal untuk pengurus RT/RW: login, pengaduan, pengumuman, iuran, kas, warga, CCTV, dan Agustusan.",
 };
 
 export default async function PanduanPengurusPage() {
