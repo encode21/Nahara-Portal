@@ -53,22 +53,21 @@
   }
 }
 
-/* One-shot burst from bottom corners upward — plays once on load */
+/* One-shot: burst up from corners, then fall down — no fade */
 @keyframes agustusan-confetti-burst {
   0% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.4);
-    opacity: 0;
-  }
-  12% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.5);
     opacity: 1;
   }
-  70% {
+  35% {
+    transform: translate3d(var(--c-dx-peak, 34px), var(--c-dy-peak, -140px), 0)
+      rotate(var(--c-spin-peak, 126deg)) scale(1);
     opacity: 1;
   }
   100% {
-    transform: translate3d(var(--c-dx, 40px), var(--c-dy, -140px), 0)
-      rotate(var(--c-spin, 280deg)) scale(1);
-    opacity: 0;
+    transform: translate3d(var(--c-dx, 40px), var(--c-fall, 220px), 0)
+      rotate(var(--c-spin, 280deg)) scale(0.95);
+    opacity: 1;
   }
 }
 
@@ -76,8 +75,8 @@
   display: block;
   opacity: 0;
   animation-name: agustusan-confetti-burst;
-  animation-timing-function: cubic-bezier(0.15, 0.75, 0.25, 1);
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
-  will-change: transform, opacity;
+  will-change: transform;
 }

@@ -33,10 +33,11 @@ const CONFETTI = Array.from({ length: 36 }, (_, i) => {
   const n = Math.floor(i / 2);
   // fan upward into the card from each corner
   const angleDeg = side === "left" ? -75 + (n % 9) * 9 : -105 - (n % 9) * 9;
-  const dist = 110 + (n % 6) * 28; // px travel
+  const dist = 110 + (n % 6) * 28; // px upward travel
   const rad = (angleDeg * Math.PI) / 180;
   const dx = Math.round(Math.cos(rad) * dist);
   const dy = Math.round(Math.sin(rad) * dist); // sin negative = up
+  const fall = 160 + (n % 7) * 24; // px fall past bottom
   const shape = SHAPES[i % 3];
   const size = 7 + (i % 5) * 2;
 
@@ -47,10 +48,14 @@ const CONFETTI = Array.from({ length: 36 }, (_, i) => {
     shape,
     size,
     delay: `${0.05 + (n % 8) * 0.04}s`,
-    duration: `${1.15 + (n % 5) * 0.12}s`,
+    duration: `${1.6 + (n % 5) * 0.15}s`,
     dx: `${dx}px`,
     dy: `${dy}px`,
-    spin: `${(i % 2 === 0 ? 1 : -1) * (220 + (i % 4) * 80)}deg`,
+    dxPeak: `${Math.round(dx * 0.85)}px`,
+    dyPeak: `${dy}px`,
+    fall: `${fall}px`,
+    spin: `${(i % 2 === 0 ? 1 : -1) * (320 + (i % 4) * 100)}deg`,
+    spinPeak: `${(i % 2 === 0 ? 1 : -1) * Math.round((320 + (i % 4) * 100) * 0.45)}deg`,
     width: shape === "dot" ? size : shape === "square" ? size : Math.round(size * 0.5),
     height: shape === "dot" ? size : shape === "square" ? size : Math.round(size * 1.5),
     radius: shape === "dot" ? "9999px" : "1px",
@@ -70,7 +75,11 @@ function CardConfetti() {
           animationDuration: p.duration,
           ["--c-dx" as string]: p.dx,
           ["--c-dy" as string]: p.dy,
+          ["--c-dx-peak" as string]: p.dxPeak,
+          ["--c-dy-peak" as string]: p.dyPeak,
+          ["--c-fall" as string]: p.fall,
           ["--c-spin" as string]: p.spin,
+          ["--c-spin-peak" as string]: p.spinPeak,
           ...(p.side === "left"
             ? { left: "4%", bottom: "6%" }
             : { right: "4%", bottom: "6%" }),
