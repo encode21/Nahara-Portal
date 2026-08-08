@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { SecurityStaff, SecurityUser, SecurityNotification } from "@/lib/types";
 import { timeAgo } from "@/lib/utils";
@@ -13,8 +14,16 @@ import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 type Tab = "petugas" | "notifikasi" | "users";
 
-export default function InfoSecurityPage() {
+function tabFromSearch(value: string | null): Tab | null {
+  if (value === "petugas" || value === "notifikasi" || value === "users") {
+    return value;
+  }
+  return null;
+}
+
+function InfoSecurityContent() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const { isAdmin, isSecurity, user, loading: authLoading } = useAuth();
   const canViewNotifications = isAdmin || isSecurity;
 
@@ -43,6 +52,18 @@ export default function InfoSecurityPage() {
     staff_id: "",
     receive_notifications: true,
   });
+
+  useEffect(() => {
+    if (authLoading) return;
+    const requested = tabFromSearch(searchParams.get("tab"));
+    if (requested === "notifikasi" && canViewNotifications) {
+      setTab("notifikasi");
+    } else if (requested === "users" && isAdmin) {
+      setTab("users");
+    } else if (requested === "petugas") {
+      setTab("petugas");
+    }
+  }, [authLoading, searchParams, canViewNotifications, isAdmin]);
 
   const fetchStaff = useCallback(async () => {
     const { data } = await supabase
@@ -278,6 +299,20 @@ export default function InfoSecurityPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function InfoSecurityPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <LoadingSpinner className="h-8 w-8" />
+        </div>
+      }
+    >
+      <InfoSecurityContent />
+    </Suspense>
   );
 }
 

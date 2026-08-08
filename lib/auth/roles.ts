@@ -74,6 +74,7 @@ export function isStaffAllowedPath(pathname: string): boolean {
 export function postLoginPath(user: User | null | undefined): string {
   if (isPortalAdmin(user)) return "/dashboard";
   if (isPortalStaff(user)) return "/pengumuman";
+  // Auth without JWT role (e.g. security_users) — dashboard; login page may override to Info Security
   return "/dashboard";
 }
 

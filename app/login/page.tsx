@@ -3,7 +3,11 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { resolveOpsPostLoginRedirect } from "@/lib/auth/roles";
+import {
+  isPortalAdmin,
+  isPortalStaff,
+  resolveOpsPostLoginRedirect,
+} from "@/lib/auth/roles";
 import { buildPortalUrl } from "@/lib/host";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { NaharaLogo } from "@/components/layout/NaharaLogo";
@@ -29,14 +33,27 @@ function LoginForm() {
       password,
     });
 
-    setLoading(false);
-
-    if (authError) {
+    if (authError || !data.user) {
+      setLoading(false);
       setError("Email atau password salah.");
       return;
     }
 
-    const next = resolveOpsPostLoginRedirect(data.user, redirectParam);
+    let next = resolveOpsPostLoginRedirect(data.user, redirectParam);
+
+    // Petugas keamanan (tanpa role admin/staff) langsung ke notifikasi
+    if (!isPortalAdmin(data.user) && !isPortalStaff(data.user) && data.user.email) {
+      const { data: securityUser } = await supabase
+        .from("security_users")
+        .select("id")
+        .ilike("email", data.user.email)
+        .maybeSingle();
+      if (securityUser && !redirectParam) {
+        next = "/info-security?tab=notifikasi";
+      }
+    }
+
+    setLoading(false);
     router.push(next);
     router.refresh();
   }
@@ -53,7 +70,7 @@ function LoginForm() {
               Masuk Pengurus
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Admin, Estate, atau RT/RW — area operasional Nahara
+              Admin, Estate, RT/RW, atau Petugas Keamanan
             </p>
           </div>
 

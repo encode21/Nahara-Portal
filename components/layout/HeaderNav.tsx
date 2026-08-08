@@ -6,6 +6,7 @@ import {
   LogOut,
   LogIn,
   Settings,
+  Shield,
   User,
   Menu,
   X,
@@ -20,16 +21,19 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
 import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
+import { SecurityNotificationBell } from "./SecurityNotificationBell";
 
 function UserMenu({
   userName,
   userEmail,
   isAdmin,
+  isSecurity,
   onLogout,
 }: {
   userName: string;
   userEmail: string;
   isAdmin: boolean;
+  isSecurity: boolean;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -85,6 +89,16 @@ function UserMenu({
               Kelola Kegiatan
             </Link>
           )}
+          {(isSecurity || isAdmin) && (
+            <Link
+              href="/info-security?tab=notifikasi"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+            >
+              <Shield className="h-4 w-4 text-slate-400" />
+              Notifikasi Security
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -107,7 +121,7 @@ export function HeaderNav() {
   const router = useRouter();
   const supabase = createClient();
   const surface = useAppSurface();
-  const { isAdmin, isStaff, user, loading } = useAuth();
+  const { isAdmin, isStaff, isSecurity, user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = useMemo(
@@ -135,7 +149,8 @@ export function HeaderNav() {
   const userName =
     user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Pengurus";
   const userEmail = user?.email ?? "";
-  const signedIn = isAdmin || isStaff;
+  // Security users have no admin/staff JWT role — treat any session as signed in
+  const signedIn = !!user;
 
   function isActive(href: string) {
     return (
@@ -172,12 +187,16 @@ export function HeaderNav() {
         </span>
 
         <div className="flex items-center gap-2">
+          {!loading && signedIn && (
+            <SecurityNotificationBell light={landingOverlay} />
+          )}
           {!loading &&
             (signedIn ? (
               <UserMenu
                 userName={userName}
                 userEmail={userEmail}
                 isAdmin={isAdmin}
+                isSecurity={isSecurity}
                 onLogout={handleLogout}
               />
             ) : surface === "landing" ? (
@@ -315,6 +334,16 @@ export function HeaderNav() {
                     >
                       <Settings className="h-5 w-5" />
                       Kelola Kegiatan
+                    </Link>
+                  )}
+                  {(isSecurity || isAdmin) && (
+                    <Link
+                      href="/info-security?tab=notifikasi"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                    >
+                      <Shield className="h-5 w-5" />
+                      Notifikasi Security
                     </Link>
                   )}
                   <button

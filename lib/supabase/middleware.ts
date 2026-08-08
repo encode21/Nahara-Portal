@@ -106,8 +106,9 @@ export async function updateSession(request: NextRequest) {
         url.pathname = "/pengumuman";
         url.search = "";
       } else {
-        url.pathname = "/login";
-        url.searchParams.set("redirect", safeInternalPath(pathname));
+        // Authenticated non-admin (e.g. security) — don't bounce to login
+        url.pathname = "/info-security";
+        url.search = "";
       }
       return NextResponse.redirect(url);
     }
