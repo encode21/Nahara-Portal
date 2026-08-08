@@ -296,9 +296,12 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
               {edition.title}
             </h1>
             {edition.description && (
-              <p className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">
-                {edition.description}
-              </p>
+              <>
+                <p className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">
+                  {edition.description}
+                </p>
+                <p className="mt-1 text-xs text-white/75">#HajatanNaharaMerdeka</p>
+              </>
             )}
             <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
               <a
