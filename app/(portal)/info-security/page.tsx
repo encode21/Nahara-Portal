@@ -512,7 +512,7 @@ function NotifikasiTab({
               </div>
               <div className="flex shrink-0 gap-2">
                 {n.pengaduan_id && (
-                  <Link href="/pengaduan" className="btn-secondary text-xs">
+                  <Link href={`/pengaduan/${n.pengaduan_id}`} className="btn-secondary text-xs">
                     Lihat Pengaduan
                   </Link>
                 )}

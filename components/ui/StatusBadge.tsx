@@ -25,10 +25,17 @@ export function StatusBadge({ status, variant = "default", className }: StatusBa
 
 export function getPengaduanVariant(status: string): StatusBadgeProps["variant"] {
   switch (status) {
-    case "Baru": return "info";
-    case "Diproses": return "warning";
-    case "Selesai": return "success";
-    default: return "default";
+    case "Baru":
+    case "Menunggu Validasi":
+      return "info";
+    case "Diproses":
+      return "warning";
+    case "Selesai":
+      return "success";
+    case "Ditolak":
+      return "danger";
+    default:
+      return "default";
   }
 }
 

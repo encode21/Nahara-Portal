@@ -29,31 +29,53 @@ function UserMenu({
   isAdmin,
   isSecurity,
   onLogout,
+  open,
+  onOpenChange,
 }: {
   userName: string;
   userEmail: string;
   isAdmin: boolean;
   isSecurity: boolean;
   onLogout: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    if (!open) return;
+
+    let removeListeners: (() => void) | undefined;
+    const setup = window.setTimeout(() => {
+      function handlePointer(e: Event) {
+        if (ref.current && !ref.current.contains(e.target as Node)) {
+          onOpenChangeRef.current(false);
+        }
+      }
+      document.addEventListener("pointerdown", handlePointer);
+      document.addEventListener("touchstart", handlePointer, { passive: true });
+      removeListeners = () => {
+        document.removeEventListener("pointerdown", handlePointer);
+        document.removeEventListener("touchstart", handlePointer);
+      };
+    }, 50);
+
+    return () => {
+      window.clearTimeout(setup);
+      removeListeners?.();
+    };
+  }, [open]);
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1.5 transition-colors hover:bg-gold/5"
+        onClick={() => onOpenChange(!open)}
+        className="flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1.5 transition-colors hover:bg-gold/5"
+        aria-expanded={open}
+        aria-haspopup="menu"
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15">
           <User className="h-4 w-4 text-gold-dark" />
@@ -70,47 +92,65 @@ function UserMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="truncate text-sm font-medium text-slate-900">
-              {userName}
-            </p>
-            {userEmail && (
-              <p className="truncate text-xs text-slate-500">{userEmail}</p>
-            )}
-          </div>
-          {isAdmin && (
-            <Link
-              href="/activities"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
-            >
-              <Settings className="h-4 w-4 text-slate-400" />
-              Kelola Kegiatan
-            </Link>
-          )}
-          {(isSecurity || isAdmin) && (
-            <Link
-              href="/info-security?tab=notifikasi"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
-            >
-              <Shield className="h-4 w-4 text-slate-400" />
-              Notifikasi Security
-            </Link>
-          )}
+        <>
           <button
             type="button"
-            onClick={() => {
-              setOpen(false);
-              onLogout();
-            }}
-            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+            className="fixed inset-0 z-[80] cursor-default bg-black/20 sm:hidden"
+            aria-label="Tutup menu pengguna"
+            onClick={() => onOpenChange(false)}
+          />
+          <div
+            role="menu"
+            className={cn(
+              "z-[90] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg",
+              "fixed left-3 right-3 top-[3.75rem]",
+              "sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1.5 sm:w-56",
+            )}
           >
-            <LogOut className="h-4 w-4 text-slate-400" />
-            Keluar
-          </button>
-        </div>
+            <div className="border-b border-slate-100 px-4 py-3">
+              <p className="truncate text-sm font-medium text-slate-900">
+                {userName}
+              </p>
+              {userEmail && (
+                <p className="truncate text-xs text-slate-500">{userEmail}</p>
+              )}
+            </div>
+            {isAdmin && (
+              <Link
+                href="/activities"
+                role="menuitem"
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+              >
+                <Settings className="h-4 w-4 text-slate-400" />
+                Kelola Kegiatan
+              </Link>
+            )}
+            {(isSecurity || isAdmin) && (
+              <Link
+                href="/info-security?tab=notifikasi"
+                role="menuitem"
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+              >
+                <Shield className="h-4 w-4 text-slate-400" />
+                Notifikasi Security
+              </Link>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onOpenChange(false);
+                onLogout();
+              }}
+              className="flex w-full touch-manipulation items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+            >
+              <LogOut className="h-4 w-4 text-slate-400" />
+              Keluar
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
@@ -123,6 +163,8 @@ export function HeaderNav() {
   const surface = useAppSurface();
   const { isAdmin, isStaff, isSecurity, user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const navItems = useMemo(
     () => getNavItemsForAccess({ surface, isAdmin, isStaff }),
@@ -169,7 +211,7 @@ export function HeaderNav() {
   return (
     <header
       className={cn(
-        "z-50 w-full max-w-[100%] overflow-x-clip",
+        "z-50 w-full max-w-[100%]",
         landingOverlay
           ? "absolute inset-x-0 top-0 border-b border-white/10 bg-slate-950/25 backdrop-blur-sm"
           : "sticky top-0 border-b border-gold/20 bg-white shadow-sm",
@@ -186,9 +228,16 @@ export function HeaderNav() {
           <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="relative z-[60] flex items-center gap-2">
           {!loading && signedIn && (
-            <SecurityNotificationBell light={landingOverlay} />
+            <SecurityNotificationBell
+              light={landingOverlay}
+              open={notifOpen}
+              onOpenChange={(next) => {
+                setNotifOpen(next);
+                if (next) setUserMenuOpen(false);
+              }}
+            />
           )}
           {!loading &&
             (signedIn ? (
@@ -197,6 +246,11 @@ export function HeaderNav() {
                 userEmail={userEmail}
                 isAdmin={isAdmin}
                 isSecurity={isSecurity}
+                open={userMenuOpen}
+                onOpenChange={(next) => {
+                  setUserMenuOpen(next);
+                  if (next) setNotifOpen(false);
+                }}
                 onLogout={handleLogout}
               />
             ) : surface === "landing" ? (

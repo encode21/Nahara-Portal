@@ -7,8 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
-
-const KATEGORI = ["Keamanan", "Kebersihan", "Infrastruktur", "Lainnya"];
+import { PENGADUAN_KATEGORI } from "@/lib/constants/pengaduan";
 
 export default function PengaduanBaruPage() {
   const router = useRouter();
@@ -28,23 +27,33 @@ export default function PengaduanBaruPage() {
     setLoading(true);
     setError(null);
 
-    const { error: insertError } = await supabase.from("pengaduan").insert({
-      nama: form.nama,
-      blok: form.blok || null,
-      kategori: form.kategori,
-      deskripsi: form.deskripsi,
-      foto_url: fotoUrl,
-      status: "Baru",
-    });
+    const { data, error: insertError } = await supabase
+      .from("pengaduan")
+      .insert({
+        nama: form.nama,
+        blok: form.blok || null,
+        kategori: form.kategori,
+        deskripsi: form.deskripsi,
+        foto_url: fotoUrl,
+        status: "Baru",
+      })
+      .select("id, kode")
+      .single();
 
     setLoading(false);
 
-    if (insertError) {
-      setError(getSupabaseErrorMessage(insertError) ?? "Gagal mengirim pengaduan. Silakan coba lagi.");
+    if (insertError || !data) {
+      setError(
+        getSupabaseErrorMessage(insertError) ??
+          "Gagal mengirim pengaduan. Silakan coba lagi.",
+      );
       return;
     }
 
-    router.push("/pengaduan/baru/sukses");
+    const params = new URLSearchParams();
+    if (data.kode) params.set("kode", data.kode);
+    params.set("id", data.id);
+    router.push(`/pengaduan/baru/sukses?${params.toString()}`);
   }
 
   return (
@@ -74,7 +83,7 @@ export default function PengaduanBaruPage() {
         <div>
           <label className="label">Kategori</label>
           <select className="input" value={form.kategori} onChange={(e) => setForm({ ...form, kategori: e.target.value })}>
-            {KATEGORI.map((k) => <option key={k} value={k}>{k}</option>)}
+            {PENGADUAN_KATEGORI.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </div>
 
@@ -103,7 +112,7 @@ export default function PengaduanBaruPage() {
       </form>
 
       <p className="mt-4 text-center text-sm text-slate-500">
-        <Link href="/login" className="text-gold-dark hover:underline">Login admin</Link>
+        <Link href="/login" className="text-gold-dark hover:underline">Login pengurus</Link>
       </p>
     </div>
   );

@@ -30,22 +30,31 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const bulanIni = getCurrentMonthStart();
 
-  const [kasRes, wargaRes, pengaduanRes, pengumumanRes, editionRes] = await Promise.all([
-    supabase.from("kas_entries").select("*"),
-    supabase
-      .from("warga")
-      .select("*, iuran (status, bulan)")
-      .order("blok_row"),
-    supabase.from("pengaduan").select("*").order("created_at", { ascending: false }).limit(3),
-    supabase.from("pengumuman").select("*").order("created_at", { ascending: false }).limit(5),
-    supabase
-      .from("event_editions")
-      .select("id, year, title, status, starts_on, ends_on")
-      .eq("status", "active")
-      .order("year", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const [kasRes, wargaRes, pengaduanRes, pengaduanBaruRes, pengumumanRes, editionRes] =
+    await Promise.all([
+      supabase.from("kas_entries").select("*"),
+      supabase
+        .from("warga")
+        .select("*, iuran (status, bulan)")
+        .order("blok_row"),
+      supabase
+        .from("pengaduan")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3),
+      supabase
+        .from("pengaduan")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "Baru"),
+      supabase.from("pengumuman").select("*").order("created_at", { ascending: false }).limit(5),
+      supabase
+        .from("event_editions")
+        .select("id, year, title, status, starts_on, ends_on")
+        .eq("status", "active")
+        .order("year", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   const kasEntries = (kasRes.data ?? []) as KasEntry[];
   const wargaList = (wargaRes.data ?? []) as WargaWithIuranRows[];
@@ -70,7 +79,7 @@ export default async function DashboardPage() {
     .filter((e) => e.type === "pengeluaran" && e.date >= monthStart)
     .reduce((s, e) => s + e.amount, 0);
 
-  const pengaduanBaru = pengaduanList.filter((p) => p.status === "Baru").length;
+  const pengaduanBaru = pengaduanBaruRes.count ?? 0;
 
   return (
     <div className="space-y-6">
@@ -100,7 +109,7 @@ export default async function DashboardPage() {
               <Megaphone className="h-5 w-5 text-gold-dark" />
             </div>
             <div>
-              <p className="text-xs text-slate-500">Pengaduan Terbaru</p>
+              <p className="text-xs text-slate-500">Menunggu Validasi</p>
               <p className="font-display text-2xl font-bold text-slate-900">
                 {pengaduanBaru}
                 <span className="ml-2 text-sm font-normal text-slate-500">baru</span>

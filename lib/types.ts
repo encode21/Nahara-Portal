@@ -65,12 +65,22 @@ export type Iuran = {
 
 export type Pengaduan = {
   id: string;
+  kode: string | null;
   nama: string;
   blok: string | null;
   kategori: "Keamanan" | "Kebersihan" | "Infrastruktur" | "Lainnya";
   deskripsi: string;
   foto_url: string | null;
-  status: "Baru" | "Diproses" | "Selesai";
+  status: "Baru" | "Diproses" | "Selesai" | "Ditolak";
+  created_at: string;
+};
+
+export type PengaduanKomentar = {
+  id: string;
+  pengaduan_id: string;
+  nama: string;
+  pesan: string;
+  is_pengurus: boolean;
   created_at: string;
 };
 

@@ -66,12 +66,22 @@ CREATE TABLE IF NOT EXISTS iuran (
 
 CREATE TABLE IF NOT EXISTS pengaduan (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  kode text,
   nama text NOT NULL,
   blok text,
   kategori text CHECK (kategori IN ('Keamanan', 'Kebersihan', 'Infrastruktur', 'Lainnya')),
   deskripsi text NOT NULL,
   foto_url text,
-  status text DEFAULT 'Baru' CHECK (status IN ('Baru', 'Diproses', 'Selesai')),
+  status text DEFAULT 'Baru' CHECK (status IN ('Baru', 'Diproses', 'Selesai', 'Ditolak')),
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pengaduan_komentar (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  pengaduan_id uuid NOT NULL REFERENCES pengaduan(id) ON DELETE CASCADE,
+  nama text NOT NULL,
+  pesan text NOT NULL,
+  is_pengurus boolean NOT NULL DEFAULT false,
   created_at timestamptz DEFAULT now()
 );
 
