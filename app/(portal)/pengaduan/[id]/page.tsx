@@ -12,7 +12,6 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface, useHasMounted } from "@/lib/hooks/useAppSurface";
-import { buildPortalUrl } from "@/lib/host";
 import { isPortalStorageUrl } from "@/lib/supabase/storage";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import {
@@ -20,6 +19,7 @@ import {
   type PengaduanStatus,
 } from "@/lib/constants/pengaduan";
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
+import { sharePengaduan } from "@/lib/pengaduan/share";
 
 const AVATAR_TONES = [
   "bg-[#1f4b3a] text-[#d4e8df]",
@@ -86,8 +86,8 @@ export default function PengaduanDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ nama: "", pesan: "" });
-  const [composerFocus, setComposerFocus] = useState(false);
-  const [shareState, setShareState] = useState<"idle" | "copied" | "error">("idle");
+  const [shareLabel, setShareLabel] = useState("Bagikan");
+  const [sharing, setSharing] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -152,43 +152,27 @@ export default function PengaduanDetailPage() {
     }
 
     setForm((f) => ({ ...f, pesan: "" }));
-    setComposerFocus(false);
     fetchData();
   }
 
   async function handleShare() {
-    if (!pengaduan) return;
+    if (!pengaduan || sharing) return;
+    setSharing(true);
+    const result = await sharePengaduan(pengaduan);
+    setSharing(false);
 
-    const url = buildPortalUrl(`/pengaduan/${pengaduan.id}`);
-    const kode = pengaduan.kode ?? pengaduan.id.slice(0, 8);
-    const title = `Pengaduan ${pengaduan.kategori} · ${kode}`;
-    const text = [
-      `Pengaduan ${pengaduan.kategori} di Cluster Nahara`,
-      pengaduan.deskripsi.length > 120
-        ? `${pengaduan.deskripsi.slice(0, 120)}…`
-        : pengaduan.deskripsi,
-      "Lihat & balas di portal warga:",
-    ].join("\n");
+    if (result === "cancelled") return;
 
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url });
-        return;
-      }
-    } catch (err) {
-      // User cancelled share sheet — don't fall through to clipboard noise
-      if (err instanceof DOMException && err.name === "AbortError") return;
+    if (result === "copied") {
+      setShareLabel("Tautan disalin");
+    } else if (result === "whatsapp") {
+      setShareLabel("Dibuka di WhatsApp");
+    } else if (result === "shared") {
+      setShareLabel("Terkirim");
+    } else {
+      setShareLabel("Coba lagi");
     }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareState("copied");
-      window.setTimeout(() => setShareState("idle"), 2000);
-    } catch {
-      setShareState("error");
-      window.setTimeout(() => setShareState("idle"), 2500);
-      window.prompt("Salin tautan pengaduan:", url);
-    }
+    window.setTimeout(() => setShareLabel("Bagikan"), 2200);
   }
 
   if (loading) {
@@ -213,7 +197,23 @@ export default function PengaduanDetailPage() {
   const replyCount = komentar.length;
   const showComposer = surface !== "landing";
   const hasThreadBelow = replyCount > 0 || showComposer;
-  const showPostActions = composerFocus || form.pesan.trim().length > 0;
+
+  const shareButton = (
+    <button
+      type="button"
+      onClick={handleShare}
+      disabled={sharing}
+      className="inline-flex touch-manipulation items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-gold/40 hover:bg-gold/5 hover:text-gold-dark disabled:opacity-60"
+      aria-label="Bagikan pengaduan ke warga lain"
+    >
+      {shareLabel === "Tautan disalin" || shareLabel === "Terkirim" ? (
+        <Check className="h-3.5 w-3.5 text-emerald-600" />
+      ) : (
+        <Share2 className="h-3.5 w-3.5" />
+      )}
+      {sharing ? "Membuka..." : shareLabel}
+    </button>
+  );
 
   return (
     <div className="mx-auto max-w-xl">
@@ -226,6 +226,7 @@ export default function PengaduanDetailPage() {
           Thread
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {shareButton}
           <span className="font-mono text-[11px] text-slate-400">
             {pengaduan.kode ?? pengaduan.id.slice(0, 8)}
           </span>
@@ -293,34 +294,12 @@ export default function PengaduanDetailPage() {
                   />
                 </a>
               )}
-              <div className="mt-3 flex items-center gap-1 text-slate-400">
-                <span className="inline-flex items-center gap-1.5 px-1 py-1 text-xs">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500">
                   <MessageCircle className="h-4 w-4" />
                   {replyCount} balasan
                 </span>
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="inline-flex touch-manipulation items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition hover:bg-slate-100 hover:text-slate-700"
-                  aria-label="Bagikan pengaduan"
-                >
-                  {shareState === "copied" ? (
-                    <>
-                      <Check className="h-4 w-4 text-emerald-600" />
-                      <span className="text-emerald-700">Tautan disalin</span>
-                    </>
-                  ) : shareState === "error" ? (
-                    <>
-                      <Share2 className="h-4 w-4" />
-                      <span>Salin manual</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-4 w-4" />
-                      <span>Bagikan</span>
-                    </>
-                  )}
-                </button>
+                {shareButton}
               </div>
             </div>
           </div>
@@ -366,72 +345,90 @@ export default function PengaduanDetailPage() {
           );
         })}
 
-        {/* Composer */}
+        {/* Composer — field jelas untuk warga awam */}
         {showComposer ? (
           <form
             onSubmit={handleReply}
-            className="border-t border-slate-100 px-4 py-4 sm:px-5"
+            className="border-t border-slate-200 bg-slate-50/70 px-4 py-4 sm:px-5"
           >
-            <div className="flex gap-3">
+            <div className="mb-3 flex items-center gap-2">
               <ThreadAvatar
                 name={form.nama || (isOps ? "Pengurus" : "Warga")}
                 accent={isOps}
                 size="sm"
               />
-              <div className="min-w-0 flex-1 space-y-1">
-                {error && (
-                  <div className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-                {!isOps ? (
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {isOps ? "Balas sebagai pengurus" : "Tulis balasan Anda"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  Balasan tampil publik di thread ini
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              {!isOps ? (
+                <div>
+                  <label htmlFor="reply-nama" className="label">
+                    Nama lengkap
+                  </label>
                   <input
-                    className="w-full border-0 bg-transparent text-sm font-semibold text-slate-900 outline-none ring-0 placeholder:font-normal placeholder:text-slate-400 focus:ring-0"
+                    id="reply-nama"
+                    className="input"
                     value={form.nama}
                     onChange={(e) => setForm({ ...form, nama: e.target.value })}
                     required
                     minLength={2}
-                    placeholder="Nama kamu"
-                    aria-label="Nama"
+                    placeholder="Contoh: Budi Santoso"
+                    autoComplete="name"
                   />
-                ) : (
-                  <p className="text-sm font-semibold text-slate-900">
-                    {form.nama}
-                    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
-                      Pengurus
-                    </span>
-                  </p>
-                )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-gold/20 bg-gold/5 px-3 py-2 text-sm">
+                  <span className="font-semibold text-slate-900">{form.nama}</span>
+                  <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
+                    Pengurus
+                  </span>
+                </div>
+              )}
+
+              <div className="border-t border-slate-100 pt-3">
+                <label htmlFor="reply-pesan" className="label">
+                  Isi balasan
+                </label>
                 <textarea
-                  className={cn(
-                    "w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:ring-0",
-                    showPostActions ? "min-h-[88px]" : "min-h-[40px]",
-                  )}
-                  rows={showPostActions ? 3 : 1}
+                  id="reply-pesan"
+                  className="input min-h-[100px]"
+                  rows={4}
                   value={form.pesan}
                   onChange={(e) => setForm({ ...form, pesan: e.target.value })}
-                  onFocus={() => setComposerFocus(true)}
                   required
                   minLength={1}
-                  placeholder={
-                    isOps ? "Balas sebagai pengurus..." : "Tambahkan balasan..."
-                  }
-                  aria-label="Pesan"
+                  placeholder="Tulis tanggapan, informasi tambahan, atau dukungan Anda..."
                 />
-                {showPostActions && (
-                  <div className="flex items-center justify-between gap-2 pt-2">
-                    <p className="text-[11px] text-slate-400">
-                      Tampil publik di thread
-                    </p>
-                    <button
-                      type="submit"
-                      className="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-                      disabled={submitting}
-                    >
-                      {submitting ? "..." : "Posting"}
-                    </button>
-                  </div>
-                )}
+              </div>
+
+              <div className="flex justify-end border-t border-slate-100 pt-3">
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LoadingSpinner /> Mengirim...
+                    </span>
+                  ) : (
+                    "Kirim balasan"
+                  )}
+                </button>
               </div>
             </div>
           </form>

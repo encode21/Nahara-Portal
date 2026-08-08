@@ -53,6 +53,7 @@ export default function PengaduanBaruPage() {
     const params = new URLSearchParams();
     if (data.kode) params.set("kode", data.kode);
     params.set("id", data.id);
+    params.set("kategori", form.kategori);
     router.push(`/pengaduan/baru/sukses?${params.toString()}`);
   }
 

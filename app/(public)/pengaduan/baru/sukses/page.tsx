@@ -1,15 +1,35 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Share2, Check } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { sharePengaduan } from "@/lib/pengaduan/share";
+import type { Pengaduan } from "@/lib/types";
 
 function PengaduanSuksesContent() {
   const searchParams = useSearchParams();
   const kode = searchParams.get("kode");
   const id = searchParams.get("id");
+  const kategori = (searchParams.get("kategori") || "Lainnya") as Pengaduan["kategori"];
+  const [shareLabel, setShareLabel] = useState("Bagikan ke warga");
+  const [sharing, setSharing] = useState(false);
+
+  async function handleShare() {
+    if (!id || sharing) return;
+    setSharing(true);
+    const result = await sharePengaduan({
+      id,
+      kode,
+      kategori,
+      deskripsi: "Ada pengaduan baru di Cluster Nahara. Buka untuk lihat & balas.",
+    });
+    setSharing(false);
+    if (result === "cancelled") return;
+    setShareLabel(result === "copied" ? "Tautan disalin" : "Siap dibagikan");
+    window.setTimeout(() => setShareLabel("Bagikan ke warga"), 2200);
+  }
 
   return (
     <div className="mx-auto max-w-md py-12 text-center">
@@ -26,15 +46,32 @@ function PengaduanSuksesContent() {
         Terima kasih. Pengaduan Anda masuk antrean validasi pengurus dan tetap
         tampil di daftar untuk ditindaklanjuti.
       </p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <div className="mt-6 flex flex-col items-stretch gap-3 sm:items-center">
         {id && (
-          <Link href={`/pengaduan/${id}`} className="btn-primary inline-block">
-            Lihat thread
-          </Link>
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={sharing}
+            className="btn-primary inline-flex items-center justify-center gap-2"
+          >
+            {shareLabel.includes("disalin") || shareLabel.includes("Siap") ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Share2 className="h-4 w-4" />
+            )}
+            {sharing ? "Membuka..." : shareLabel}
+          </button>
         )}
-        <Link href="/pengaduan/baru" className="btn-secondary inline-block">
-          Kirim Pengaduan Lain
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {id && (
+            <Link href={`/pengaduan/${id}`} className="btn-secondary inline-block">
+              Lihat thread
+            </Link>
+          )}
+          <Link href="/pengaduan/baru" className="btn-secondary inline-block">
+            Kirim Pengaduan Lain
+          </Link>
+        </div>
       </div>
     </div>
   );

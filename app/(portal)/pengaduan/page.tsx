@@ -9,7 +9,7 @@ import { timeAgo, cn } from "@/lib/utils";
 import { StatusBadge, getPengaduanVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
-import { Plus, Search, ChevronRight } from "lucide-react";
+import { Plus, Search, ChevronRight, Share2, Check } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface, useHasMounted } from "@/lib/hooks/useAppSurface";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
@@ -25,6 +25,7 @@ import {
 } from "@/lib/constants/pengaduan";
 import { PengaduanStats } from "@/components/pengaduan/PengaduanStats";
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
+import { sharePengaduan } from "@/lib/pengaduan/share";
 
 function PengaduanPageContent() {
   const supabase = createClient();
@@ -45,6 +46,7 @@ function PengaduanPageContent() {
   );
   const [kategoriFilter, setKategoriFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [shareFeedbackId, setShareFeedbackId] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const { data } = await supabase
@@ -104,6 +106,15 @@ function PengaduanPageContent() {
     await supabase.from("pengaduan").update({ status }).eq("id", id);
     setBusyId(null);
     await Promise.all([fetchAll(), fetchFiltered()]);
+  }
+
+  async function handleShare(p: Pengaduan, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const result = await sharePengaduan(p);
+    if (result === "cancelled") return;
+    setShareFeedbackId(p.id);
+    window.setTimeout(() => setShareFeedbackId(null), 2000);
   }
 
   const tabCounts = useMemo(() => {
@@ -259,15 +270,47 @@ function PengaduanPageContent() {
                         onUpdate={(status) => updateStatus(p.id, status)}
                       />
                     ) : (
-                      <span />
+                      <button
+                        type="button"
+                        onClick={(e) => handleShare(p, e)}
+                        className="inline-flex touch-manipulation items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-gold/40 hover:bg-gold/5 hover:text-gold-dark"
+                      >
+                        {shareFeedbackId === p.id ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                            Dibagikan
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="h-3.5 w-3.5" />
+                            Bagikan
+                          </>
+                        )}
+                      </button>
                     )}
-                    <Link
-                      href={`/pengaduan/${p.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-gold-dark hover:underline"
-                    >
-                      Lihat thread
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleShare(p, e)}
+                          className="inline-flex touch-manipulation items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-gold-dark"
+                          aria-label="Bagikan pengaduan"
+                        >
+                          {shareFeedbackId === p.id ? (
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                          ) : (
+                            <Share2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      )}
+                      <Link
+                        href={`/pengaduan/${p.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-gold-dark hover:underline"
+                      >
+                        Lihat thread
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
