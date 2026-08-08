@@ -257,6 +257,7 @@ export function TwibbonMaker({
       edition_id: editionId,
       image_url: url,
       caption: `Twibbon warga — ${shareTitle}`,
+      category: "twibbon",
       sort_order: Date.now() % 1_000_000,
       is_published: true,
     });

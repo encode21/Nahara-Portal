@@ -7,9 +7,17 @@ import { useParams } from "next/navigation";
 import { Images } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { EventEdition, EventGalleryItem } from "@/lib/types";
-import { AGUSTUSAN_MEDIA, AGUSTUSAN_YEAR } from "@/lib/constants/agustusan";
+import {
+  AGUSTUSAN_MEDIA,
+  AGUSTUSAN_YEAR,
+  GALLERY_CATEGORIES,
+  GALLERY_CATEGORY_LABELS,
+  type GalleryCategory,
+} from "@/lib/constants/agustusan";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
+
+type FilterKey = "all" | GalleryCategory;
 
 export default function GaleriDokumentasiPage() {
   const params = useParams();
@@ -19,6 +27,7 @@ export default function GaleriDokumentasiPage() {
   const [items, setItems] = useState<EventGalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<EventGalleryItem | null>(null);
+  const [filter, setFilter] = useState<FilterKey>("all");
 
   useEffect(() => {
     async function load() {
@@ -44,7 +53,6 @@ export default function GaleriDokumentasiPage() {
         .order("created_at", { ascending: false });
 
       if (error || !data?.length) {
-        // Fallback aset lokal jika tabel belum di-seed / kosong
         if (year === AGUSTUSAN_YEAR) {
           setItems(
             AGUSTUSAN_MEDIA.gallery.map((g, i) => ({
@@ -52,6 +60,7 @@ export default function GaleriDokumentasiPage() {
               edition_id: editionRow.id,
               image_url: g.src,
               caption: g.alt,
+              category: "dokumentasi",
               sort_order: i,
               is_published: true,
               created_at: new Date().toISOString(),
@@ -69,6 +78,21 @@ export default function GaleriDokumentasiPage() {
     if (Number.isFinite(year)) load();
   }, [supabase, year]);
 
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: items.length };
+    for (const c of GALLERY_CATEGORIES) map[c] = 0;
+    for (const item of items) {
+      const key = item.category in map ? item.category : "dokumentasi";
+      map[key] = (map[key] ?? 0) + 1;
+    }
+    return map;
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return items;
+    return items.filter((item) => item.category === filter);
+  }, [filter, items]);
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -80,6 +104,14 @@ export default function GaleriDokumentasiPage() {
   if (!edition) {
     return <p className="py-12 text-center text-slate-600">Edisi tidak ditemukan.</p>;
   }
+
+  const chips: { key: FilterKey; label: string }[] = [
+    { key: "all", label: "Semua" },
+    ...GALLERY_CATEGORIES.map((key) => ({
+      key,
+      label: GALLERY_CATEGORY_LABELS[key],
+    })),
+  ];
 
   return (
     <div className="space-y-8">
@@ -99,13 +131,42 @@ export default function GaleriDokumentasiPage() {
         </p>
       </div>
 
-      {items.length === 0 ? (
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {chips.map(({ key, label }) => {
+            const count = counts[key] ?? 0;
+            if (key !== "all" && count === 0) return null;
+            const selected = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                  selected
+                    ? "bg-[#9b1b23] text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                {label}
+                <span className={`ml-1.5 tabular-nums ${selected ? "text-white/80" : "text-slate-500"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm text-slate-500">
-          Belum ada foto di galeri. Panitia bisa mengunggah dari menu Kelola Agustusan.
+          {items.length === 0
+            ? "Belum ada foto di galeri. Panitia bisa mengunggah dari menu Kelola Agustusan."
+            : "Tidak ada foto di kategori ini."}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
-          {items.map((item) => {
+          {filtered.map((item) => {
             const isLocal = item.image_url.startsWith("/");
             return (
               <button

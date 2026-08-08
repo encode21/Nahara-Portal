@@ -17,6 +17,25 @@ export const AGUSTUSAN_TITLE = "Agustusan HUT ke-81 RI";
 export const AGUSTUSAN_TAGLINE =
   "Dari Kita untuk Kita Semua — E Pluribus Unum Annuit Coeptis";
 
+/** Kategori item galeri Agustusan (kolom event_gallery_items.category) */
+export const GALLERY_CATEGORIES = [
+  "dokumentasi",
+  "twibbon",
+  "lomba",
+  "malam_puncak",
+  "persiapan",
+] as const;
+
+export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
+
+export const GALLERY_CATEGORY_LABELS: Record<GalleryCategory, string> = {
+  dokumentasi: "Dokumentasi",
+  twibbon: "Twibbon",
+  lomba: "Lomba",
+  malam_puncak: "Malam Puncak",
+  persiapan: "Persiapan",
+};
+
 export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
   ibu: "Lomba Ibu-Ibu",
   bapak: "Lomba Bapak-Bapak",

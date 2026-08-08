@@ -216,6 +216,8 @@ export type EventGalleryItem = {
   edition_id: string;
   image_url: string;
   caption: string | null;
+  /** dokumentasi | twibbon | lomba | malam_puncak | persiapan */
+  category: string;
   sort_order: number;
   is_published: boolean;
   created_at: string;

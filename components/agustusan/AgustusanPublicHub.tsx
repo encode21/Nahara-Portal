@@ -182,6 +182,7 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
             edition_id: editionRow.id,
             image_url: g.src,
             caption: g.alt,
+            category: "dokumentasi",
             sort_order: i,
             is_published: true,
             created_at: new Date().toISOString(),

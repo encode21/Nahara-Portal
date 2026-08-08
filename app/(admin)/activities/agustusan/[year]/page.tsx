@@ -16,6 +16,9 @@ import {
   AGUSTUSAN_ACTIVITY_ID,
   AGUSTUSAN_YEAR,
   CONTEST_CATEGORY_LABELS,
+  GALLERY_CATEGORIES,
+  GALLERY_CATEGORY_LABELS,
+  type GalleryCategory,
 } from "@/lib/constants/agustusan";
 import { entryLabel } from "@/lib/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
@@ -60,6 +63,8 @@ export default function AdminEditionPage() {
   });
   const [gallery, setGallery] = useState<EventGalleryItem[]>([]);
   const [galleryCaption, setGalleryCaption] = useState("");
+  const [galleryCategory, setGalleryCategory] =
+    useState<GalleryCategory>("dokumentasi");
   const [galleryUploading, setGalleryUploading] = useState(false);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
@@ -283,6 +288,7 @@ export default function AdminEditionPage() {
         edition_id: edition.id,
         image_url: url,
         caption: galleryCaption.trim() || null,
+        category: galleryCategory,
         sort_order: nextOrder,
         is_published: true,
       });
@@ -325,6 +331,22 @@ export default function AdminEditionPage() {
       .eq("id", item.id);
     if (err) {
       setError(getSupabaseErrorMessage(err) ?? "Gagal update");
+      return;
+    }
+    if (edition) await loadGallery(edition.id);
+  }
+
+  async function updateGalleryCategory(
+    item: EventGalleryItem,
+    category: GalleryCategory
+  ) {
+    if (item.category === category) return;
+    const { error: err } = await supabase
+      .from("event_gallery_items")
+      .update({ category })
+      .eq("id", item.id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal ubah kategori");
       return;
     }
     if (edition) await loadGallery(edition.id);
@@ -664,6 +686,22 @@ export default function AdminEditionPage() {
                 onChange={(e) => setGalleryCaption(e.target.value)}
               />
             </div>
+            <div>
+              <label className="label">Kategori</label>
+              <select
+                className="input"
+                value={galleryCategory}
+                onChange={(e) =>
+                  setGalleryCategory(e.target.value as GalleryCategory)
+                }
+              >
+                {GALLERY_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {GALLERY_CATEGORY_LABELS[cat]}
+                  </option>
+                ))}
+              </select>
+            </div>
             <label className="btn-primary inline-flex cursor-pointer">
               {galleryUploading ? "Mengunggah…" : "Pilih & upload foto"}
               <input
@@ -710,6 +748,28 @@ export default function AdminEditionPage() {
                         <span className="ml-1 text-slate-400">(draft)</span>
                       )}
                     </p>
+                    <select
+                      className="input py-1 text-xs"
+                      value={
+                        GALLERY_CATEGORIES.includes(
+                          item.category as GalleryCategory
+                        )
+                          ? item.category
+                          : "dokumentasi"
+                      }
+                      onChange={(e) =>
+                        updateGalleryCategory(
+                          item,
+                          e.target.value as GalleryCategory
+                        )
+                      }
+                    >
+                      {GALLERY_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {GALLERY_CATEGORY_LABELS[cat]}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
