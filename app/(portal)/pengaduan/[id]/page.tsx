@@ -197,26 +197,13 @@ export default function PengaduanDetailPage() {
   const replyCount = komentar.length;
   const showComposer = surface !== "landing";
   const hasThreadBelow = replyCount > 0 || showComposer;
-
-  const shareButton = (
-    <button
-      type="button"
-      onClick={handleShare}
-      disabled={sharing}
-      className="inline-flex touch-manipulation items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-gold/40 hover:bg-gold/5 hover:text-gold-dark disabled:opacity-60"
-      aria-label="Bagikan pengaduan ke warga lain"
-    >
-      {shareLabel === "Tautan disalin" || shareLabel === "Terkirim" ? (
-        <Check className="h-3.5 w-3.5 text-emerald-600" />
-      ) : (
-        <Share2 className="h-3.5 w-3.5" />
-      )}
-      {sharing ? "Membuka..." : shareLabel}
-    </button>
-  );
+  const shareDone =
+    shareLabel === "Tautan disalin" ||
+    shareLabel === "Terkirim" ||
+    shareLabel === "Dibuka di WhatsApp";
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="relative mx-auto max-w-xl pb-24">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Link
           href="/pengaduan"
@@ -226,7 +213,6 @@ export default function PengaduanDetailPage() {
           Thread
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {shareButton}
           <span className="font-mono text-[11px] text-slate-400">
             {pengaduan.kode ?? pengaduan.id.slice(0, 8)}
           </span>
@@ -299,7 +285,6 @@ export default function PengaduanDetailPage() {
                   <MessageCircle className="h-4 w-4" />
                   {replyCount} balasan
                 </span>
-                {shareButton}
               </div>
             </div>
           </div>
@@ -437,6 +422,31 @@ export default function PengaduanDetailPage() {
             Balas thread di portal warga atau ops Nahara.
           </div>
         )}
+      </div>
+
+      {/* Floating share — satu tombol, tidak memenuhi header/kartu */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-end p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="pointer-events-auto flex flex-col items-end gap-2">
+          {(sharing || shareDone || shareLabel === "Coba lagi") && (
+            <span className="rounded-full bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+              {sharing ? "Membuka..." : shareLabel}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={sharing}
+            className="inline-flex h-14 touch-manipulation items-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white shadow-lg shadow-slate-900/25 transition hover:bg-slate-800 active:scale-[0.98] disabled:opacity-70"
+            aria-label="Bagikan pengaduan ke warga lain"
+          >
+            {shareDone ? (
+              <Check className="h-5 w-5 text-emerald-300" />
+            ) : (
+              <Share2 className="h-5 w-5" />
+            )}
+            Bagikan
+          </button>
+        </div>
       </div>
 
       <style jsx global>{`
