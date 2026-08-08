@@ -61,6 +61,7 @@ export default function AdminEditionPage() {
     prize: "",
     published: true,
   });
+  const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [gallery, setGallery] = useState<EventGalleryItem[]>([]);
   const [galleryCaption, setGalleryCaption] = useState("");
   const [galleryCategory, setGalleryCategory] =
@@ -217,30 +218,86 @@ export default function AdminEditionPage() {
     if (selectedId) await loadEntries(selectedId);
   }
 
+  function resetResultForm() {
+    setEditingResultId(null);
+    setResultForm({ rank: "1", winner_label: "", prize: "", published: true });
+  }
+
+  function startEditResult(r: EventContestResult) {
+    setEditingResultId(r.id);
+    setResultForm({
+      rank: String(r.rank),
+      winner_label: r.winner_label,
+      prize: r.prize ?? "",
+      published: r.published,
+    });
+    setError(null);
+    setMessage(null);
+  }
+
   async function saveResult(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
     setError(null);
     const rank = parseInt(resultForm.rank, 10);
+    if (!Number.isFinite(rank) || rank < 1) {
+      setError("Peringkat tidak valid.");
+      return;
+    }
+    const winnerLabel = resultForm.winner_label.trim();
+    if (!winnerLabel) {
+      setError("Nama juara wajib diisi.");
+      return;
+    }
+    const wasEditing = Boolean(editingResultId);
     const payload = {
       contest_id: selectedId,
       rank,
-      winner_label: resultForm.winner_label.trim(),
+      winner_label: winnerLabel,
       prize: resultForm.prize.trim() || null,
       published: resultForm.published,
       announced_at: new Date().toISOString(),
     };
-    const existing = results.find((r) => r.rank === rank);
-    const result = existing
-      ? await supabase.from("event_contest_results").update(payload).eq("id", existing.id)
-      : await supabase.from("event_contest_results").insert(payload);
+
+    let result;
+    if (editingResultId) {
+      result = await supabase
+        .from("event_contest_results")
+        .update(payload)
+        .eq("id", editingResultId);
+    } else {
+      const existing = results.find((r) => r.rank === rank);
+      result = existing
+        ? await supabase
+            .from("event_contest_results")
+            .update(payload)
+            .eq("id", existing.id)
+        : await supabase.from("event_contest_results").insert(payload);
+    }
+
     if (result.error) {
       setError(getSupabaseErrorMessage(result.error) ?? "Gagal simpan juara");
       return;
     }
-    setResultForm({ rank: "1", winner_label: "", prize: "", published: true });
+    resetResultForm();
     await loadResults(selectedId);
-    setMessage("Juara disimpan.");
+    setMessage(wasEditing ? "Juara diperbarui." : "Juara disimpan.");
+  }
+
+  async function deleteResult(id: string) {
+    if (!confirm("Hapus juara ini?")) return;
+    setError(null);
+    const { error: err } = await supabase
+      .from("event_contest_results")
+      .delete()
+      .eq("id", id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal hapus juara");
+      return;
+    }
+    if (editingResultId === id) resetResultForm();
+    if (selectedId) await loadResults(selectedId);
+    setMessage("Juara dihapus.");
   }
 
   async function publishAnnouncement() {
@@ -452,7 +509,10 @@ export default function AdminEditionPage() {
           <select
             className="input max-w-md"
             value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
+            onChange={(e) => {
+              setSelectedId(e.target.value);
+              resetResultForm();
+            }}
           >
             {contests.map((c) => (
               <option key={c.id} value={c.id}>
@@ -602,6 +662,11 @@ export default function AdminEditionPage() {
       {tab === "juara" && selected && (
         <div className="space-y-6">
           <form onSubmit={saveResult} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2">
+            {editingResultId && (
+              <p className="sm:col-span-2 text-sm font-medium text-[#7a1218]">
+                Mengedit juara — ubah nama/hadiah lalu simpan.
+              </p>
+            )}
             <div>
               <label className="label">Peringkat</label>
               <select
@@ -631,7 +696,7 @@ export default function AdminEditionPage() {
                 onChange={(e) => setResultForm({ ...resultForm, prize: e.target.value })}
               />
             </div>
-            <div className="flex items-end gap-3">
+            <div className="flex flex-wrap items-end gap-3">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -643,24 +708,58 @@ export default function AdminEditionPage() {
                 Publikasikan
               </label>
               <button type="submit" className="btn-primary">
-                Simpan juara
+                {editingResultId ? "Update juara" : "Simpan juara"}
               </button>
+              {editingResultId && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={resetResultForm}
+                >
+                  Batal
+                </button>
+              )}
             </div>
           </form>
           <button type="button" className="btn-secondary" onClick={publishAnnouncement}>
             Buat pengumuman portal
           </button>
           <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-            {results.map((r) => (
-              <li key={r.id} className="px-4 py-3 text-sm">
-                <span className="font-bold text-[#7a1218]">#{r.rank}</span>{" "}
-                {r.winner_label}
-                {r.prize && <span className="text-slate-500"> — {r.prize}</span>}
-                {!r.published && (
-                  <span className="ml-2 text-xs text-slate-400">(draft)</span>
-                )}
-              </li>
-            ))}
+            {results.length === 0 ? (
+              <li className="px-4 py-6 text-sm text-slate-500">Belum ada juara.</li>
+            ) : (
+              results.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <span className="font-bold text-[#7a1218]">#{r.rank}</span>{" "}
+                    {r.winner_label}
+                    {r.prize && <span className="text-slate-500"> — {r.prize}</span>}
+                    {!r.published && (
+                      <span className="ml-2 text-xs text-slate-400">(draft)</span>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      className="text-xs text-accent hover:underline"
+                      onClick={() => startEditResult(r)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => deleteResult(r.id)}
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       )}
