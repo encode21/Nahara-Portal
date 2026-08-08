@@ -1,8 +1,9 @@
-import { buildPortalUrl } from "@/lib/host";
+import { buildLandingUrl } from "@/lib/host";
 import type { Pengaduan } from "@/lib/types";
 
+/** Publik share selalu ke landing agar URL portal tidak terekspos. */
 export function pengaduanShareUrl(pengaduanId: string): string {
-  return buildPortalUrl(`/pengaduan/${pengaduanId}`);
+  return buildLandingUrl(`/pengaduan/${pengaduanId}`);
 }
 
 export function pengaduanSharePayload(pengaduan: Pick<

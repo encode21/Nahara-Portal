@@ -228,14 +228,23 @@ export function HeaderNav() {
           <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
         </span>
 
-        <div className="relative z-[60] flex items-center gap-2">
+        <div
+          className={cn(
+            "relative z-[60] flex items-center gap-1.5 sm:gap-2",
+            // Saat drawer terbuka, sembunyikan kontrol header agar tidak bentrok overlay
+            mobileOpen && "pointer-events-none invisible md:pointer-events-auto md:visible",
+          )}
+        >
           {!loading && signedIn && (
             <SecurityNotificationBell
               light={landingOverlay}
               open={notifOpen}
               onOpenChange={(next) => {
                 setNotifOpen(next);
-                if (next) setUserMenuOpen(false);
+                if (next) {
+                  setUserMenuOpen(false);
+                  setMobileOpen(false);
+                }
               }}
             />
           )}
@@ -249,7 +258,10 @@ export function HeaderNav() {
                 open={userMenuOpen}
                 onOpenChange={(next) => {
                   setUserMenuOpen(next);
-                  if (next) setNotifOpen(false);
+                  if (next) {
+                    setNotifOpen(false);
+                    setMobileOpen(false);
+                  }
                 }}
                 onLogout={handleLogout}
               />
@@ -282,20 +294,20 @@ export function HeaderNav() {
           {navItems.length > 0 && (
             <button
               type="button"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              onClick={() => {
+                setNotifOpen(false);
+                setUserMenuOpen(false);
+                setMobileOpen(true);
+              }}
               className={cn(
                 "rounded-lg p-2 md:hidden",
                 landingOverlay
                   ? "text-white/90 hover:bg-white/10"
                   : "text-slate-600 hover:bg-gold/5",
               )}
-              aria-label="Menu"
+              aria-label="Buka menu"
             >
-              {mobileOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              <Menu className="h-5 w-5" />
             </button>
           )}
         </div>
@@ -324,67 +336,82 @@ export function HeaderNav() {
       )}
 
       {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        <div className="md:hidden">
+          <button
+            type="button"
+            className="fixed inset-0 z-[100] cursor-default bg-slate-950/45 backdrop-blur-[2px]"
+            aria-label="Tutup menu"
             onClick={() => setMobileOpen(false)}
           />
 
-          <aside className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white px-4 py-6 shadow-lg md:hidden">
-            <div className="mb-4 flex items-center justify-between">
-              <NaharaLogo />
+          <aside
+            className="fixed inset-y-0 left-0 z-[110] flex w-[min(20rem,88vw)] flex-col bg-white shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu navigasi"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+              <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-2 text-slate-600 hover:bg-gold/5"
-                aria-label="Close menu"
+                className="inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <nav className="space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                      isActive(item.href)
-                        ? "nav-active"
-                        : "text-slate-600 hover:bg-gold/5",
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-4">
+              <div className="space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition",
+                        isActive(item.href)
+                          ? "bg-gold/15 text-gold-dark"
+                          : "text-slate-700 hover:bg-slate-50",
+                      )}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
 
               {surface === "ops" && (
-                <>
-                  <div className="my-2 border-t border-slate-100" />
+                <div className="mt-4 border-t border-slate-100 pt-4">
                   <a
                     href={portalHomeHref}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     <ExternalLink className="h-5 w-5" />
                     Portal Warga
                   </a>
-                </>
+                </div>
               )}
 
               {signedIn && (
-                <>
-                  <div className="my-2 border-t border-slate-100" />
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <div className="mb-2 px-3">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {userName}
+                    </p>
+                    {userEmail && (
+                      <p className="truncate text-xs text-slate-500">{userEmail}</p>
+                    )}
+                  </div>
                   {isAdmin && (
                     <Link
                       href="/activities"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <Settings className="h-5 w-5" />
                       Kelola Kegiatan
@@ -394,7 +421,7 @@ export function HeaderNav() {
                     <Link
                       href="/info-security?tab=notifikasi"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <Shield className="h-5 w-5" />
                       Notifikasi Security
@@ -403,18 +430,19 @@ export function HeaderNav() {
                   <button
                     type="button"
                     onClick={() => {
+                      setMobileOpen(false);
                       handleLogout();
                     }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-gold/5"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="h-5 w-5" />
                     Keluar
                   </button>
-                </>
+                </div>
               )}
             </nav>
           </aside>
-        </>
+        </div>
       )}
     </header>
   );

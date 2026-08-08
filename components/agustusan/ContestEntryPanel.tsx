@@ -6,6 +6,7 @@ import type { EventContest, EventContestEntry, EventEdition } from "@/lib/types"
 import { entryLabel, isRegistrationOpen } from "@/lib/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { formatDateTime } from "@/lib/utils";
+import { PUBLIC_LIMITS } from "@/lib/validation/publicForms";
 
 type Props = {
   edition: EventEdition;
@@ -62,10 +63,16 @@ export function ContestEntryPanel({ edition, contest }: Props) {
     setSubmitting(true);
     const payload = {
       contest_id: contest.id,
-      display_name: form.display_name.trim(),
-      partner_name: form.partner_name.trim() || null,
-      block_number: form.block_number.trim() || null,
-      phone: form.phone.trim() || null,
+      display_name: form.display_name.trim().slice(0, PUBLIC_LIMITS.nama),
+      partner_name: form.partner_name.trim()
+        ? form.partner_name.trim().slice(0, PUBLIC_LIMITS.nama)
+        : null,
+      block_number: form.block_number.trim()
+        ? form.block_number.trim().slice(0, PUBLIC_LIMITS.blok)
+        : null,
+      phone: form.phone.trim()
+        ? form.phone.trim().slice(0, PUBLIC_LIMITS.phone)
+        : null,
       status: "registered" as const,
     };
 
@@ -167,6 +174,8 @@ export function ContestEntryPanel({ edition, contest }: Props) {
                 <input
                   className="input"
                   required
+                  minLength={2}
+                  maxLength={PUBLIC_LIMITS.nama}
                   value={form.display_name}
                   onChange={(e) => setForm({ ...form, display_name: e.target.value })}
                 />
@@ -177,6 +186,7 @@ export function ContestEntryPanel({ edition, contest }: Props) {
                   <input
                     className="input"
                     required
+                    maxLength={PUBLIC_LIMITS.nama}
                     value={form.partner_name}
                     onChange={(e) => setForm({ ...form, partner_name: e.target.value })}
                   />
@@ -186,6 +196,7 @@ export function ContestEntryPanel({ edition, contest }: Props) {
                 <label className="label">Blok / kavling</label>
                 <input
                   className="input"
+                  maxLength={PUBLIC_LIMITS.blok}
                   value={form.block_number}
                   onChange={(e) => setForm({ ...form, block_number: e.target.value })}
                 />
@@ -194,6 +205,7 @@ export function ContestEntryPanel({ edition, contest }: Props) {
                 <label className="label">No. HP (opsional)</label>
                 <input
                   className="input"
+                  maxLength={PUBLIC_LIMITS.phone}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />

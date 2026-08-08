@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Pengaduan } from "@/lib/types";
-import { timeAgo, cn } from "@/lib/utils";
+import { timeAgo } from "@/lib/utils";
 import { StatusBadge, getPengaduanVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
@@ -26,6 +26,8 @@ import {
 import { PengaduanStats } from "@/components/pengaduan/PengaduanStats";
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
 import { sharePengaduan } from "@/lib/pengaduan/share";
+import { sanitizeSearchTerm } from "@/lib/validation/publicForms";
+import { cn } from "@/lib/utils";
 
 function PengaduanPageContent() {
   const supabase = createClient();
@@ -36,6 +38,7 @@ function PengaduanPageContent() {
   const { isAdmin, isStaff } = useAuth();
   const readOnly = !mounted || surface === "landing";
   const canManage = mounted && (isAdmin || isStaff) && surface !== "landing";
+  const canDelete = mounted && isAdmin && surface !== "landing";
 
   const [allList, setAllList] = useState<Pengaduan[]>([]);
   const [list, setList] = useState<Pengaduan[]>([]);
@@ -67,7 +70,7 @@ function PengaduanPageContent() {
     if (status) query = query.eq("status", status);
     if (kategoriFilter) query = query.eq("kategori", kategoriFilter);
 
-    const q = search.trim();
+    const q = sanitizeSearchTerm(search);
     if (q) {
       query = query.or(
         `kode.ilike.%${q}%,nama.ilike.%${q}%,deskripsi.ilike.%${q}%`,
@@ -108,6 +111,19 @@ function PengaduanPageContent() {
     await Promise.all([fetchAll(), fetchFiltered()]);
   }
 
+  async function deletePengaduan(id: string) {
+    if (!canDelete) return;
+    if (!confirm("Hapus pengaduan ini beserta seluruh balasan thread?")) return;
+    setBusyId(id);
+    const { error } = await supabase.from("pengaduan").delete().eq("id", id);
+    setBusyId(null);
+    if (error) {
+      alert(error.message || "Gagal menghapus pengaduan.");
+      return;
+    }
+    await Promise.all([fetchAll(), fetchFiltered()]);
+  }
+
   async function handleShare(p: Pengaduan, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -141,7 +157,7 @@ function PengaduanPageContent() {
           <h1 className="font-display text-2xl font-bold text-slate-900">Pengaduan</h1>
           <p className="mt-1 text-sm text-slate-400">
             {readOnly
-              ? "Status laporan lingkungan dari warga (lihat saja)"
+              ? "Status laporan lingkungan dari warga — tanpa login"
               : canManage
                 ? "Validasi & tindak lanjut laporan warga"
                 : "Lihat status pengaduan lingkungan"}
@@ -267,6 +283,8 @@ function PengaduanPageContent() {
                       <PengaduanStatusActions
                         pengaduan={p}
                         busy={busyId === p.id}
+                        canDelete={canDelete}
+                        onDelete={() => deletePengaduan(p.id)}
                         onUpdate={(status) => updateStatus(p.id, status)}
                       />
                     ) : (

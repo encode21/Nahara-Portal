@@ -104,13 +104,17 @@ export function isOpsPublicPath(pathname: string): boolean {
   return pathname === "/login" || pathname.startsWith("/login/");
 }
 
-/** Paths allowed on landing host without hop. */
+/** Paths allowed on landing host without hop to portal. */
 export function isLandingPath(pathname: string): boolean {
   if (pathname === "/" || pathname === "") return true;
   // Single-page hub Agustusan (tanpa shell portal warga)
   if (pathname === "/agustusan" || pathname.startsWith("/agustusan/")) return true;
   // Baca saja — buat/edit tetap di portal/ops
   if (pathname === "/pengumuman" || pathname.startsWith("/pengumuman/")) return true;
+  // Pengaduan: list + detail/thread (bukan /pengaduan/baru)
   if (pathname === "/pengaduan") return true;
+  if (/^\/pengaduan\/[^/]+$/.test(pathname) && !pathname.startsWith("/pengaduan/baru")) {
+    return true;
+  }
   return false;
 }

@@ -6,6 +6,8 @@ import type { PengaduanStatus } from "@/lib/constants/pengaduan";
 type PengaduanStatusActionsProps = {
   pengaduan: Pengaduan;
   onUpdate: (status: PengaduanStatus) => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
   busy?: boolean;
   size?: "sm" | "md";
 };
@@ -13,6 +15,8 @@ type PengaduanStatusActionsProps = {
 export function PengaduanStatusActions({
   pengaduan,
   onUpdate,
+  onDelete,
+  canDelete = false,
   busy = false,
   size = "sm",
 }: PengaduanStatusActionsProps) {
@@ -20,6 +24,17 @@ export function PengaduanStatusActions({
     size === "sm"
       ? "rounded-lg px-2.5 py-1.5 text-xs font-medium transition disabled:opacity-50"
       : "rounded-lg px-3 py-2 text-sm font-medium transition disabled:opacity-50";
+
+  const deleteBtn = canDelete && onDelete ? (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onDelete}
+      className={`${btn} border border-red-200 bg-white text-red-600 hover:bg-red-50`}
+    >
+      Hapus
+    </button>
+  ) : null;
 
   if (pengaduan.status === "Baru") {
     return (
@@ -40,6 +55,7 @@ export function PengaduanStatusActions({
         >
           Tolak
         </button>
+        {deleteBtn}
       </div>
     );
   }
@@ -63,24 +79,31 @@ export function PengaduanStatusActions({
         >
           Tolak
         </button>
+        {deleteBtn}
       </div>
     );
   }
 
   if (pengaduan.status === "Ditolak") {
     return (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => onUpdate("Diproses")}
-        className={`${btn} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
-      >
-        Proses ulang
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onUpdate("Diproses")}
+          className={`${btn} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
+        >
+          Proses ulang
+        </button>
+        {deleteBtn}
+      </div>
     );
   }
 
   return (
-    <span className="text-xs text-emerald-700">Laporan selesai</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-emerald-700">Laporan selesai</span>
+      {deleteBtn}
+    </div>
   );
 }

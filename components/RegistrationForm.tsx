@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Activity } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { PUBLIC_LIMITS } from "@/lib/validation/publicForms";
 
 type Props = {
   onSuccess: (data: {
@@ -87,9 +88,11 @@ export function RegistrationForm({ onSuccess }: Props) {
 
     const { error: insertError } = await supabase.from("participants").insert({
       activity_id: activityId,
-      name: name.trim(),
-      phone: phone.trim() || null,
-      block_number: blockNumber.trim() || null,
+      name: name.trim().slice(0, PUBLIC_LIMITS.nama),
+      phone: phone.trim() ? phone.trim().slice(0, PUBLIC_LIMITS.phone) : null,
+      block_number: blockNumber.trim()
+        ? blockNumber.trim().slice(0, PUBLIC_LIMITS.blok)
+        : null,
       payment_status: false,
       attendance_status: false,
     });
@@ -196,6 +199,8 @@ export function RegistrationForm({ onSuccess }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Nama lengkap warga"
           required
+          minLength={2}
+          maxLength={PUBLIC_LIMITS.nama}
         />
       </div>
 
@@ -210,6 +215,7 @@ export function RegistrationForm({ onSuccess }: Props) {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="08xxxxxxxxxx"
+          maxLength={PUBLIC_LIMITS.phone}
         />
       </div>
 
@@ -224,6 +230,7 @@ export function RegistrationForm({ onSuccess }: Props) {
           value={blockNumber}
           onChange={(e) => setBlockNumber(e.target.value)}
           placeholder="Contoh: A-12"
+          maxLength={PUBLIC_LIMITS.blok}
         />
       </div>
 

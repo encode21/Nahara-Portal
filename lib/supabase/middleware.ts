@@ -56,7 +56,8 @@ export async function updateSession(request: NextRequest) {
     if (pathname === "/login" || pathname.startsWith("/login/")) {
       return NextResponse.redirect(buildOpsUrl("/login", search));
     }
-    // Landing: pengaduan hanya lihat — form buat tidak dibuka di sini
+    // Landing: form buat tetap tidak dibuka di sini (hindari spam publik)
+    // List + detail/thread boleh di nahara.id tanpa hop ke portal
     if (pathname === "/pengaduan/baru" || pathname.startsWith("/pengaduan/baru/")) {
       const url = request.nextUrl.clone();
       url.pathname = "/pengaduan";

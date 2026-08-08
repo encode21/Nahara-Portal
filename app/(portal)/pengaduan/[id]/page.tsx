@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Check, MessageCircle, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Pengaduan, PengaduanKomentar } from "@/lib/types";
@@ -20,6 +20,7 @@ import {
 } from "@/lib/constants/pengaduan";
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
 import { sharePengaduan } from "@/lib/pengaduan/share";
+import { PUBLIC_LIMITS } from "@/lib/validation/publicForms";
 
 const AVATAR_TONES = [
   "bg-[#1f4b3a] text-[#d4e8df]",
@@ -72,11 +73,13 @@ function ThreadAvatar({
 export default function PengaduanDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const router = useRouter();
   const supabase = createClient();
   const surface = useAppSurface();
   const mounted = useHasMounted();
   const { isAdmin, isStaff, user } = useAuth();
   const canManage = mounted && (isAdmin || isStaff) && surface !== "landing";
+  const canDelete = mounted && isAdmin && surface !== "landing";
   const isOps = isAdmin || isStaff;
 
   const [pengaduan, setPengaduan] = useState<Pengaduan | null>(null);
@@ -123,6 +126,23 @@ export default function PengaduanDetailPage() {
     await supabase.from("pengaduan").update({ status }).eq("id", pengaduan.id);
     setBusy(false);
     fetchData();
+  }
+
+  async function deletePengaduan() {
+    if (!canDelete || !pengaduan) return;
+    if (!confirm("Hapus pengaduan ini beserta seluruh balasan thread?")) return;
+    setBusy(true);
+    const { error: delError } = await supabase
+      .from("pengaduan")
+      .delete()
+      .eq("id", pengaduan.id);
+    setBusy(false);
+    if (delError) {
+      setError(getSupabaseErrorMessage(delError) ?? "Gagal menghapus pengaduan.");
+      return;
+    }
+    router.push("/pengaduan");
+    router.refresh();
   }
 
   async function handleReply(e: React.FormEvent) {
@@ -195,8 +215,7 @@ export default function PengaduanDetailPage() {
   }
 
   const replyCount = komentar.length;
-  const showComposer = surface !== "landing";
-  const hasThreadBelow = replyCount > 0 || showComposer;
+  const hasThreadBelow = true;
   const shareDone =
     shareLabel === "Tautan disalin" ||
     shareLabel === "Terkirim" ||
@@ -232,6 +251,8 @@ export default function PengaduanDetailPage() {
             pengaduan={pengaduan}
             busy={busy}
             size="md"
+            canDelete={canDelete}
+            onDelete={deletePengaduan}
             onUpdate={updateStatus}
           />
         </div>
@@ -292,7 +313,7 @@ export default function PengaduanDetailPage() {
 
         {/* Replies */}
         {komentar.map((k, index) => {
-          const connectAfter = index < komentar.length - 1 || showComposer;
+          const connectAfter = true;
           return (
             <div
               key={k.id}
@@ -331,97 +352,93 @@ export default function PengaduanDetailPage() {
         })}
 
         {/* Composer — field jelas untuk warga awam */}
-        {showComposer ? (
-          <form
-            onSubmit={handleReply}
-            className="border-t border-slate-200 bg-slate-50/70 px-4 py-4 sm:px-5"
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <ThreadAvatar
-                name={form.nama || (isOps ? "Pengurus" : "Warga")}
-                accent={isOps}
-                size="sm"
-              />
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {isOps ? "Balas sebagai pengurus" : "Tulis balasan Anda"}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Balasan tampil publik di thread ini
-                </p>
-              </div>
+        <form
+          onSubmit={handleReply}
+          className="border-t border-slate-200 bg-slate-50/70 px-4 py-4 sm:px-5"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <ThreadAvatar
+              name={form.nama || (isOps ? "Pengurus" : "Warga")}
+              accent={isOps}
+              size="sm"
+            />
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                {isOps ? "Balas sebagai pengurus" : "Tulis balasan Anda"}
+              </p>
+              <p className="text-xs text-slate-500">
+                Balasan tampil publik di thread ini
+              </p>
             </div>
+          </div>
 
-            {error && (
-              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+          {error && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            {!isOps ? (
+              <div>
+                <label htmlFor="reply-nama" className="label">
+                  Nama lengkap
+                </label>
+                <input
+                  id="reply-nama"
+                  className="input"
+                  value={form.nama}
+                  onChange={(e) => setForm({ ...form, nama: e.target.value })}
+                  required
+                  minLength={2}
+                  maxLength={PUBLIC_LIMITS.nama}
+                  placeholder="Contoh: Budi Santoso"
+                  autoComplete="name"
+                />
+              </div>
+            ) : (
+              <div className="rounded-lg border border-gold/20 bg-gold/5 px-3 py-2 text-sm">
+                <span className="font-semibold text-slate-900">{form.nama}</span>
+                <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
+                  Pengurus
+                </span>
               </div>
             )}
 
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              {!isOps ? (
-                <div>
-                  <label htmlFor="reply-nama" className="label">
-                    Nama lengkap
-                  </label>
-                  <input
-                    id="reply-nama"
-                    className="input"
-                    value={form.nama}
-                    onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                    required
-                    minLength={2}
-                    placeholder="Contoh: Budi Santoso"
-                    autoComplete="name"
-                  />
-                </div>
-              ) : (
-                <div className="rounded-lg border border-gold/20 bg-gold/5 px-3 py-2 text-sm">
-                  <span className="font-semibold text-slate-900">{form.nama}</span>
-                  <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
-                    Pengurus
-                  </span>
-                </div>
-              )}
-
-              <div className="border-t border-slate-100 pt-3">
-                <label htmlFor="reply-pesan" className="label">
-                  Isi balasan
-                </label>
-                <textarea
-                  id="reply-pesan"
-                  className="input min-h-[100px]"
-                  rows={4}
-                  value={form.pesan}
-                  onChange={(e) => setForm({ ...form, pesan: e.target.value })}
-                  required
-                  minLength={1}
-                  placeholder="Tulis tanggapan, informasi tambahan, atau dukungan Anda..."
-                />
-              </div>
-
-              <div className="flex justify-end border-t border-slate-100 pt-3">
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <LoadingSpinner /> Mengirim...
-                    </span>
-                  ) : (
-                    "Kirim balasan"
-                  )}
-                </button>
-              </div>
+            <div className="border-t border-slate-100 pt-3">
+              <label htmlFor="reply-pesan" className="label">
+                Isi balasan
+              </label>
+              <textarea
+                id="reply-pesan"
+                className="input min-h-[100px]"
+                rows={4}
+                value={form.pesan}
+                onChange={(e) => setForm({ ...form, pesan: e.target.value })}
+                required
+                minLength={1}
+                maxLength={PUBLIC_LIMITS.pesan}
+                placeholder="Tulis tanggapan, informasi tambahan, atau dukungan Anda..."
+              />
             </div>
-          </form>
-        ) : (
-          <div className="border-t border-slate-100 px-4 py-4 text-sm text-slate-500 sm:px-5">
-            Balas thread di portal warga atau ops Nahara.
+
+            <div className="flex justify-end border-t border-slate-100 pt-3">
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <LoadingSpinner /> Mengirim...
+                  </span>
+                ) : (
+                  "Kirim balasan"
+                )}
+              </button>
+            </div>
           </div>
-        )}
+        </form>
       </div>
 
       {/* Floating share — satu tombol, tidak memenuhi header/kartu */}

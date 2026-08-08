@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { PENGADUAN_KATEGORI } from "@/lib/constants/pengaduan";
+import { PUBLIC_LIMITS } from "@/lib/validation/publicForms";
 
 export default function PengaduanBaruPage() {
   const router = useRouter();
@@ -27,13 +28,33 @@ export default function PengaduanBaruPage() {
     setLoading(true);
     setError(null);
 
+    const nama = form.nama.trim();
+    const deskripsi = form.deskripsi.trim();
+    const blok = form.blok.trim();
+
+    if (nama.length < 2 || nama.length > PUBLIC_LIMITS.nama) {
+      setError(`Nama harus 2–${PUBLIC_LIMITS.nama} karakter.`);
+      setLoading(false);
+      return;
+    }
+    if (deskripsi.length < 3 || deskripsi.length > PUBLIC_LIMITS.deskripsi) {
+      setError(`Deskripsi harus 3–${PUBLIC_LIMITS.deskripsi} karakter.`);
+      setLoading(false);
+      return;
+    }
+    if (!PENGADUAN_KATEGORI.includes(form.kategori as (typeof PENGADUAN_KATEGORI)[number])) {
+      setError("Kategori tidak valid.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error: insertError } = await supabase
       .from("pengaduan")
       .insert({
-        nama: form.nama,
-        blok: form.blok || null,
+        nama,
+        blok: blok ? blok.slice(0, PUBLIC_LIMITS.blok) : null,
         kategori: form.kategori,
-        deskripsi: form.deskripsi,
+        deskripsi: deskripsi.slice(0, PUBLIC_LIMITS.deskripsi),
         foto_url: fotoUrl,
         status: "Baru",
       })
@@ -73,12 +94,25 @@ export default function PengaduanBaruPage() {
 
         <div>
           <label className="label">Nama</label>
-          <input className="input" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} required />
+          <input
+            className="input"
+            value={form.nama}
+            onChange={(e) => setForm({ ...form, nama: e.target.value })}
+            required
+            minLength={2}
+            maxLength={PUBLIC_LIMITS.nama}
+          />
         </div>
 
         <div>
           <label className="label">Nomor Blok</label>
-          <input className="input" placeholder="e.g. NHT-1/05" value={form.blok} onChange={(e) => setForm({ ...form, blok: e.target.value })} />
+          <input
+            className="input"
+            placeholder="e.g. NHT-1/05"
+            value={form.blok}
+            onChange={(e) => setForm({ ...form, blok: e.target.value })}
+            maxLength={PUBLIC_LIMITS.blok}
+          />
         </div>
 
         <div>
@@ -90,7 +124,15 @@ export default function PengaduanBaruPage() {
 
         <div>
           <label className="label">Deskripsi</label>
-          <textarea className="input" rows={4} value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} required />
+          <textarea
+            className="input"
+            rows={4}
+            value={form.deskripsi}
+            onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+            required
+            minLength={3}
+            maxLength={PUBLIC_LIMITS.deskripsi}
+          />
         </div>
 
         <ImageUpload
