@@ -14,7 +14,7 @@ Env production:
 NEXT_PUBLIC_LANDING_HOST=nahara.id
 NEXT_PUBLIC_PORTAL_HOST=portal.nahara.id
 NEXT_PUBLIC_OPS_HOST=ops.nahara.id
-NEXT_PUBLIC_SITE_URL=https://portal.nahara.id
+NEXT_PUBLIC_SITE_URL=https://nahara.id
 ```
 
 ## Alur

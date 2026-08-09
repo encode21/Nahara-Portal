@@ -35,10 +35,16 @@ export function StoredImage({ src, alt, className }: StoredImageProps) {
     );
   }
 
+  const objectFit = className?.includes("object-contain")
+    ? "object-contain"
+    : "object-cover";
+
+  // className (h/w/shrink/rounded) di wrapper — jangan pakai w-full kosong
+  // supaya di flex row thumbnail tidak meregang penuh lebar.
   return (
-    <span className="relative block h-full w-full overflow-hidden">
+    <span className={`relative block overflow-hidden ${className ?? ""}`}>
       {status === "loading" && (
-        <Skeleton className="absolute inset-0 z-[1] h-full w-full rounded-none" />
+        <Skeleton className="absolute inset-0 z-[1] h-full w-full rounded-[inherit]" />
       )}
       {status === "error" && (
         <span
@@ -58,7 +64,7 @@ export function StoredImage({ src, alt, className }: StoredImageProps) {
         loading="lazy"
         onLoad={() => setStatus("ready")}
         onError={() => setStatus("error")}
-        className={`${className ?? ""} ${
+        className={`h-full w-full ${objectFit} transition-opacity duration-300 ${
           status === "ready" ? "opacity-100" : "opacity-0"
         }`}
       />

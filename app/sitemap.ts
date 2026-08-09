@@ -1,58 +1,33 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/constants/brand";
+import { headers } from "next/headers";
+import { LANDING_URL } from "@/lib/constants/brand";
+import { getAppSurface, getLandingOrigin } from "@/lib/host";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/** Sitemap hanya untuk landing (nahara.id). Portal/ops mengembalikan kosong. */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const surface = getAppSurface((await headers()).get("host"));
+  if (surface !== "landing") {
+    return [];
+  }
+
+  const origin = getLandingOrigin() || LANDING_URL;
   const lastModified = new Date();
 
-  return [
-    { url: SITE_URL, lastModified, changeFrequency: "daily", priority: 1 },
-    {
-      url: `${SITE_URL}/dashboard`,
-      lastModified,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/panduan`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/panduan/warga`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/panduan/pengurus`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/pengumuman`,
-      lastModified,
-      changeFrequency: "daily",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/kegiatan`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/pengaduan`,
-      lastModified,
-      changeFrequency: "daily",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/register`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
+  const paths: {
+    path: string;
+    changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+    priority: number;
+  }[] = [
+    { path: "/", changeFrequency: "daily", priority: 1 },
+    { path: "/agustusan", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/pengumuman", changeFrequency: "daily", priority: 0.8 },
+    { path: "/pengaduan", changeFrequency: "daily", priority: 0.7 },
   ];
+
+  return paths.map(({ path, changeFrequency, priority }) => ({
+    url: path === "/" ? origin : `${origin}${path}`,
+    lastModified,
+    changeFrequency,
+    priority,
+  }));
 }
