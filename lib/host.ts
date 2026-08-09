@@ -107,6 +107,15 @@ export function isOpsPublicPath(pathname: string): boolean {
 /** Paths allowed on landing host without hop to portal. */
 export function isLandingPath(pathname: string): boolean {
   if (pathname === "/" || pathname === "") return true;
+  // SEO crawlers — jangan redirect ke portal
+  if (
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest"
+  ) {
+    return true;
+  }
   // Single-page hub Agustusan (tanpa shell portal warga)
   if (pathname === "/agustusan" || pathname.startsWith("/agustusan/")) return true;
   // Baca saja — buat/edit tetap di portal/ops
