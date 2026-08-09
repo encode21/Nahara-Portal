@@ -52,7 +52,7 @@ export default function RegisterPage() {
           {confirmed.registrationFee > 0 && (
             <p className="mt-4 text-sm text-amber-700">
               Silakan lakukan pembayaran iuran sesuai instruksi dari pengurus
-              komunitas.
+              paguyuban.
             </p>
           )}
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">

@@ -85,7 +85,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">Ringkasan komunitas Cluster Nahara</p>
+        <p className="mt-1 text-sm text-slate-400">Ringkasan paguyuban Cluster Nahara</p>
       </div>
 
       {activeEdition && <AgustusanDashboardCard edition={activeEdition} />}

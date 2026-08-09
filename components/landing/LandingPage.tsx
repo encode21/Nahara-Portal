@@ -169,7 +169,7 @@ export async function LandingPage() {
         </div>
       </section>
 
-      {/* Pintasan komunitas */}
+      {/* Pintasan paguyuban */}
       <section className="bg-[#f3f1ec] px-5 py-12 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-5xl">
           <h2 className="font-display text-xl font-bold text-slate-900 sm:text-2xl">

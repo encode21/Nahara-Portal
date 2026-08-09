@@ -15,11 +15,47 @@ import {
   type GalleryCategory,
 } from "@/lib/constants/agustusan";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
-import { LoadingSpinner } from "@/components/ui/Loading";
+import { Skeleton } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 
 type FilterKey = "all" | GalleryCategory;
 type MediaTab = GalleryMediaType;
+
+function GaleriSkeleton() {
+  return (
+    <div className="space-y-8" role="status" aria-busy="true" aria-label="Memuat galeri">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-9 w-64 sm:w-80" />
+          <Skeleton className="h-4 w-56 sm:w-72" />
+        </div>
+        <Skeleton className="h-4 w-48" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-10 w-24 rounded-lg" />
+        <Skeleton className="h-10 w-24 rounded-lg" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-20 rounded-lg" />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="overflow-hidden">
+            <Skeleton className="aspect-[4/3] w-full rounded-none" />
+            <Skeleton className="mt-0 h-8 w-full rounded-none bg-slate-100" />
+          </div>
+        ))}
+      </div>
+      <span className="sr-only">Memuat galeri…</span>
+    </div>
+  );
+}
 
 function asGalleryItem(
   item: EventGalleryItem
@@ -131,11 +167,7 @@ export default function GaleriDokumentasiPage() {
   const driveUrl = normalizeGoogleDriveUrl(edition?.gallery_drive_url);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <LoadingSpinner className="h-8 w-8" />
-      </div>
-    );
+    return <GaleriSkeleton />;
   }
 
   if (!edition) {

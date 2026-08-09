@@ -1,6 +1,6 @@
 # Nahara — Portal Cluster
 
-Portal web modern untuk mengelola kegiatan komunitas, pendaftaran warga, dan kas komunitas perumahan Nahara.
+Portal web modern untuk mengelola kegiatan paguyuban, pendaftaran warga, dan kas paguyuban perumahan Nahara.
 
 ## Tech Stack
 
@@ -88,7 +88,7 @@ Framework preset: **Next.js** (auto-detected)
 ## Database Schema
 
 ```sql
-activities       — kegiatan komunitas
+activities       — kegiatan paguyuban
 participants     — peserta per kegiatan
 kas_entries      — transaksi kas (pemasukan/pengeluaran)
 ```
@@ -114,4 +114,4 @@ supabase/
 
 ## Lisensi
 
-Private — Komunitas Nahara
+Private — Paguyuban Nahara

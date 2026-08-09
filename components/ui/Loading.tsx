@@ -23,6 +23,15 @@ export function LoadingSpinner({ className = "h-5 w-5" }: { className?: string }
   );
 }
 
+export function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-slate-200/80 ${className}`}
+      aria-hidden
+    />
+  );
+}
+
 export function PageLoading() {
   return (
     <div className="flex min-h-[200px] items-center justify-center">

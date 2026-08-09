@@ -69,7 +69,7 @@ export default function ActivitiesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Kegiatan</h1>
-          <p className="mt-1 text-slate-500">Kelola kegiatan komunitas</p>
+          <p className="mt-1 text-slate-500">Kelola kegiatan paguyuban</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/activities/agustusan" className="btn-secondary">
@@ -95,7 +95,7 @@ export default function ActivitiesPage() {
       ) : activities.length === 0 ? (
         <EmptyState
           title="Belum ada kegiatan"
-          description="Buat kegiatan pertama untuk komunitas."
+          description="Buat kegiatan pertama untuk paguyuban."
           action={
             <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
               Tambah Kegiatan

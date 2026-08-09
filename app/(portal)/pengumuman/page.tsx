@@ -109,8 +109,8 @@ export default function PengumumanPage() {
           <h1 className="font-display text-2xl font-bold text-slate-900">Pengumuman</h1>
           <p className="mt-1 text-sm text-slate-500">
             {readOnly
-              ? "Informasi resmi komunitas Cluster Nahara"
-              : "Informasi resmi komunitas — ketuk kartu untuk detail"}
+              ? "Informasi resmi paguyuban Cluster Nahara"
+              : "Informasi resmi paguyuban — ketuk kartu untuk detail"}
           </p>
         </div>
         {canManage && (

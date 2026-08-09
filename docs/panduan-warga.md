@@ -3,7 +3,7 @@
 Panduan ini untuk **warga biasa**. Anda **tidak perlu membuat akun** atau login untuk memakai fitur di bawah.
 
 **Alamat portal warga:** [https://portal.nahara.id](https://portal.nahara.id)  
-Beranda publik Cluster Nahara: [https://nahara.id](https://nahara.id) — menampilkan kegiatan dan informasi komunitas.  
+Beranda publik Cluster Nahara: [https://nahara.id](https://nahara.id) — menampilkan kegiatan dan informasi paguyuban.  
 Masuk pengurus (bila diperlukan): [https://ops.nahara.id/login](https://ops.nahara.id/login).
 
 ---

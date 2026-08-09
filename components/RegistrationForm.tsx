@@ -135,7 +135,7 @@ export function RegistrationForm({ onSuccess }: Props) {
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Form Pendaftaran</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Isi data di bawah untuk mendaftar kegiatan komunitas.
+          Isi data di bawah untuk mendaftar kegiatan paguyuban.
         </p>
       </div>
 

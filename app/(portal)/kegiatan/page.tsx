@@ -57,7 +57,7 @@ export default function KegiatanPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-slate-900">Kegiatan</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Lihat semua kegiatan komunitas dan daftar sebagai peserta.
+            Lihat semua kegiatan paguyuban dan daftar sebagai peserta.
           </p>
         </div>
         <div className="flex gap-2">

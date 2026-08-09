@@ -72,7 +72,7 @@ export default function KasPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Kas Komunitas</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Kas Paguyuban</h1>
           <p className="mt-1 text-slate-500">Catat pemasukan dan pengeluaran</p>
         </div>
         <div className="flex flex-wrap gap-2">
