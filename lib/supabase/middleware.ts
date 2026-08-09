@@ -14,6 +14,7 @@ import {
   buildPortalUrl,
   getAppSurface,
   isLandingPath,
+  isLegacySpamPath,
   isOpsPublicPath,
 } from "@/lib/host";
 
@@ -53,6 +54,13 @@ export async function updateSession(request: NextRequest) {
 
   // --- Landing: nahara.id ---
   if (surface === "landing") {
+    // Jejak spam/PHP lama — 410 Gone (bukan redirect ke portal)
+    if (isLegacySpamPath(pathname)) {
+      return new NextResponse("Gone", {
+        status: 410,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
     if (pathname === "/login" || pathname.startsWith("/login/")) {
       return NextResponse.redirect(buildOpsUrl("/login", search));
     }

@@ -127,3 +127,24 @@ export function isLandingPath(pathname: string): boolean {
   }
   return false;
 }
+
+/**
+ * Jejak situs PHP / SEO spam lama di domain (saiga, *.php, dll).
+ * Harus 410 di landing — jangan di-redirect ke portal.
+ */
+export function isLegacySpamPath(pathname: string): boolean {
+  const p = pathname.toLowerCase();
+  if (p.endsWith(".php") || p.includes(".php/")) return true;
+  if (p === "/saiga" || p.startsWith("/saiga/")) return true;
+  // CMS leftovers yang sering jadi target spam
+  if (
+    p.startsWith("/wp-admin") ||
+    p.startsWith("/wp-content") ||
+    p.startsWith("/wp-includes") ||
+    p === "/xmlrpc.php" ||
+    p === "/wlwmanifest.xml"
+  ) {
+    return true;
+  }
+  return false;
+}
