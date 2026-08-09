@@ -175,6 +175,8 @@ export type EventEdition = {
   status: EventEditionStatus;
   activity_id: string | null;
   campaign_id: string | null;
+  /** Folder arsip Google Drive (canonical https://drive.google.com/drive/folders/…) */
+  gallery_drive_url: string | null;
   created_at: string;
 };
 
@@ -221,10 +223,16 @@ export type EventContestResult = {
   created_at: string;
 };
 
+export type GalleryMediaType = "image" | "video";
+
 export type EventGalleryItem = {
   id: string;
   edition_id: string;
+  /** Foto, atau poster untuk video */
   image_url: string;
+  media_type: GalleryMediaType;
+  /** URL MP4 di storage bila media_type = video */
+  video_url: string | null;
   caption: string | null;
   /** dokumentasi | twibbon | lomba | malam_puncak | persiapan */
   category: string;

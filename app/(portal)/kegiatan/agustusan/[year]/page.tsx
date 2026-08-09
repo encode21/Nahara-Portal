@@ -4,9 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images, Camera } from "lucide-react";
+import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images, Camera, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Activity, DonasiCampaign, EventContest, EventEdition, Participant } from "@/lib/types";
+import type {
+  Activity,
+  DonasiCampaign,
+  EventContest,
+  EventEdition,
+  EventGalleryItem,
+  Participant,
+} from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import {
   AGUSTUSAN_ACTIVITY_ID,
@@ -17,6 +24,7 @@ import {
   AGUSTUSAN_YEAR,
   CONTEST_CATEGORY_LABELS,
 } from "@/lib/constants/agustusan";
+import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { AgustusanFab } from "@/components/agustusan/AgustusanFab";
 
@@ -32,6 +40,7 @@ export default function AgustusanEditionPage() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [campaign, setCampaign] = useState<DonasiCampaign | null>(null);
   const [donors, setDonors] = useState<Donor[]>([]);
+  const [teaserVideo, setTeaserVideo] = useState<EventGalleryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -66,7 +75,7 @@ export default function AgustusanEditionPage() {
         editionRow.campaign_id ??
         (editionRow.year === AGUSTUSAN_YEAR ? AGUSTUSAN_CAMPAIGN_ID : null);
 
-      const [contestsRes, activityRes, campaignRes] = await Promise.all([
+      const [contestsRes, activityRes, campaignRes, teaserRes] = await Promise.all([
         supabase
           .from("event_contests")
           .select("*")
@@ -78,10 +87,21 @@ export default function AgustusanEditionPage() {
         campaignId
           ? supabase.from("donasi_campaign").select("*").eq("id", campaignId).maybeSingle()
           : Promise.resolve({ data: null }),
+        supabase
+          .from("event_gallery_items")
+          .select("*")
+          .eq("edition_id", editionRow.id)
+          .eq("is_published", true)
+          .eq("media_type", "video")
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
       let activityData = (activityRes.data ?? null) as Activity | null;
       let campaignData = (campaignRes.data ?? null) as DonasiCampaign | null;
+      setTeaserVideo((teaserRes.data as EventGalleryItem | null) ?? null);
 
       if (!campaignData && editionRow.year === AGUSTUSAN_YEAR) {
         const { data: byTitle } = await supabase
@@ -169,6 +189,9 @@ export default function AgustusanEditionPage() {
     ? formatDateTime(edition.registration_closes_at)
     : null;
   const showMedia = year === 2026;
+  const driveUrl = normalizeGoogleDriveUrl(edition.gallery_drive_url);
+  const teaserSrc = teaserVideo?.video_url ?? AGUSTUSAN_MEDIA.video;
+  const teaserPoster = teaserVideo?.image_url ?? AGUSTUSAN_MEDIA.videoPoster;
 
   return (
     <div className="-mx-4 -mt-6 overflow-x-clip lg:-mx-6 lg:-mt-8">
@@ -280,13 +303,14 @@ export default function AgustusanEditionPage() {
               <p className="text-sm text-slate-600">Cuplikan suasana Cluster Nahara menyambut HUT RI.</p>
               <div className="overflow-hidden rounded-2xl bg-black shadow-sm">
                 <video
+                  key={teaserSrc}
                   className="aspect-video w-full"
                   controls
                   playsInline
                   preload="metadata"
-                  poster={AGUSTUSAN_MEDIA.videoPoster}
+                  poster={teaserPoster}
                 >
-                  <source src={AGUSTUSAN_MEDIA.video} type="video/mp4" />
+                  <source src={teaserSrc} type="video/mp4" />
                   Browser Anda tidak mendukung pemutar video.
                 </video>
               </div>
@@ -298,12 +322,25 @@ export default function AgustusanEditionPage() {
                   <h2 className="font-display text-2xl font-bold text-slate-900">Galeri</h2>
                   <p className="text-sm text-slate-600">Suasana cluster & semangat Agustusan.</p>
                 </div>
-                <Link
-                  href={`/kegiatan/agustusan/${year}/galeri`}
-                  className="inline-flex text-sm font-medium text-[#9a7b2e] hover:underline"
-                >
-                  Lihat galeri / dokumentasi →
-                </Link>
+                <div className="flex flex-col items-start gap-1 sm:items-end">
+                  <Link
+                    href={`/kegiatan/agustusan/${year}/galeri`}
+                    className="inline-flex text-sm font-medium text-[#9a7b2e] hover:underline"
+                  >
+                    Lihat galeri / dokumentasi →
+                  </Link>
+                  {driveUrl && (
+                    <a
+                      href={driveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-[#9a7b2e] hover:underline"
+                    >
+                      Arsip Google Drive
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {AGUSTUSAN_MEDIA.gallery.slice(0, 3).map((img) => (

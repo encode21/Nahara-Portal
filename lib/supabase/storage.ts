@@ -2,12 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const UPLOAD_BUCKET = "nahara-uploads";
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ] as const;
+export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"] as const;
 
 export type UploadFolder = "kegiatan" | "pengumuman" | "pengaduan" | "agustusan";
 
@@ -23,6 +25,8 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
 };
 
 function publicObjectMarker(): string {
@@ -93,6 +97,30 @@ async function sniffImageMime(file: File): Promise<string | null> {
   return null;
 }
 
+async function sniffVideoMime(file: File): Promise<string | null> {
+  const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (buf.length < 8) return null;
+  // ISO BMFF (mp4/m4v/mov): ....ftyp
+  if (
+    buf[4] === 0x66 &&
+    buf[5] === 0x74 &&
+    buf[6] === 0x79 &&
+    buf[7] === 0x70
+  ) {
+    return "video/mp4";
+  }
+  // WebM / Matroska EBML
+  if (
+    buf[0] === 0x1a &&
+    buf[1] === 0x45 &&
+    buf[2] === 0xdf &&
+    buf[3] === 0xa3
+  ) {
+    return "video/webm";
+  }
+  return null;
+}
+
 export async function validateImageFile(file: File): Promise<string | null> {
   if (file.size > MAX_IMAGE_BYTES) {
     return "Ukuran maksimal 5 MB.";
@@ -111,6 +139,28 @@ export async function validateImageFile(file: File): Promise<string | null> {
   return null;
 }
 
+export async function validateVideoFile(file: File): Promise<string | null> {
+  if (file.size > MAX_VIDEO_BYTES) {
+    return "Ukuran video maksimal 50 MB.";
+  }
+  const sniffed = await sniffVideoMime(file);
+  if (
+    !sniffed ||
+    !ALLOWED_VIDEO_TYPES.includes(sniffed as (typeof ALLOWED_VIDEO_TYPES)[number])
+  ) {
+    return "Format video harus MP4 atau WebM.";
+  }
+  if (
+    file.type &&
+    file.type !== "application/octet-stream" &&
+    ALLOWED_VIDEO_TYPES.includes(file.type as (typeof ALLOWED_VIDEO_TYPES)[number]) &&
+    file.type !== sniffed
+  ) {
+    return "Tipe file tidak cocok dengan isi video.";
+  }
+  return null;
+}
+
 function extensionForMime(mime: string): string {
   return MIME_TO_EXT[mime] ?? "jpg";
 }
@@ -124,6 +174,38 @@ export async function uploadPortalImage(
   if (validation) return { url: null, error: validation };
 
   const sniffed = (await sniffImageMime(file))!;
+  const ext = extensionForMime(sniffed);
+  const path = `${folder}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(UPLOAD_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: sniffed,
+    });
+
+  if (uploadError) {
+    return { url: null, error: uploadError.message };
+  }
+
+  const { data } = supabase.storage.from(UPLOAD_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, error: null };
+}
+
+/** Video upload — intended for agustusan highlights only. */
+export async function uploadPortalVideo(
+  supabase: SupabaseClient,
+  file: File,
+  folder: UploadFolder = "agustusan"
+): Promise<{ url: string | null; error: string | null }> {
+  if (folder !== "agustusan") {
+    return { url: null, error: "Upload video hanya untuk folder agustusan." };
+  }
+  const validation = await validateVideoFile(file);
+  if (validation) return { url: null, error: validation };
+
+  const sniffed = (await sniffVideoMime(file))!;
   const ext = extensionForMime(sniffed);
   const path = `${folder}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 

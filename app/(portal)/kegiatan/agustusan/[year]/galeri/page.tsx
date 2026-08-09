@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Images } from "lucide-react";
+import { ExternalLink, Images, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { EventEdition, EventGalleryItem } from "@/lib/types";
+import type { EventEdition, EventGalleryItem, GalleryMediaType } from "@/lib/types";
 import {
   AGUSTUSAN_MEDIA,
   AGUSTUSAN_YEAR,
@@ -14,10 +14,22 @@ import {
   GALLERY_CATEGORY_LABELS,
   type GalleryCategory,
 } from "@/lib/constants/agustusan";
+import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 
 type FilterKey = "all" | GalleryCategory;
+type MediaTab = GalleryMediaType;
+
+function asGalleryItem(
+  item: EventGalleryItem
+): EventGalleryItem {
+  return {
+    ...item,
+    media_type: item.media_type === "video" ? "video" : "image",
+    video_url: item.video_url ?? null,
+  };
+}
 
 export default function GaleriDokumentasiPage() {
   const params = useParams();
@@ -28,6 +40,7 @@ export default function GaleriDokumentasiPage() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<EventGalleryItem | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [mediaTab, setMediaTab] = useState<MediaTab>("image");
 
   useEffect(() => {
     async function load() {
@@ -59,6 +72,8 @@ export default function GaleriDokumentasiPage() {
               id: `local-${i}`,
               edition_id: editionRow.id,
               image_url: g.src,
+              media_type: "image" as const,
+              video_url: null,
               caption: g.alt,
               category: "dokumentasi",
               sort_order: i,
@@ -70,7 +85,7 @@ export default function GaleriDokumentasiPage() {
           setItems([]);
         }
       } else {
-        setItems(data as EventGalleryItem[]);
+        setItems((data as EventGalleryItem[]).map(asGalleryItem));
       }
       setLoading(false);
     }
@@ -78,20 +93,32 @@ export default function GaleriDokumentasiPage() {
     if (Number.isFinite(year)) load();
   }, [supabase, year]);
 
+  const imageItems = useMemo(
+    () => items.filter((i) => i.media_type !== "video"),
+    [items]
+  );
+  const videoItems = useMemo(
+    () => items.filter((i) => i.media_type === "video"),
+    [items]
+  );
+  const tabItems = mediaTab === "video" ? videoItems : imageItems;
+
   const counts = useMemo(() => {
-    const map: Record<string, number> = { all: items.length };
+    const map: Record<string, number> = { all: tabItems.length };
     for (const c of GALLERY_CATEGORIES) map[c] = 0;
-    for (const item of items) {
+    for (const item of tabItems) {
       const key = item.category in map ? item.category : "dokumentasi";
       map[key] = (map[key] ?? 0) + 1;
     }
     return map;
-  }, [items]);
+  }, [tabItems]);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return items;
-    return items.filter((item) => item.category === filter);
-  }, [filter, items]);
+    if (filter === "all") return tabItems;
+    return tabItems.filter((item) => item.category === filter);
+  }, [filter, tabItems]);
+
+  const driveUrl = normalizeGoogleDriveUrl(edition?.gallery_drive_url);
 
   if (loading) {
     return (
@@ -115,23 +142,68 @@ export default function GaleriDokumentasiPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <Link
-          href={`/kegiatan/agustusan/${year}`}
-          className="text-sm text-slate-500 hover:text-accent"
-        >
-          ← {edition.title}
-        </Link>
-        <h1 className="mt-2 flex items-center gap-2 font-display text-3xl font-bold text-slate-900">
-          <Images className="h-7 w-7 text-[#9b1b23]" />
-          Galeri & Dokumentasi
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Dokumentasi visual Agustusan {edition.year} Cluster Nahara.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Link
+            href={`/kegiatan/agustusan/${year}`}
+            className="text-sm text-slate-500 hover:text-accent"
+          >
+            ← {edition.title}
+          </Link>
+          <h1 className="mt-2 flex items-center gap-2 font-display text-3xl font-bold text-slate-900">
+            <Images className="h-7 w-7 text-[#9b1b23]" />
+            Galeri & Dokumentasi
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Dokumentasi visual Agustusan {edition.year} Cluster Nahara.
+          </p>
+        </div>
+        {driveUrl && (
+          <a
+            href={driveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9a7b2e] hover:underline"
+          >
+            Arsip lengkap di Google Drive
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
       </div>
 
-      {items.length > 0 && (
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { id: "image" as const, label: "Foto", count: imageItems.length },
+            { id: "video" as const, label: "Video", count: videoItems.length },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setMediaTab(tab.id);
+              setFilter("all");
+            }}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              mediaTab === tab.id
+                ? "bg-[#9b1b23] text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {tab.label}
+            <span
+              className={`ml-1.5 tabular-nums ${
+                mediaTab === tab.id ? "text-white/80" : "text-slate-500"
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {tabItems.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {chips.map(({ key, label }) => {
             const count = counts[key] ?? 0;
@@ -144,12 +216,16 @@ export default function GaleriDokumentasiPage() {
                 onClick={() => setFilter(key)}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                   selected
-                    ? "bg-[#9b1b23] text-white"
+                    ? "bg-slate-800 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 {label}
-                <span className={`ml-1.5 tabular-nums ${selected ? "text-white/80" : "text-slate-500"}`}>
+                <span
+                  className={`ml-1.5 tabular-nums ${
+                    selected ? "text-white/80" : "text-slate-500"
+                  }`}
+                >
                   {count}
                 </span>
               </button>
@@ -160,14 +236,36 @@ export default function GaleriDokumentasiPage() {
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm text-slate-500">
-          {items.length === 0
-            ? "Belum ada foto di galeri. Panitia bisa mengunggah dari menu Kelola Agustusan."
-            : "Tidak ada foto di kategori ini."}
+          {tabItems.length === 0 ? (
+            <>
+              {mediaTab === "video"
+                ? "Belum ada video highlight di portal."
+                : "Belum ada foto di galeri."}
+              {driveUrl && (
+                <>
+                  {" "}
+                  Lihat arsip di{" "}
+                  <a
+                    href={driveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#9a7b2e] hover:underline"
+                  >
+                    Google Drive
+                  </a>
+                  .
+                </>
+              )}
+            </>
+          ) : (
+            `Tidak ada ${mediaTab === "video" ? "video" : "foto"} di kategori ini.`
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
           {filtered.map((item) => {
             const isLocal = item.image_url.startsWith("/");
+            const isVideo = item.media_type === "video";
             return (
               <button
                 key={item.id}
@@ -189,6 +287,13 @@ export default function GaleriDokumentasiPage() {
                     alt={item.caption ?? "Dokumentasi"}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                   />
+                )}
+                {isVideo && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="rounded-full bg-black/55 p-3 text-white shadow-sm">
+                      <Play className="h-6 w-6 fill-current" />
+                    </span>
+                  </span>
                 )}
                 {item.caption && (
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6 text-xs text-white opacity-0 transition group-hover:opacity-100 sm:opacity-100">
@@ -212,7 +317,18 @@ export default function GaleriDokumentasiPage() {
             className="relative max-h-[90vh] w-full max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {active.image_url.startsWith("/") ? (
+            {active.media_type === "video" && active.video_url ? (
+              <video
+                className="max-h-[80vh] w-full bg-black"
+                controls
+                autoPlay
+                playsInline
+                poster={active.image_url}
+                src={active.video_url}
+              >
+                Browser Anda tidak mendukung pemutar video.
+              </video>
+            ) : active.image_url.startsWith("/") ? (
               <Image
                 src={active.image_url}
                 alt={active.caption ?? "Dokumentasi"}

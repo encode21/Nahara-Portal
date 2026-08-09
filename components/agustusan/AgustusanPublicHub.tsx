@@ -9,8 +9,10 @@ import {
   Check,
   ChevronDown,
   Copy,
+  ExternalLink,
   HeartHandshake,
   Images,
+  Play,
   Trophy,
   Users,
 } from "lucide-react";
@@ -39,6 +41,7 @@ import type {
   Participant,
 } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 type ResultRow = EventContestResult & { contest?: EventContest | null };
@@ -61,6 +64,7 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
   const [copied, setCopied] = useState(false);
   const [openContestId, setOpenContestId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<EventGalleryItem | null>(null);
+  const [galleryMediaTab, setGalleryMediaTab] = useState<"image" | "video">("image");
 
   useEffect(() => {
     async function load() {
@@ -172,7 +176,14 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
         );
       }
 
-      const galleryRows = (galleryRes.data ?? []) as EventGalleryItem[];
+      const galleryRows = ((galleryRes.data ?? []) as EventGalleryItem[]).map(
+        (item) => ({
+          ...item,
+          media_type:
+            item.media_type === "video" ? ("video" as const) : ("image" as const),
+          video_url: item.video_url ?? null,
+        })
+      );
       if (galleryRows.length > 0) {
         setGallery(galleryRows);
       } else if (year === AGUSTUSAN_YEAR) {
@@ -181,6 +192,8 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
             id: `local-${i}`,
             edition_id: editionRow.id,
             image_url: g.src,
+            media_type: "image" as const,
+            video_url: null,
             caption: g.alt,
             category: "dokumentasi",
             sort_order: i,
@@ -251,6 +264,14 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
     : null;
   const showMedia = year === AGUSTUSAN_YEAR;
   const days = groupContestsByDay(contests);
+  const driveUrl = normalizeGoogleDriveUrl(edition.gallery_drive_url);
+  const galleryImages = gallery.filter((g) => g.media_type !== "video");
+  const galleryVideos = gallery.filter((g) => g.media_type === "video");
+  const galleryTabItems =
+    galleryMediaTab === "video" ? galleryVideos : galleryImages;
+  const teaserVideo = galleryVideos[0] ?? null;
+  const teaserSrc = teaserVideo?.video_url ?? AGUSTUSAN_MEDIA.video;
+  const teaserPoster = teaserVideo?.image_url ?? AGUSTUSAN_MEDIA.videoPoster;
 
   const byContest = new Map<string, ResultRow[]>();
   for (const r of results) {
@@ -371,13 +392,14 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
             </p>
             <div className="overflow-hidden rounded-2xl bg-black shadow-sm">
               <video
+                key={teaserSrc}
                 className="aspect-video w-full"
                 controls
                 playsInline
                 preload="metadata"
-                poster={AGUSTUSAN_MEDIA.videoPoster}
+                poster={teaserPoster}
               >
-                <source src={AGUSTUSAN_MEDIA.video} type="video/mp4" />
+                <source src={teaserSrc} type="video/mp4" />
                 Browser Anda tidak mendukung pemutar video.
               </video>
             </div>
@@ -503,19 +525,83 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
         </section>
 
         <section id="galeri" className="scroll-mt-24 space-y-4">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-slate-900">
-              Galeri & Dokumentasi
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Suasana cluster & semangat Agustusan.
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-slate-900">
+                Galeri & Dokumentasi
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Suasana cluster & semangat Agustusan.
+              </p>
+            </div>
+            {driveUrl && (
+              <a
+                href={driveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9a7b2e] hover:underline"
+              >
+                Arsip lengkap di Google Drive
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
-          {gallery.length === 0 ? (
-            <p className="text-sm text-slate-500">Belum ada foto di galeri.</p>
+
+          {(galleryImages.length > 0 || galleryVideos.length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { id: "image" as const, label: "Foto", count: galleryImages.length },
+                  { id: "video" as const, label: "Video", count: galleryVideos.length },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setGalleryMediaTab(tab.id)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                    galleryMediaTab === tab.id
+                      ? "bg-[#9b1b23] text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {tab.label}
+                  <span
+                    className={`ml-1.5 tabular-nums ${
+                      galleryMediaTab === tab.id ? "text-white/80" : "text-slate-500"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {galleryTabItems.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {galleryMediaTab === "video"
+                ? "Belum ada video highlight."
+                : "Belum ada foto di galeri."}
+              {driveUrl && (
+                <>
+                  {" "}
+                  Buka{" "}
+                  <a
+                    href={driveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#9a7b2e] hover:underline"
+                  >
+                    arsip Google Drive
+                  </a>
+                  .
+                </>
+              )}
+            </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {gallery.map((item) => (
+              {galleryTabItems.map((item) => (
                 <button
                   key={item.id}
                   type="button"
@@ -536,6 +622,13 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
                       alt={item.caption || "Galeri Agustusan"}
                       className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
                     />
+                  )}
+                  {item.media_type === "video" && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="rounded-full bg-black/55 p-3 text-white">
+                        <Play className="h-5 w-5 fill-current" />
+                      </span>
+                    </span>
                   )}
                 </button>
               ))}
@@ -658,7 +751,18 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
             className="relative max-h-[85vh] w-full max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {lightbox.image_url.startsWith("/") ? (
+            {lightbox.media_type === "video" && lightbox.video_url ? (
+              <video
+                className="max-h-[80vh] w-full bg-black"
+                controls
+                autoPlay
+                playsInline
+                poster={lightbox.image_url}
+                src={lightbox.video_url}
+              >
+                Browser Anda tidak mendukung pemutar video.
+              </video>
+            ) : lightbox.image_url.startsWith("/") ? (
               <Image
                 src={lightbox.image_url}
                 alt={lightbox.caption || "Galeri Agustusan"}

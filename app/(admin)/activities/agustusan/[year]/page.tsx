@@ -10,6 +10,7 @@ import type {
   EventContestResult,
   EventEdition,
   EventGalleryItem,
+  GalleryMediaType,
 } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import {
@@ -22,7 +23,8 @@ import {
 } from "@/lib/constants/agustusan";
 import { entryLabel } from "@/lib/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
-import { uploadPortalImage, removePortalImage } from "@/lib/supabase/storage";
+import { uploadPortalImage, uploadPortalVideo, removePortalImage } from "@/lib/supabase/storage";
+import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 import {
@@ -66,7 +68,11 @@ export default function AdminEditionPage() {
   const [galleryCaption, setGalleryCaption] = useState("");
   const [galleryCategory, setGalleryCategory] =
     useState<GalleryCategory>("dokumentasi");
+  const [galleryMediaType, setGalleryMediaType] =
+    useState<GalleryMediaType>("image");
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [driveUrlDraft, setDriveUrlDraft] = useState("");
+  const [savingDrive, setSavingDrive] = useState(false);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
   const editing = contests.find((c) => c.id === editingId) ?? null;
@@ -93,6 +99,7 @@ export default function AdminEditionPage() {
     const editionRow = (ed ?? null) as EventEdition | null;
     setEdition(editionRow);
     setSopText(editionRow?.sop_text ?? "");
+    setDriveUrlDraft(editionRow?.gallery_drive_url ?? "");
     if (!editionRow) {
       setLoading(false);
       return;
@@ -324,47 +331,146 @@ export default function AdminEditionPage() {
     setMessage("Pengumuman dibuat di menu Pengumuman.");
   }
 
+  async function saveGalleryDriveUrl() {
+    if (!edition) return;
+    setError(null);
+    const raw = driveUrlDraft.trim();
+    let normalized: string | null = null;
+    if (raw) {
+      normalized = normalizeGoogleDriveUrl(raw);
+      if (!normalized) {
+        setError(
+          "URL Google Drive tidak valid. Gunakan link folder (drive.google.com)."
+        );
+        return;
+      }
+    }
+    setSavingDrive(true);
+    const { error: err } = await supabase
+      .from("event_editions")
+      .update({ gallery_drive_url: normalized })
+      .eq("id", edition.id);
+    setSavingDrive(false);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal simpan link Drive");
+      return;
+    }
+    setEdition({ ...edition, gallery_drive_url: normalized });
+    setDriveUrlDraft(normalized ?? "");
+    setMessage(
+      normalized
+        ? "Link folder Google Drive disimpan."
+        : "Link Google Drive dikosongkan."
+    );
+  }
+
   async function handleGalleryUpload(files: FileList | null) {
     if (!edition || !files?.length) return;
     setError(null);
     setGalleryUploading(true);
     let ok = 0;
-    for (const file of Array.from(files)) {
-      const { url, error: uploadError } = await uploadPortalImage(
+
+    if (galleryMediaType === "video") {
+      const videoFile = files[0];
+      const posterInput = document.getElementById(
+        "gallery-video-poster"
+      ) as HTMLInputElement | null;
+      const posterFile = posterInput?.files?.[0] ?? null;
+      if (!posterFile) {
+        setError("Video perlu poster (gambar thumbnail).");
+        setGalleryUploading(false);
+        return;
+      }
+
+      const { url: videoUrl, error: videoErr } = await uploadPortalVideo(
         supabase,
-        file,
+        videoFile,
         "agustusan"
       );
-      if (uploadError || !url) {
-        setError(uploadError ?? "Gagal upload");
-        continue;
+      if (videoErr || !videoUrl) {
+        setError(videoErr ?? "Gagal upload video");
+        setGalleryUploading(false);
+        return;
       }
+
+      const { url: posterUrl, error: posterErr } = await uploadPortalImage(
+        supabase,
+        posterFile,
+        "agustusan"
+      );
+      if (posterErr || !posterUrl) {
+        await removePortalImage(supabase, videoUrl);
+        setError(posterErr ?? "Gagal upload poster");
+        setGalleryUploading(false);
+        return;
+      }
+
       const nextOrder =
-        gallery.reduce((m, g) => Math.max(m, g.sort_order), 0) + 1 + ok;
+        gallery.reduce((m, g) => Math.max(m, g.sort_order), 0) + 1;
       const { error: err } = await supabase.from("event_gallery_items").insert({
         edition_id: edition.id,
-        image_url: url,
+        media_type: "video",
+        image_url: posterUrl,
+        video_url: videoUrl,
         caption: galleryCaption.trim() || null,
         category: galleryCategory,
         sort_order: nextOrder,
         is_published: true,
       });
       if (err) {
-        setError(getSupabaseErrorMessage(err) ?? "Gagal simpan galeri");
-        continue;
+        await removePortalImage(supabase, videoUrl);
+        await removePortalImage(supabase, posterUrl);
+        setError(getSupabaseErrorMessage(err) ?? "Gagal simpan video");
+        setGalleryUploading(false);
+        return;
       }
-      ok += 1;
+      ok = 1;
+      if (posterInput) posterInput.value = "";
+    } else {
+      for (const file of Array.from(files)) {
+        const { url, error: uploadError } = await uploadPortalImage(
+          supabase,
+          file,
+          "agustusan"
+        );
+        if (uploadError || !url) {
+          setError(uploadError ?? "Gagal upload");
+          continue;
+        }
+        const nextOrder =
+          gallery.reduce((m, g) => Math.max(m, g.sort_order), 0) + 1 + ok;
+        const { error: err } = await supabase.from("event_gallery_items").insert({
+          edition_id: edition.id,
+          media_type: "image",
+          image_url: url,
+          video_url: null,
+          caption: galleryCaption.trim() || null,
+          category: galleryCategory,
+          sort_order: nextOrder,
+          is_published: true,
+        });
+        if (err) {
+          setError(getSupabaseErrorMessage(err) ?? "Gagal simpan galeri");
+          continue;
+        }
+        ok += 1;
+      }
     }
+
     setGalleryCaption("");
     setGalleryUploading(false);
     if (ok) {
-      setMessage(`${ok} foto ditambahkan ke galeri.`);
+      setMessage(
+        galleryMediaType === "video"
+          ? "Video ditambahkan ke galeri."
+          : `${ok} foto ditambahkan ke galeri.`
+      );
       await loadGallery(edition.id);
     }
   }
 
   async function deleteGalleryItem(item: EventGalleryItem) {
-    if (!confirm("Hapus foto ini dari galeri?")) return;
+    if (!confirm("Hapus item ini dari galeri?")) return;
     setError(null);
     const { error: err } = await supabase
       .from("event_gallery_items")
@@ -377,8 +483,11 @@ export default function AdminEditionPage() {
     if (item.image_url.includes("/storage/")) {
       await removePortalImage(supabase, item.image_url);
     }
+    if (item.video_url?.includes("/storage/")) {
+      await removePortalImage(supabase, item.video_url);
+    }
     if (edition) await loadGallery(edition.id);
-    setMessage("Foto dihapus.");
+    setMessage("Item galeri dihapus.");
   }
 
   async function toggleGalleryPublish(item: EventGalleryItem) {
@@ -766,9 +875,35 @@ export default function AdminEditionPage() {
 
       {tab === "galeri" && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+            <div>
+              <label className="label">Folder arsip Google Drive</label>
+              <p className="mb-2 text-xs text-slate-500">
+                Satu link folder untuk warga (isi subfolder Foto & Video di Drive).
+                Pastikan share: Anyone with the link can view.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  className="input flex-1"
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  value={driveUrlDraft}
+                  onChange={(e) => setDriveUrlDraft(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn-secondary shrink-0"
+                  disabled={savingDrive}
+                  onClick={saveGalleryDriveUrl}
+                >
+                  {savingDrive ? "Menyimpan…" : "Simpan link Drive"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-sm text-slate-600">
-              Upload dokumentasi (bisa banyak file sekaligus). Tampil di{" "}
+              Highlight portal (foto/video singkat). Arsip lengkap tetap di Drive. Tampil di{" "}
               <Link
                 href={`/kegiatan/agustusan/${year}/galeri`}
                 className="text-accent hover:underline"
@@ -776,11 +911,36 @@ export default function AdminEditionPage() {
                 /kegiatan/agustusan/{year}/galeri
               </Link>
             </p>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { id: "image" as const, label: "Foto" },
+                  { id: "video" as const, label: "Video" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setGalleryMediaType(opt.id)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                    galleryMediaType === opt.id
+                      ? "bg-accent text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             <div>
-              <label className="label">Keterangan (opsional, untuk batch ini)</label>
+              <label className="label">Keterangan (opsional)</label>
               <input
                 className="input"
-                placeholder="Contoh: Lomba Jalan Silang — 8 Agu"
+                placeholder={
+                  galleryMediaType === "video"
+                    ? "Contoh: Teaser malam puncak"
+                    : "Contoh: Lomba Jalan Silang — 8 Agu"
+                }
                 value={galleryCaption}
                 onChange={(e) => setGalleryCaption(e.target.value)}
               />
@@ -801,24 +961,55 @@ export default function AdminEditionPage() {
                 ))}
               </select>
             </div>
-            <label className="btn-primary inline-flex cursor-pointer">
-              {galleryUploading ? "Mengunggah…" : "Pilih & upload foto"}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                multiple
-                className="hidden"
-                disabled={galleryUploading}
-                onChange={(e) => {
-                  handleGalleryUpload(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            {galleryMediaType === "video" ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="label">Poster / thumbnail (wajib)</label>
+                  <input
+                    id="gallery-video-poster"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="block w-full text-sm text-slate-600"
+                    disabled={galleryUploading}
+                  />
+                </div>
+                <label className="btn-primary inline-flex cursor-pointer">
+                  {galleryUploading ? "Mengunggah…" : "Pilih & upload video (MP4)"}
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm"
+                    className="hidden"
+                    disabled={galleryUploading}
+                    onChange={(e) => {
+                      handleGalleryUpload(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <p className="text-xs text-slate-500">Maksimal 50 MB · MP4 / WebM</p>
+              </div>
+            ) : (
+              <label className="btn-primary inline-flex cursor-pointer">
+                {galleryUploading ? "Mengunggah…" : "Pilih & upload foto"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  className="hidden"
+                  disabled={galleryUploading}
+                  onChange={(e) => {
+                    handleGalleryUpload(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           {gallery.length === 0 ? (
-            <p className="text-sm text-slate-500">Belum ada foto. Jalankan seed galeri atau upload di sini.</p>
+            <p className="text-sm text-slate-500">
+              Belum ada item. Upload highlight atau andalkan folder Drive.
+            </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {gallery.map((item) => (
@@ -826,20 +1017,25 @@ export default function AdminEditionPage() {
                   key={item.id}
                   className="overflow-hidden rounded-lg border border-slate-200 bg-white"
                 >
-                  {item.image_url.startsWith("/") ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image_url}
-                      alt={item.caption ?? ""}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  ) : (
-                    <StoredImage
-                      src={item.image_url}
-                      alt={item.caption ?? ""}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  )}
+                  <div className="relative">
+                    {item.image_url.startsWith("/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image_url}
+                        alt={item.caption ?? ""}
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                    ) : (
+                      <StoredImage
+                        src={item.image_url}
+                        alt={item.caption ?? ""}
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                    )}
+                    <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      {item.media_type === "video" ? "Video" : "Foto"}
+                    </span>
+                  </div>
                   <div className="space-y-2 p-2">
                     <p className="line-clamp-2 text-xs text-slate-600">
                       {item.caption || "Tanpa keterangan"}

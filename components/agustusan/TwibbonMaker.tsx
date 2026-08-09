@@ -255,7 +255,9 @@ export function TwibbonMaker({
 
     const { error: insertError } = await supabase.from("event_gallery_items").insert({
       edition_id: editionId,
+      media_type: "image",
       image_url: url,
+      video_url: null,
       caption: `Twibbon warga — ${shareTitle}`.slice(0, 200),
       category: "twibbon",
       sort_order: Date.now() % 1_000_000,
