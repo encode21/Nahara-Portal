@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { ContestEntryPanel } from "@/components/agustusan/ContestEntryPanel";
+import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
 import { TwibbonMaker } from "@/components/agustusan/TwibbonMaker";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
@@ -213,6 +214,10 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
 
   useEffect(() => {
     if (loading) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("media") === "video") {
+      setGalleryMediaTab("video");
+    }
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash) return;
     // Delay until layout paints
@@ -269,9 +274,6 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
   const galleryVideos = gallery.filter((g) => g.media_type === "video");
   const galleryTabItems =
     galleryMediaTab === "video" ? galleryVideos : galleryImages;
-  const teaserVideo = galleryVideos[0] ?? null;
-  const teaserSrc = teaserVideo?.video_url ?? AGUSTUSAN_MEDIA.video;
-  const teaserPoster = teaserVideo?.image_url ?? AGUSTUSAN_MEDIA.videoPoster;
 
   const byContest = new Map<string, ResultRow[]>();
   for (const r of results) {
@@ -392,17 +394,24 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
             </p>
             <div className="overflow-hidden rounded-2xl bg-black shadow-sm">
               <video
-                key={teaserSrc}
                 className="aspect-video w-full"
                 controls
                 playsInline
                 preload="metadata"
-                poster={teaserPoster}
+                poster={AGUSTUSAN_MEDIA.videoPoster}
               >
-                <source src={teaserSrc} type="video/mp4" />
+                <source src={AGUSTUSAN_MEDIA.video} type="video/mp4" />
                 Browser Anda tidak mendukung pemutar video.
               </video>
             </div>
+            <GalleryVideoReels
+              videos={galleryVideos}
+              seeAllHref={`?media=video#galeri`}
+              onSeeAll={() => setGalleryMediaTab("video")}
+              onSelect={(item) => {
+                setLightbox(item);
+              }}
+            />
           </section>
         )}
 
@@ -753,7 +762,7 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
           >
             {lightbox.media_type === "video" && lightbox.video_url ? (
               <video
-                className="max-h-[80vh] w-full bg-black"
+                className="mx-auto max-h-[80vh] w-full max-w-md bg-black"
                 controls
                 autoPlay
                 playsInline

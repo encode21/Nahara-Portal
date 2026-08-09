@@ -27,6 +27,7 @@ import {
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { AgustusanFab } from "@/components/agustusan/AgustusanFab";
+import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 
@@ -40,7 +41,8 @@ export default function AgustusanEditionPage() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [campaign, setCampaign] = useState<DonasiCampaign | null>(null);
   const [donors, setDonors] = useState<Donor[]>([]);
-  const [teaserVideo, setTeaserVideo] = useState<EventGalleryItem | null>(null);
+  const [galleryVideos, setGalleryVideos] = useState<EventGalleryItem[]>([]);
+  const [activeVideo, setActiveVideo] = useState<EventGalleryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -75,7 +77,7 @@ export default function AgustusanEditionPage() {
         editionRow.campaign_id ??
         (editionRow.year === AGUSTUSAN_YEAR ? AGUSTUSAN_CAMPAIGN_ID : null);
 
-      const [contestsRes, activityRes, campaignRes, teaserRes] = await Promise.all([
+      const [contestsRes, activityRes, campaignRes, videosRes] = await Promise.all([
         supabase
           .from("event_contests")
           .select("*")
@@ -95,13 +97,16 @@ export default function AgustusanEditionPage() {
           .eq("media_type", "video")
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+          .limit(12),
       ]);
 
       let activityData = (activityRes.data ?? null) as Activity | null;
       let campaignData = (campaignRes.data ?? null) as DonasiCampaign | null;
-      setTeaserVideo((teaserRes.data as EventGalleryItem | null) ?? null);
+      setGalleryVideos(((videosRes.data ?? []) as EventGalleryItem[]).map((item) => ({
+        ...item,
+        media_type: "video" as const,
+        video_url: item.video_url ?? null,
+      })));
 
       if (!campaignData && editionRow.year === AGUSTUSAN_YEAR) {
         const { data: byTitle } = await supabase
@@ -190,8 +195,6 @@ export default function AgustusanEditionPage() {
     : null;
   const showMedia = year === 2026;
   const driveUrl = normalizeGoogleDriveUrl(edition.gallery_drive_url);
-  const teaserSrc = teaserVideo?.video_url ?? AGUSTUSAN_MEDIA.video;
-  const teaserPoster = teaserVideo?.image_url ?? AGUSTUSAN_MEDIA.videoPoster;
 
   return (
     <div className="-mx-4 -mt-6 overflow-x-clip lg:-mx-6 lg:-mt-8">
@@ -303,17 +306,21 @@ export default function AgustusanEditionPage() {
               <p className="text-sm text-slate-600">Cuplikan suasana Cluster Nahara menyambut HUT RI.</p>
               <div className="overflow-hidden rounded-2xl bg-black shadow-sm">
                 <video
-                  key={teaserSrc}
                   className="aspect-video w-full"
                   controls
                   playsInline
                   preload="metadata"
-                  poster={teaserPoster}
+                  poster={AGUSTUSAN_MEDIA.videoPoster}
                 >
-                  <source src={teaserSrc} type="video/mp4" />
+                  <source src={AGUSTUSAN_MEDIA.video} type="video/mp4" />
                   Browser Anda tidak mendukung pemutar video.
                 </video>
               </div>
+              <GalleryVideoReels
+                videos={galleryVideos}
+                seeAllHref={`/kegiatan/agustusan/${year}/galeri?media=video`}
+                onSelect={setActiveVideo}
+              />
             </section>
 
             <section className="space-y-4">
@@ -497,6 +504,43 @@ export default function AgustusanEditionPage() {
       </div>
 
       <AgustusanFab year={year} title={edition.title} />
+
+      {activeVideo?.video_url && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal
+          onClick={() => setActiveVideo(null)}
+        >
+          <div
+            className="relative max-h-[90vh] w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              className="max-h-[80vh] w-full rounded-xl bg-black"
+              controls
+              autoPlay
+              playsInline
+              poster={activeVideo.image_url}
+              src={activeVideo.video_url}
+            >
+              Browser Anda tidak mendukung pemutar video.
+            </video>
+            {activeVideo.caption && (
+              <p className="mt-3 text-center text-sm text-white/90">
+                {activeVideo.caption}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setActiveVideo(null)}
+              className="absolute -top-2 right-0 rounded-lg bg-white/90 px-3 py-1.5 text-sm font-medium text-slate-800"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

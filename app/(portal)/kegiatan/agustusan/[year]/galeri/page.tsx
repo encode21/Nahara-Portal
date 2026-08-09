@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { ExternalLink, Images, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { EventEdition, EventGalleryItem, GalleryMediaType } from "@/lib/types";
@@ -33,6 +33,7 @@ function asGalleryItem(
 
 export default function GaleriDokumentasiPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const year = Number(params.year);
   const supabase = useMemo(() => createClient(), []);
   const [edition, setEdition] = useState<EventEdition | null>(null);
@@ -40,7 +41,16 @@ export default function GaleriDokumentasiPage() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<EventGalleryItem | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [mediaTab, setMediaTab] = useState<MediaTab>("image");
+  const [mediaTab, setMediaTab] = useState<MediaTab>(
+    searchParams.get("media") === "video" ? "video" : "image"
+  );
+
+  useEffect(() => {
+    if (searchParams.get("media") === "video") {
+      setMediaTab("video");
+      setFilter("all");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function load() {
@@ -262,7 +272,13 @@ export default function GaleriDokumentasiPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
+        <div
+          className={
+            mediaTab === "video"
+              ? "grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5"
+              : "grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3"
+          }
+        >
           {filtered.map((item) => {
             const isLocal = item.image_url.startsWith("/");
             const isVideo = item.media_type === "video";
@@ -271,7 +287,9 @@ export default function GaleriDokumentasiPage() {
                 key={item.id}
                 type="button"
                 onClick={() => setActive(item)}
-                className="group relative aspect-[4/3] overflow-hidden bg-slate-100 text-left"
+                className={`group relative overflow-hidden bg-slate-100 text-left ${
+                  isVideo ? "aspect-[9/16]" : "aspect-[4/3]"
+                }`}
               >
                 {isLocal ? (
                   <Image
@@ -319,7 +337,7 @@ export default function GaleriDokumentasiPage() {
           >
             {active.media_type === "video" && active.video_url ? (
               <video
-                className="max-h-[80vh] w-full bg-black"
+                className="mx-auto max-h-[80vh] w-full max-w-md bg-black"
                 controls
                 autoPlay
                 playsInline
