@@ -95,7 +95,6 @@ export default function AgustusanEditionPage() {
           .eq("edition_id", editionRow.id)
           .eq("is_published", true)
           .eq("media_type", "video")
-          .order("sort_order", { ascending: true })
           .order("created_at", { ascending: false })
           .limit(12),
       ]);

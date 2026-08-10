@@ -271,7 +271,12 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
   const days = groupContestsByDay(contests);
   const driveUrl = normalizeGoogleDriveUrl(edition.gallery_drive_url);
   const galleryImages = gallery.filter((g) => g.media_type !== "video");
-  const galleryVideos = gallery.filter((g) => g.media_type === "video");
+  const galleryVideos = gallery
+    .filter((g) => g.media_type === "video")
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   const galleryTabItems =
     galleryMediaTab === "video" ? galleryVideos : galleryImages;
 

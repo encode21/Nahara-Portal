@@ -25,7 +25,12 @@ export function GalleryVideoReels({
 }: Props) {
   if (videos.length === 0) return null;
 
-  const shown = videos.slice(0, limit);
+  const shown = [...videos]
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    .slice(0, limit);
 
   return (
     <div className="space-y-3">

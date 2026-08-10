@@ -144,7 +144,13 @@ export default function GaleriDokumentasiPage() {
     [items]
   );
   const videoItems = useMemo(
-    () => items.filter((i) => i.media_type === "video"),
+    () =>
+      items
+        .filter((i) => i.media_type === "video")
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
     [items]
   );
   const tabItems = mediaTab === "video" ? videoItems : imageItems;
