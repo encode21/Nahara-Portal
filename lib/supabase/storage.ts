@@ -57,6 +57,30 @@ export function isPortalStorageUrl(
   return true;
 }
 
+function brandFromFtyp(buf: Uint8Array): string | null {
+  if (
+    buf.length < 12 ||
+    buf[4] !== 0x66 ||
+    buf[5] !== 0x74 ||
+    buf[6] !== 0x79 ||
+    buf[7] !== 0x70
+  ) {
+    return null;
+  }
+  return String.fromCharCode(buf[8], buf[9], buf[10], buf[11]).toLowerCase();
+}
+
+function isHeicBrand(brand: string): boolean {
+  return (
+    brand === "heic" ||
+    brand === "heix" ||
+    brand === "hevc" ||
+    brand === "hevx" ||
+    brand === "mif1" ||
+    brand === "msf1"
+  );
+}
+
 async function sniffImageMime(file: File): Promise<string | null> {
   const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   if (buf.length < 3) return null;
@@ -97,6 +121,20 @@ async function sniffImageMime(file: File): Promise<string | null> {
   return null;
 }
 
+async function isHeicFile(file: File): Promise<boolean> {
+  if (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    /\.heic$/i.test(file.name) ||
+    /\.heif$/i.test(file.name)
+  ) {
+    return true;
+  }
+  const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const brand = brandFromFtyp(buf);
+  return brand ? isHeicBrand(brand) : false;
+}
+
 async function sniffVideoMime(file: File): Promise<string | null> {
   const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   if (buf.length < 8) return null;
@@ -122,11 +160,11 @@ async function sniffVideoMime(file: File): Promise<string | null> {
 }
 
 export async function validateImageFile(file: File): Promise<string | null> {
-  if (file.size > MAX_IMAGE_BYTES) {
-    return "Ukuran maksimal 5 MB.";
-  }
   const sniffed = await sniffImageMime(file);
   if (!sniffed || !ALLOWED_IMAGE_TYPES.includes(sniffed as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+    if (await isHeicFile(file)) {
+      return "Format HEIC/HEIF tidak didukung. Simpan sebagai JPG atau PNG dulu.";
+    }
     return "Format harus JPG, PNG, WebP, atau GIF.";
   }
   if (
@@ -135,6 +173,9 @@ export async function validateImageFile(file: File): Promise<string | null> {
     file.type !== sniffed
   ) {
     return "Tipe file tidak cocok dengan isi gambar.";
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return "Ukuran maksimal 5 MB.";
   }
   return null;
 }
@@ -170,16 +211,37 @@ export async function uploadPortalImage(
   file: File,
   folder: UploadFolder
 ): Promise<{ url: string | null; error: string | null }> {
-  const validation = await validateImageFile(file);
+  let toUpload = file;
+  const initialMime = await sniffImageMime(file);
+
+  // Oversized raster photos → JPEG compress client-side (GIF kept as-is).
+  if (
+    initialMime &&
+    initialMime !== "image/gif" &&
+    ALLOWED_IMAGE_TYPES.includes(initialMime as (typeof ALLOWED_IMAGE_TYPES)[number]) &&
+    file.size > MAX_IMAGE_BYTES
+  ) {
+    const { compressImageToMax } = await import("@/lib/image/compress-image");
+    const compressed = await compressImageToMax(file, MAX_IMAGE_BYTES);
+    if (!compressed) {
+      return {
+        url: null,
+        error: "Ukuran maksimal 5 MB. Gagal mengompres gambar otomatis.",
+      };
+    }
+    toUpload = compressed;
+  }
+
+  const validation = await validateImageFile(toUpload);
   if (validation) return { url: null, error: validation };
 
-  const sniffed = (await sniffImageMime(file))!;
+  const sniffed = (await sniffImageMime(toUpload))!;
   const ext = extensionForMime(sniffed);
   const path = `${folder}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from(UPLOAD_BUCKET)
-    .upload(path, file, {
+    .upload(path, toUpload, {
       cacheControl: "3600",
       upsert: false,
       contentType: sniffed,

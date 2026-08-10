@@ -25,7 +25,7 @@ export function ImageUpload({
   onChange,
   disabled = false,
   label = "Gambar",
-  hint = "JPG, PNG, WebP, atau GIF — maks. 5 MB",
+  hint = "JPG, PNG, WebP, atau GIF — foto besar dikompres otomatis (maks. 5 MB). HEIC tidak didukung.",
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);

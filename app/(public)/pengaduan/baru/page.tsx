@@ -140,7 +140,7 @@ export default function PengaduanBaruPage() {
           value={fotoUrl}
           onChange={setFotoUrl}
           label="Foto Bukti (opsional)"
-          hint="Lampirkan foto kondisi lapangan — maks. 5 MB"
+          hint="Lampirkan foto kondisi lapangan — foto besar dikompres otomatis (maks. 5 MB). HEIC tidak didukung."
         />
 
         <button type="submit" className="btn-primary w-full" disabled={loading}>
