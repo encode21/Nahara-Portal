@@ -28,7 +28,7 @@ export function PengumumanCardItem({ item, isAdmin, onOpen, onEdit, onDelete }: 
             <StoredImage
               src={item.image_url}
               alt=""
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-gold/10 to-slate-50 px-4">
