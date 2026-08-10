@@ -474,7 +474,7 @@ export function Footer() {
             Pengaduan
           </Link>
         </p>
-        <p className="mt-4">© {new Date().getFullYear()} Paguyuban Warga Cluster Nahara</p>
+        <p className="mt-4">© {new Date().getFullYear()} Paguyuban Warga Nahara</p>
       </footer>
     );
   }

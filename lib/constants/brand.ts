@@ -25,7 +25,7 @@ export const LANDING_SITE_TITLE =
   "Cluster Nahara Cimanggis Golf Estate (CGE) | Paguyuban Warga";
 
 export const LANDING_SITE_DESCRIPTION =
-  "Situs resmi Cluster Nahara di Cimanggis Golf Estate (CGE), Depok. Paguyuban warga Nahara Cimanggis: pengumuman, Agustusan, pengaduan lingkungan, dan info komunitas — nahara.id.";
+  "Situs resmi Paguyuban Warga Nahara di Cluster Nahara, Cimanggis Golf Estate (CGE), Depok. Pengumuman, Agustusan, pengaduan lingkungan, dan info warga — nahara.id.";
 
 /** Judul app portal warga */
 export const SITE_TITLE = "Nahara Portal Warga";
@@ -51,10 +51,10 @@ export const SITE_KEYWORDS = [
   "Nahara Cimanggis",
   "cluster cimanggis golf estate",
   "Cimanggis Golf Estate",
-  "paguyuban nahara",
+  "Paguyuban Warga Nahara",
   "Paguyuban Warga Cluster Nahara",
   "paguyuban warga nahara",
-  "perumahan cluster nahara",
+  "Paguyuban Nahara",
   "perumahan Cimanggis Golf Estate",
   "cluster nahara depok",
   "nahara depok",

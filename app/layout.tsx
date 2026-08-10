@@ -70,7 +70,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: OG_IMAGE_PATH,
           width: 1200,
           height: 630,
-          alt: `${SITE_SHORT_NAME} — Paguyuban Warga Cluster Nahara, Cimanggis Golf Estate`,
+          alt: `${SITE_SHORT_NAME} — Paguyuban Warga Nahara, Cimanggis Golf Estate`,
           type: "image/png",
         },
       ],

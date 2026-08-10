@@ -40,8 +40,9 @@ function landingJsonLd() {
       {
         "@type": "Organization",
         "@id": orgId,
-        name: "Paguyuban Warga Cluster Nahara",
+        name: "Paguyuban Warga Nahara",
         alternateName: [
+          "Paguyuban Warga Cluster Nahara",
           "Cluster Nahara",
           "Nahara Cluster",
           "Nahara Cimanggis",
@@ -76,7 +77,7 @@ function landingJsonLd() {
           "Cluster Cimanggis Golf Estate Nahara",
         ],
         description:
-          "Cluster Nahara adalah komunitas warga di kawasan Cimanggis Golf Estate (CGE), Cimanggis, Depok. Informasi resmi paguyuban tersedia di nahara.id.",
+          "Cluster Nahara di Cimanggis Golf Estate (CGE), Cimanggis, Depok. Informasi resmi dikelola Paguyuban Warga Nahara melalui nahara.id.",
         url: LANDING_URL,
         address: {
           "@type": "PostalAddress",

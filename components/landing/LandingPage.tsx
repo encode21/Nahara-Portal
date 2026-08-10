@@ -290,22 +290,24 @@ export async function LandingPage() {
         </div>
       </section>
 
-      {/* Tentang — konten indeks untuk frasa pencarian lokal */}
+      {/* Tentang — identitas resmi paguyuban */}
       <section className="border-t border-slate-200 bg-white px-5 py-12 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-5xl">
           <h2 className="font-display text-xl font-bold text-slate-900 sm:text-2xl">
-            Tentang Cluster Nahara
+            Tentang Paguyuban Warga Nahara
           </h2>
           <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-slate-600">
             <p>
-              <strong className="font-semibold text-slate-800">Cluster Nahara</strong>{" "}
-              adalah komunitas warga di kawasan{" "}
+              <strong className="font-semibold text-slate-800">
+                Paguyuban Warga Nahara
+              </strong>{" "}
+              adalah organisasi warga Cluster Nahara di kawasan{" "}
               <strong className="font-semibold text-slate-800">
                 Cimanggis Golf Estate (CGE)
               </strong>
               , Cimanggis, Depok. Situs{" "}
               <strong className="font-semibold text-slate-800">nahara.id</strong>{" "}
-              adalah kanal resmi Paguyuban Warga Cluster Nahara untuk pengumuman,
+              milik Paguyuban Warga Nahara — kanal resmi untuk pengumuman,
               kegiatan warga, dan layanan pengaduan lingkungan.
             </p>
             <p>
