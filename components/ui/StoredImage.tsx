@@ -10,6 +10,21 @@ type StoredImageProps = {
   className?: string;
 };
 
+/** Ambil class object-* untuk <img>; sisanya ke wrapper. */
+function splitObjectClasses(className?: string) {
+  const tokens = (className ?? "").split(/\s+/).filter(Boolean);
+  const objectTokens: string[] = [];
+  const wrapperTokens: string[] = [];
+  for (const t of tokens) {
+    if (t.startsWith("object-")) objectTokens.push(t);
+    else wrapperTokens.push(t);
+  }
+  return {
+    objectClass: objectTokens.length > 0 ? objectTokens.join(" ") : "object-cover",
+    wrapperClass: wrapperTokens.join(" "),
+  };
+}
+
 /** Gambar dari Supabase Storage (public URL) — host/path asing ditolak. */
 export function StoredImage({ src, alt, className }: StoredImageProps) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -35,14 +50,12 @@ export function StoredImage({ src, alt, className }: StoredImageProps) {
     );
   }
 
-  const objectFit = className?.includes("object-contain")
-    ? "object-contain"
-    : "object-cover";
+  const { objectClass, wrapperClass } = splitObjectClasses(className);
 
   // className (h/w/shrink/rounded) di wrapper — jangan pakai w-full kosong
   // supaya di flex row thumbnail tidak meregang penuh lebar.
   return (
-    <span className={`relative block overflow-hidden ${className ?? ""}`}>
+    <span className={`relative block overflow-hidden ${wrapperClass}`}>
       {status === "loading" && (
         <Skeleton className="absolute inset-0 z-[1] h-full w-full rounded-[inherit]" />
       )}
@@ -64,7 +77,7 @@ export function StoredImage({ src, alt, className }: StoredImageProps) {
         loading="lazy"
         onLoad={() => setStatus("ready")}
         onError={() => setStatus("error")}
-        className={`h-full w-full ${objectFit} transition-opacity duration-300 ${
+        className={`h-full w-full ${objectClass} transition-opacity duration-300 ${
           status === "ready" ? "opacity-100" : "opacity-0"
         }`}
       />

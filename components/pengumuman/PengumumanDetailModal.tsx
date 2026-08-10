@@ -102,13 +102,13 @@ export function PengumumanDetailModal({
               <button
                 type="button"
                 onClick={() => setLightboxOpen(true)}
-                className="group relative block w-full bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/50"
+                className="group relative block aspect-[16/10] w-full overflow-hidden bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/50"
                 aria-label="Lihat foto penuh"
               >
                 <StoredImage
                   src={item.image_url}
                   alt={item.judul}
-                  className="mx-auto max-h-80 w-full object-contain"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
                 <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-medium text-white opacity-90 transition group-hover:bg-black/70">
                   <Expand className="h-3.5 w-3.5" />
