@@ -456,8 +456,25 @@ export function Footer() {
 
   if (surface === "landing") {
     return (
-      <footer className="border-t border-white/10 bg-[#0f1419] py-6 text-center text-xs text-white/50">
-        <p>© {new Date().getFullYear()} Paguyuban · Nahara</p>
+      <footer className="border-t border-white/10 bg-[#0f1419] px-5 py-8 text-center text-xs text-white/50">
+        <p className="font-display text-sm font-semibold text-white/80">
+          Cluster Nahara · Cimanggis Golf Estate (CGE)
+        </p>
+        <p className="mt-1 text-white/45">
+          Paguyuban Warga · nahara.id · Cimanggis, Depok
+        </p>
+        <p className="mt-3 space-x-3">
+          <Link href="/pengumuman" className="text-gold/90 hover:underline">
+            Pengumuman
+          </Link>
+          <Link href="/agustusan" className="text-gold/90 hover:underline">
+            Agustusan
+          </Link>
+          <Link href="/pengaduan" className="text-gold/90 hover:underline">
+            Pengaduan
+          </Link>
+        </p>
+        <p className="mt-4">© {new Date().getFullYear()} Paguyuban Warga Cluster Nahara</p>
       </footer>
     );
   }

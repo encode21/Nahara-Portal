@@ -14,8 +14,9 @@ export function NaharaLogo({ href = "/dashboard", className }: NaharaLogoProps) 
       <Image
         src={LOGO_BADGE_SRC}
         alt=""
-        width={160}
-        height={160}
+        width={128}
+        height={128}
+        sizes="(max-width: 640px) 40px, (max-width: 1024px) 56px, 64px"
         className="h-10 w-10 shrink-0 object-contain sm:h-14 sm:w-14 lg:h-16 lg:w-16"
         priority
         aria-hidden
@@ -23,8 +24,9 @@ export function NaharaLogo({ href = "/dashboard", className }: NaharaLogoProps) 
       <Image
         src={LOGO_WORDMARK_SRC}
         alt="Nahara"
-        width={400}
-        height={90}
+        width={240}
+        height={54}
+        sizes="(max-width: 640px) 152px, 180px"
         className="h-6 w-auto max-w-[min(9.5rem,42vw)] object-contain object-left sm:h-8 sm:max-w-none lg:h-9"
         priority
       />

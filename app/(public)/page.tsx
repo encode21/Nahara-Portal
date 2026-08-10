@@ -14,34 +14,81 @@ const SOCIAL_BOT_RE =
   /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Discordbot|Googlebot|bingbot|Applebot/i;
 
 function landingJsonLd() {
+  const orgId = `${LANDING_URL}/#organization`;
+  const websiteId = `${LANDING_URL}/#website`;
+  const placeId = `${LANDING_URL}/#place`;
+
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": `${LANDING_URL}/#website`,
+        "@id": websiteId,
         url: LANDING_URL,
         name: "Cluster Nahara",
+        alternateName: [
+          "Nahara Cimanggis",
+          "Cimanggis Golf Estate Nahara",
+          "CGE Nahara",
+          "nahara.id",
+        ],
         description: LANDING_SITE_DESCRIPTION,
         inLanguage: "id-ID",
-        publisher: { "@id": `${LANDING_URL}/#organization` },
+        publisher: { "@id": orgId },
+        about: { "@id": placeId },
       },
       {
         "@type": "Organization",
-        "@id": `${LANDING_URL}/#organization`,
+        "@id": orgId,
         name: "Paguyuban Warga Cluster Nahara",
-        alternateName: ["Nahara Cluster", "Cluster Nahara Cimanggis"],
+        alternateName: [
+          "Cluster Nahara",
+          "Nahara Cluster",
+          "Nahara Cimanggis",
+          "Cluster Nahara Cimanggis Golf Estate",
+          "CGE Nahara",
+          "Paguyuban Nahara",
+        ],
         url: LANDING_URL,
-        logo: `${LANDING_URL}/icons/icon-512.png`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${LANDING_URL}/icons/icon-512.png`,
+        },
+        image: `${LANDING_URL}/og.png`,
+        sameAs: [LANDING_URL],
         address: {
           "@type": "PostalAddress",
+          streetAddress: "Cimanggis Golf Estate",
           addressLocality: "Cimanggis",
           addressRegion: "Jawa Barat",
           addressCountry: "ID",
         },
-        areaServed: {
+        areaServed: { "@id": placeId },
+      },
+      {
+        "@type": ["Place", "ResidenceCommunity"],
+        "@id": placeId,
+        name: "Cluster Nahara",
+        alternateName: [
+          "Cluster Nahara Cimanggis Golf Estate",
+          "Nahara Cimanggis Golf Estate",
+          "CGE — Cluster Nahara",
+          "Cluster Cimanggis Golf Estate Nahara",
+        ],
+        description:
+          "Cluster Nahara adalah komunitas warga di kawasan Cimanggis Golf Estate (CGE), Cimanggis, Depok. Informasi resmi paguyuban tersedia di nahara.id.",
+        url: LANDING_URL,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Cimanggis Golf Estate",
+          addressLocality: "Cimanggis",
+          addressRegion: "Jawa Barat",
+          addressCountry: "ID",
+        },
+        containedInPlace: {
           "@type": "Place",
-          name: "Cimanggis Golf Estate — Cluster Nahara",
+          name: "Cimanggis Golf Estate (CGE)",
+          alternateName: ["CGE", "Cimanggis Golf Estate"],
         },
       },
     ],

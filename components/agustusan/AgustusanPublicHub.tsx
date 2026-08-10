@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   CalendarDays,
   Camera,
@@ -18,7 +19,6 @@ import {
 } from "lucide-react";
 import { ContestEntryPanel } from "@/components/agustusan/ContestEntryPanel";
 import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
-import { TwibbonMaker } from "@/components/agustusan/TwibbonMaker";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 import { groupContestsByDay } from "@/lib/agustusan";
@@ -43,6 +43,19 @@ import type {
 } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
+
+const TwibbonMaker = dynamic(
+  () =>
+    import("@/components/agustusan/TwibbonMaker").then((m) => m.TwibbonMaker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner className="h-7 w-7" />
+      </div>
+    ),
+  }
+);
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 type ResultRow = EventContestResult & { contest?: EventContest | null };
@@ -301,9 +314,10 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
           {showMedia ? (
             <Image
               src={AGUSTUSAN_MEDIA.hero}
-              alt="Dirgahayu Republik Indonesia ke-81 — Nahara"
+              alt="Cluster Nahara Cimanggis Golf Estate — Agustusan HUT RI"
               fill
               priority
+              quality={70}
               className="object-cover object-[center_22%]"
               sizes="100vw"
             />
@@ -625,15 +639,16 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
                   {item.image_url.startsWith("/") ? (
                     <Image
                       src={item.image_url}
-                      alt={item.caption || "Galeri Agustusan"}
+                      alt={item.caption || "Galeri Agustusan Cluster Nahara"}
                       fill
+                      quality={65}
                       className="object-cover transition duration-500 hover:scale-[1.03]"
                       sizes="(max-width: 640px) 100vw, 33vw"
                     />
                   ) : (
                     <StoredImage
                       src={item.image_url}
-                      alt={item.caption || "Galeri Agustusan"}
+                      alt={item.caption || "Galeri Agustusan Cluster Nahara"}
                       className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
                     />
                   )}

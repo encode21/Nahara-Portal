@@ -66,14 +66,15 @@ export async function LandingPage() {
 
   return (
     <div className="w-full bg-white">
-      {/* Compact community banner — like lokal/RT sites */}
+      {/* Compact community banner — brand first for SEO */}
       <section className="relative isolate w-full overflow-hidden bg-slate-900">
         <div className="relative h-[300px] w-full sm:h-[360px] lg:h-[400px]">
           <Image
             src={heroPhoto}
-            alt="Cluster Nahara berhias bendera Merah Putih"
+            alt="Cluster Nahara di Cimanggis Golf Estate berhias bendera Merah Putih"
             fill
             priority
+            quality={70}
             className="object-cover object-[center_40%]"
             sizes="100vw"
           />
@@ -89,29 +90,59 @@ export async function LandingPage() {
           <div className="absolute inset-0 z-10 flex items-end">
             <div className="mx-auto w-full max-w-5xl px-5 pb-8 pt-20 sm:px-6 sm:pb-10">
               <p className="font-display text-[11px] font-semibold tracking-[0.2em] text-gold sm:text-xs">
-                PAGUYUBAN · NAHARA
+                PAGUYUBAN WARGA · CIMANGGIS GOLF ESTATE
               </p>
               <h1 className="mt-2 max-w-2xl font-display text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
-                {AGUSTUSAN_TITLE}
+                Cluster Nahara
               </h1>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/85 sm:text-[15px]">
-                {AGUSTUSAN_TAGLINE}
+                Komunitas warga di Cimanggis Golf Estate (CGE). Pengumuman,
+                kegiatan, dan info lingkungan — resmi di nahara.id.
               </p>
               <div className="mt-5 flex flex-wrap gap-2.5">
                 <Link
-                  href="/agustusan"
+                  href="/pengumuman"
                   className="inline-flex items-center justify-center rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-gold/90"
                 >
-                  Lihat kegiatan
+                  Pengumuman warga
                 </Link>
                 <Link
-                  href="/agustusan#twibbon"
+                  href="/agustusan"
                   className="inline-flex items-center justify-center rounded-md border border-white/40 bg-black/25 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/40"
                 >
-                  Buat twibbon
+                  {AGUSTUSAN_TITLE}
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Kampanye singkat */}
+      <section className="border-b border-slate-200 bg-[#f8f5ef] px-5 py-6 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-800/80">
+              Sedang berlangsung
+            </p>
+            <p className="mt-0.5 font-display text-base font-semibold text-slate-900 sm:text-lg">
+              {AGUSTUSAN_TITLE}
+            </p>
+            <p className="text-sm text-slate-600">{AGUSTUSAN_TAGLINE}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/agustusan"
+              className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Lihat kegiatan
+            </Link>
+            <Link
+              href="/agustusan#twibbon"
+              className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-gold/50"
+            >
+              Buat twibbon
+            </Link>
           </div>
         </div>
       </section>
@@ -259,6 +290,34 @@ export async function LandingPage() {
         </div>
       </section>
 
+      {/* Tentang — konten indeks untuk frasa pencarian lokal */}
+      <section className="border-t border-slate-200 bg-white px-5 py-12 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="font-display text-xl font-bold text-slate-900 sm:text-2xl">
+            Tentang Cluster Nahara
+          </h2>
+          <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-slate-600">
+            <p>
+              <strong className="font-semibold text-slate-800">Cluster Nahara</strong>{" "}
+              adalah komunitas warga di kawasan{" "}
+              <strong className="font-semibold text-slate-800">
+                Cimanggis Golf Estate (CGE)
+              </strong>
+              , Cimanggis, Depok. Situs{" "}
+              <strong className="font-semibold text-slate-800">nahara.id</strong>{" "}
+              adalah kanal resmi Paguyuban Warga Cluster Nahara untuk pengumuman,
+              kegiatan warga, dan layanan pengaduan lingkungan.
+            </p>
+            <p>
+              Pencarian seperti{" "}
+              <em>cluster nahara</em>, <em>cimanggis golf estate nahara</em>,{" "}
+              <em>nahara cimanggis</em>, atau <em>cluster cimanggis golf estate</em>{" "}
+              mengarah ke informasi paguyuban yang sama — dikelola warga, untuk warga.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Galeri ringkas */}
       <section className="bg-slate-950">
         <div className="mx-auto grid max-w-5xl sm:grid-cols-3">
@@ -271,6 +330,7 @@ export async function LandingPage() {
                 src={item.src}
                 alt={item.alt}
                 fill
+                quality={65}
                 className="object-cover opacity-95 transition duration-500 hover:scale-[1.03] hover:opacity-100"
                 sizes="(max-width: 640px) 100vw, 33vw"
               />

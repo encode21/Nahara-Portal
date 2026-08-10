@@ -21,11 +21,13 @@ import "./globals.css";
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
+  display: "swap",
 });
 
 const syne = Syne({
   subsets: ["latin"],
   variable: "--font-syne",
+  display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(base),
     title: {
       default: title,
-      template: isLanding ? `%s | Cluster Nahara` : `%s | ${SITE_TITLE}`,
+      template: isLanding ? `%s | Cluster Nahara CGE` : `%s | ${SITE_TITLE}`,
     },
     description,
     applicationName: isLanding ? SITE_SHORT_NAME : SITE_TITLE,
@@ -58,7 +60,9 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "id_ID",
       url: isLanding ? LANDING_URL : base,
-      siteName: isLanding ? "Cluster Nahara" : SITE_TITLE,
+      siteName: isLanding
+        ? "Cluster Nahara — Cimanggis Golf Estate (CGE)"
+        : SITE_TITLE,
       title,
       description,
       images: [
