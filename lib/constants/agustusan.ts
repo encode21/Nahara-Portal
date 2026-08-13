@@ -103,7 +103,7 @@ export const PEAK_EVENT = {
   subtitle: "Malam Puncak — Door Prize & Hadiah Utama",
   location: "Mini Golf Cluster Nahara",
   startsAtLabel: "Sabtu, 16 Agustus 2026 · 19:30 WIB",
-  duckRaceEmbedUrl: "https://www.online-stopwatch.com/duck-race/full-screen/",
+  duckRaceEmbedUrl: "https://www.online-stopwatch.com/duck-race/",
   registrationOpen: true,
 } as const;
 
@@ -123,7 +123,10 @@ export function twibbonLocalStorageKey(year: number): string {
   return `nahara:agustusan:${year}:lastTwibbonUrl`;
 }
 
-export function formatHouseholdLabel(blokRow: string, nomorKavling: number): string {
+export function formatHouseholdLabel(
+  blokRow: string,
+  nomorKavling: number,
+): string {
   return `${blokRow}/${String(nomorKavling).padStart(2, "0")}`;
 }
 
