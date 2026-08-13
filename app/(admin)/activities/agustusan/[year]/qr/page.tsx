@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import QRCode from "qrcode";
 import { getPortalOrigin } from "@/lib/host";
+import { isPeakRegistrationOpen } from "@/lib/constants/agustusan";
 import { LoadingSpinner } from "@/components/ui/Loading";
 
 export default function AdminPeakQrPage() {
   const params = useParams();
   const year = Number(params.year);
+  const regOpen = isPeakRegistrationOpen();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const targetUrl = useMemo(() => {
     const path = `/kegiatan/agustusan/${year}/daftar`;
@@ -49,6 +51,26 @@ export default function AdminPeakQrPage() {
         <p className="mt-1 text-sm text-slate-600">
           Scan untuk mendaftar Acara Puncak & Door Prize
         </p>
+      </div>
+
+      <div
+        className={`rounded-xl px-4 py-3 text-sm ${
+          regOpen
+            ? "bg-emerald-50 text-emerald-800"
+            : "bg-amber-50 text-amber-900"
+        }`}
+      >
+        Status:{" "}
+        <strong>{regOpen ? "Pendaftaran DIBUKA" : "Pendaftaran DITUTUP"}</strong>
+        {!regOpen && (
+          <span className="mt-1 block text-xs">
+            Set{" "}
+            <code className="rounded bg-white/70 px-1">
+              NEXT_PUBLIC_PEAK_REGISTRATION_OPEN=true
+            </code>{" "}
+            lalu restart/redeploy sebelum acara.
+          </span>
+        )}
       </div>
 
       <div className="card flex flex-col items-center gap-4 text-center">

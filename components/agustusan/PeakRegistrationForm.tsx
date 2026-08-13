@@ -10,9 +10,9 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { StoredImage } from "@/components/ui/StoredImage";
 import {
   PEAK_BLOK_ROWS,
-  PEAK_EVENT,
   PEAK_TERMS,
   formatHouseholdLabel,
+  isPeakRegistrationOpen,
   twibbonLocalStorageKey,
 } from "@/lib/constants/agustusan";
 import { getPeakLotNumbers } from "@/lib/agustusan-peak";
@@ -71,7 +71,7 @@ export function PeakRegistrationForm({ edition, year }: Props) {
       : null;
   const hasTwibbon = Boolean(form.twibbon_url) && !replaceTwibbon;
   const registrationClosed =
-    !PEAK_EVENT.registrationOpen || edition.status === "archived";
+    !isPeakRegistrationOpen() || edition.status === "archived";
 
   useEffect(() => {
     try {
@@ -197,7 +197,8 @@ export function PeakRegistrationForm({ edition, year }: Props) {
       <div className="card text-center">
         <p className="font-medium text-slate-900">Pendaftaran ditutup</p>
         <p className="mt-2 text-sm text-slate-600">
-          Pendaftaran Acara Puncak untuk edisi ini sudah tidak dibuka.
+          Pendaftaran online Acara Puncak sedang ditutup. Pendaftaran akan dibuka
+          panitia saat acara (offline / QR di lokasi).
         </p>
         <Link href={`/kegiatan/agustusan/${year}`} className="btn-secondary mt-4 inline-flex">
           Kembali ke hub

@@ -25,6 +25,7 @@ import {
   CONTEST_CATEGORY_LABELS,
   PEAK_EVENT,
   PEAK_TERMS,
+  isPeakRegistrationOpen,
 } from "@/lib/constants/agustusan";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
@@ -196,6 +197,8 @@ export default function AgustusanEditionPage() {
     : null;
   const showMedia = year === 2026;
   const driveUrl = normalizeGoogleDriveUrl(edition.gallery_drive_url);
+  const peakRegOpen =
+    isPeakRegistrationOpen() && edition.status !== "archived";
 
   return (
     <div className="-mx-4 -mt-6 overflow-x-clip lg:-mx-6 lg:-mt-8">
@@ -246,12 +249,18 @@ export default function AgustusanEditionPage() {
               </>
             )}
             <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
-              <Link
-                href={`/kegiatan/agustusan/${year}/daftar`}
-                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#7a1218] hover:bg-[#faf7f0]"
-              >
-                Daftar Acara Puncak
-              </Link>
+              {peakRegOpen ? (
+                <Link
+                  href={`/kegiatan/agustusan/${year}/daftar`}
+                  className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#7a1218] hover:bg-[#faf7f0]"
+                >
+                  Daftar Acara Puncak
+                </Link>
+              ) : (
+                <span className="inline-flex items-center justify-center rounded-lg bg-white/15 px-5 py-3 text-sm font-semibold text-white/80 ring-1 ring-white/25">
+                  Daftar Acara Puncak (segera)
+                </span>
+              )}
               <Link
                 href={`/kegiatan/agustusan/${year}/lomba`}
                 className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
@@ -334,9 +343,7 @@ export default function AgustusanEditionPage() {
             <div className="rounded-xl bg-white/10 px-4 py-3">
               <p className="text-xs text-white/70">Status pendaftaran</p>
               <p className="mt-1 font-medium">
-                {PEAK_EVENT.registrationOpen && edition.status !== "archived"
-                  ? "Dibuka"
-                  : "Ditutup"}
+                {peakRegOpen ? "Dibuka" : "Ditutup — dibuka saat acara"}
               </p>
             </div>
           </div>
@@ -362,12 +369,19 @@ export default function AgustusanEditionPage() {
               ))}
             </ol>
           </details>
-          <Link
-            href={`/kegiatan/agustusan/${year}/daftar`}
-            className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-6 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
-          >
-            Daftar Acara Puncak
-          </Link>
+          {peakRegOpen ? (
+            <Link
+              href={`/kegiatan/agustusan/${year}/daftar`}
+              className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-6 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
+            >
+              Daftar Acara Puncak
+            </Link>
+          ) : (
+            <p className="rounded-lg bg-black/25 px-4 py-3 text-sm text-white/85">
+              Pendaftaran online ditutup sementara. Akan dibuka panitia saat acara
+              (scan QR / daftar offline di lokasi).
+            </p>
+          )}
         </section>
 
         {showMedia && (

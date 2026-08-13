@@ -103,8 +103,22 @@ export const PEAK_EVENT = {
   subtitle: "Malam Puncak — Door Prize & Hadiah Utama",
   location: "Mini Golf Cluster Nahara",
   startsAtLabel: "Sabtu, 16 Agustus 2026 · 19:30 WIB",
-  registrationOpen: true,
+  duckRaceEmbedUrl: "https://www.online-stopwatch.com/duck-race/full-screen/",
 } as const;
+
+/**
+ * Toggle pendaftaran Acara Puncak via env (tanpa redeploy kode).
+ * NEXT_PUBLIC_PEAK_REGISTRATION_OPEN=true|1|yes|on → dibuka
+ * false / kosong / nilai lain → ditutup (default: ditutup)
+ *
+ * Saat acara: set true di .env / Vercel, restart/redeploy.
+ * Sebelum acara (daftar offline nanti): biarkan false.
+ */
+export function isPeakRegistrationOpen(): boolean {
+  const raw = process.env.NEXT_PUBLIC_PEAK_REGISTRATION_OPEN?.trim().toLowerCase();
+  if (!raw) return false;
+  return raw === "true" || raw === "1" || raw === "yes" || raw === "on";
+}
 
 export const PEAK_TERMS = [
   "Pendaftaran hanya berlaku untuk warga/rumah yang terdaftar di Nahara.",
