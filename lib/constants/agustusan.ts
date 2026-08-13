@@ -79,3 +79,54 @@ export const AGUSTUSAN_MEDIA = {
     },
   ],
 } as const;
+
+/** Blok eligible for Malam Puncak registration (exclude row 4 & 5). */
+export const PEAK_BLOK_ROWS = [
+  "NHB-1",
+  "NHB-2",
+  "NHB-3",
+  "NHB-6",
+  "NHB-7",
+  "NHB-8",
+  "NHT-1",
+  "NHT-2",
+  "NHT-3",
+  "NHT-6",
+  "NHT-7",
+  "NHT-8",
+] as const;
+
+export type PeakBlokRow = (typeof PEAK_BLOK_ROWS)[number];
+
+export const PEAK_EVENT = {
+  title: "Acara Puncak Agustusan Nahara 2026",
+  subtitle: "Malam Puncak — Door Prize & Hadiah Utama",
+  location: "Mini Golf Cluster Nahara",
+  startsAtLabel: "Sabtu, 16 Agustus 2026 · 19:30 WIB",
+  duckRaceEmbedUrl: "https://www.online-stopwatch.com/duck-race/full-screen/",
+  registrationOpen: true,
+} as const;
+
+export const PEAK_TERMS = [
+  "Pendaftaran hanya berlaku untuk warga/rumah yang terdaftar di Nahara.",
+  "Maksimal 2 peserta dari setiap rumah (suami + istri).",
+  "Peserta wajib mengisi data dengan benar.",
+  "Peserta wajib upload Twibbon sebelum pendaftaran dapat diselesaikan.",
+  "Data pendaftaran digunakan untuk keperluan acara dan door prize.",
+  "Hanya peserta yang telah terverifikasi yang masuk daftar door prize.",
+  "Peserta yang tidak melakukan pendaftaran tidak akan masuk daftar Duck Race.",
+  "Panitia berhak melakukan verifikasi data peserta.",
+  "Setiap rumah hanya dapat terdaftar maksimal 2 orang.",
+] as const;
+
+export function twibbonLocalStorageKey(year: number): string {
+  return `nahara:agustusan:${year}:lastTwibbonUrl`;
+}
+
+export function formatHouseholdLabel(blokRow: string, nomorKavling: number): string {
+  return `${blokRow}/${String(nomorKavling).padStart(2, "0")}`;
+}
+
+export function isPeakBlokRow(value: string): value is PeakBlokRow {
+  return (PEAK_BLOK_ROWS as readonly string[]).includes(value);
+}

@@ -241,6 +241,62 @@ export type EventGalleryItem = {
   created_at: string;
 };
 
+export type PeakParticipantRole = "suami" | "istri";
+export type PeakRegistrationStatus = "pending" | "verified" | "cancelled";
+export type DoorPrizeKind = "door" | "utama";
+
+export type EventPeakRegistration = {
+  id: string;
+  edition_id: string;
+  blok_row: string;
+  nomor_kavling: number;
+  household_label: string;
+  participant_name: string;
+  participant_role: PeakParticipantRole;
+  phone: string | null;
+  twibbon_url: string;
+  terms_accepted_at: string;
+  status: PeakRegistrationStatus;
+  registration_code: string;
+  warga_id: string | null;
+  verified_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EventDoorPrize = {
+  id: string;
+  edition_id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  quantity: number;
+  sort_order: number;
+  is_active: boolean;
+  kind: DoorPrizeKind;
+  created_at: string;
+};
+
+export type EventDoorPrizeWinner = {
+  id: string;
+  edition_id: string;
+  prize_id: string;
+  registration_id: string;
+  selected_at: string;
+  selected_by: string | null;
+};
+
+export type EventPeakPushSubscription = {
+  id: string;
+  registration_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+};
+
 export type KasSummary = {
   totalPemasukan: number;
   totalPengeluaran: number;

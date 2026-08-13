@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Download,
   ImagePlus,
@@ -13,6 +14,7 @@ import {
 import {
   AGUSTUSAN_MEDIA,
   TWIBBON_PHOTO_CIRCLE,
+  twibbonLocalStorageKey,
 } from "@/lib/constants/agustusan";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPortalImage } from "@/lib/supabase/storage";
@@ -46,6 +48,7 @@ export function TwibbonMaker({
   const photoRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
   const lastBlobRef = useRef<Blob | null>(null);
+  const lastStoredUrlRef = useRef<string | null>(null);
 
   const [ready, setReady] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
@@ -158,6 +161,38 @@ export function TwibbonMaker({
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
   }
 
+  function saveTwibbonUrlLocal(url: string) {
+    try {
+      localStorage.setItem(twibbonLocalStorageKey(year), url);
+    } catch {
+      /* ignore */
+    }
+    lastStoredUrlRef.current = url;
+  }
+
+  /** Upload ke storage agar form /daftar bisa skip tanpa wajib masuk galeri. */
+  async function persistTwibbonForRegistration(blob: Blob): Promise<string | null> {
+    if (lastStoredUrlRef.current) return lastStoredUrlRef.current;
+    const file = new File([blob], `twibbon-nahara-${year}.png`, {
+      type: "image/png",
+    });
+    const { url, error: uploadError } = await uploadPortalImage(
+      supabase,
+      file,
+      "agustusan"
+    );
+    if (uploadError || !url) {
+      setMessage(
+        uploadError
+          ? `Twibbon diunduh, tapi gagal disimpan untuk daftar: ${uploadError}`
+          : "Twibbon diunduh. Saat daftar, pilih file dari HP."
+      );
+      return null;
+    }
+    saveTwibbonUrlLocal(url);
+    return url;
+  }
+
   function triggerDownload(blob: Blob) {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -174,11 +209,20 @@ export function TwibbonMaker({
     setBusy(true);
     draw();
     const blob = await canvasToBlob();
-    setBusy(false);
-    if (!blob) return;
+    if (!blob) {
+      setBusy(false);
+      return;
+    }
     lastBlobRef.current = blob;
+    lastStoredUrlRef.current = null;
     triggerDownload(blob);
-    setMessage("Twibbon diunduh.");
+    const url = await persistTwibbonForRegistration(blob);
+    setBusy(false);
+    if (url) {
+      setMessage(
+        "Twibbon diunduh & siap untuk pendaftaran. Lanjut daftar Acara Puncak tanpa upload ulang."
+      );
+    }
     setGalleryPromptOpen(true);
   }
 
@@ -190,9 +234,12 @@ export function TwibbonMaker({
     setBusy(true);
     draw();
     const blob = await canvasToBlob();
-    setBusy(false);
-    if (!blob) return;
+    if (!blob) {
+      setBusy(false);
+      return;
+    }
     lastBlobRef.current = blob;
+    lastStoredUrlRef.current = null;
 
     const file = new File([blob], `twibbon-nahara-${year}.png`, {
       type: "image/png",
@@ -220,12 +267,21 @@ export function TwibbonMaker({
         shared = true;
       }
     } catch {
+      setBusy(false);
       return;
     }
 
     if (!shared) {
       triggerDownload(blob);
-      setMessage("Twibbon diunduh.");
+    }
+    const url = await persistTwibbonForRegistration(blob);
+    setBusy(false);
+    if (url) {
+      setMessage(
+        shared
+          ? "Twibbon dibagikan & siap untuk pendaftaran."
+          : "Twibbon diunduh & siap untuk pendaftaran."
+      );
     }
     setGalleryPromptOpen(true);
   }
@@ -239,18 +295,20 @@ export function TwibbonMaker({
     }
     setUploadingGallery(true);
     setMessage(null);
-    const file = new File([blob], `twibbon-nahara-${year}.png`, {
-      type: "image/png",
-    });
-    const { url, error: uploadError } = await uploadPortalImage(
-      supabase,
-      file,
-      "agustusan"
-    );
-    if (uploadError || !url) {
-      setUploadingGallery(false);
-      setMessage(uploadError ?? "Gagal mengunggah ke galeri.");
-      return;
+
+    let url = lastStoredUrlRef.current;
+    if (!url) {
+      const file = new File([blob], `twibbon-nahara-${year}.png`, {
+        type: "image/png",
+      });
+      const uploaded = await uploadPortalImage(supabase, file, "agustusan");
+      if (uploaded.error || !uploaded.url) {
+        setUploadingGallery(false);
+        setMessage(uploaded.error ?? "Gagal mengunggah ke galeri.");
+        return;
+      }
+      url = uploaded.url;
+      saveTwibbonUrlLocal(url);
     }
 
     const { error: insertError } = await supabase.from("event_gallery_items").insert({
@@ -363,8 +421,8 @@ export function TwibbonMaker({
               Masukkan ke Galeri Agustusan?
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              Twibbon-mu sudah siap. Mau ikut dipajang di Galeri / Dokumentasi{" "}
-              {shareTitle}?
+              Twibbon sudah siap untuk pendaftaran Acara Puncak. Mau ikut dipajang di
+              Galeri / Dokumentasi {shareTitle} juga?
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <button
@@ -376,17 +434,28 @@ export function TwibbonMaker({
                 {uploadingGallery ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                 ) : null}
-                Ya, masukkan
+                Ya, masukkan galeri
               </button>
               <button
                 type="button"
                 className="btn-secondary flex-1"
                 disabled={uploadingGallery}
-                onClick={() => setGalleryPromptOpen(false)}
+                onClick={() => {
+                  setGalleryPromptOpen(false);
+                  setMessage(
+                    "Siap daftar. Buka halaman Daftar Acara Puncak — twibbon akan terisi otomatis."
+                  );
+                }}
               >
-                Tidak
+                Langsung daftar
               </button>
             </div>
+            <Link
+              href={`/kegiatan/agustusan/${year}/daftar`}
+              className="mt-3 inline-flex w-full items-center justify-center text-sm font-medium text-[#9a7b2e] hover:underline"
+            >
+              Buka form pendaftaran →
+            </Link>
           </div>
         </div>
       )}

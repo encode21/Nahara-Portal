@@ -23,6 +23,8 @@ import {
   AGUSTUSAN_TAGLINE,
   AGUSTUSAN_YEAR,
   CONTEST_CATEGORY_LABELS,
+  PEAK_EVENT,
+  PEAK_TERMS,
 } from "@/lib/constants/agustusan";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
@@ -245,6 +247,12 @@ export default function AgustusanEditionPage() {
             )}
             <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
               <Link
+                href={`/kegiatan/agustusan/${year}/daftar`}
+                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#7a1218] hover:bg-[#faf7f0]"
+              >
+                Daftar Acara Puncak
+              </Link>
+              <Link
                 href={`/kegiatan/agustusan/${year}/lomba`}
                 className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
               >
@@ -298,6 +306,70 @@ export default function AgustusanEditionPage() {
       </section>
 
       <div className="mx-auto max-w-7xl space-y-14 px-4 py-12 lg:px-6 lg:py-16">
+        <section
+          id="acara-puncak"
+          className="scroll-mt-24 space-y-5 rounded-2xl border border-[#c9a84c]/30 bg-gradient-to-br from-[#7a1218] to-[#9b1b23] p-6 text-white sm:p-8"
+        >
+          <div>
+            <p className="text-xs font-medium tracking-[0.2em] text-[#f0d78c] uppercase">
+              Malam Puncak
+            </p>
+            <h2 className="mt-1 font-display text-2xl font-bold sm:text-3xl">
+              {PEAK_EVENT.title}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-white/85">
+              {PEAK_EVENT.subtitle}. Hadir bersama tetangga, door prize untuk peserta terdaftar,
+              dan hadiah utama lewat Duck Race.
+            </p>
+          </div>
+          <div className="grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-xl bg-white/10 px-4 py-3">
+              <p className="text-xs text-white/70">Tanggal & waktu</p>
+              <p className="mt-1 font-medium">{PEAK_EVENT.startsAtLabel}</p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-4 py-3">
+              <p className="text-xs text-white/70">Lokasi</p>
+              <p className="mt-1 font-medium">{PEAK_EVENT.location}</p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-4 py-3">
+              <p className="text-xs text-white/70">Status pendaftaran</p>
+              <p className="mt-1 font-medium">
+                {PEAK_EVENT.registrationOpen && edition.status !== "archived"
+                  ? "Dibuka"
+                  : "Ditutup"}
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl bg-white/10 px-4 py-3 text-sm">
+              <p className="font-semibold text-[#f0d78c]">Door Prize</p>
+              <p className="mt-1 text-white/85">
+                Setiap peserta terverifikasi (maks. 2 per rumah) mendapat 1 kesempatan undian.
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-4 py-3 text-sm">
+              <p className="font-semibold text-[#f0d78c]">Hadiah Utama — Duck Race</p>
+              <p className="mt-1 text-white/85">
+                1 rumah = 1 duck (label blok/nomor). Hanya rumah yang sudah registrasi.
+              </p>
+            </div>
+          </div>
+          <details className="rounded-xl bg-black/20 px-4 py-3 text-sm">
+            <summary className="cursor-pointer font-medium">Syarat & Ketentuan</summary>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-white/85">
+              {PEAK_TERMS.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ol>
+          </details>
+          <Link
+            href={`/kegiatan/agustusan/${year}/daftar`}
+            className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-6 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
+          >
+            Daftar Acara Puncak
+          </Link>
+        </section>
+
         {showMedia && (
           <>
             <section className="space-y-4">

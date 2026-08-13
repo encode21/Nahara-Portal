@@ -18,6 +18,7 @@ const withPWA = withPWAInit({
   register: true,
   reloadOnOnline: true,
   cacheOnFrontEndNav: true,
+  customWorkerSrc: "worker",
   fallbacks: {
     document: "/offline",
   },

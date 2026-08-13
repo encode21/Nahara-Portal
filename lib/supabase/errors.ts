@@ -8,5 +8,12 @@ export function getSupabaseErrorMessage(error: PostgrestError | null): string | 
   if (error.code === "42P01") {
     return "Tabel belum ada. Jalankan migration SQL di Supabase terlebih dahulu.";
   }
-  return error.message;
+  const msg = error.message ?? "";
+  // Postgres RAISE EXCEPTION via RPC often prefixes with context; surface clean text.
+  const raised = msg.match(/Rumah .+|Silakan upload|Anda harus|Data ini sudah|Blok tidak|Peran peserta|Nama peserta|Nomor|Edisi|Pendaftaran|Hadiah|Kuota|Tidak ada peserta|Hanya admin|URL Twibbon|Kode pendaftaran/i);
+  if (raised) {
+    const idx = msg.search(/Rumah .+|Silakan upload|Anda harus|Data ini sudah|Blok tidak|Peran peserta|Nama peserta|Nomor|Edisi|Pendaftaran|Hadiah|Kuota|Tidak ada peserta|Hanya admin|URL Twibbon|Kode pendaftaran/i);
+    if (idx >= 0) return msg.slice(idx).replace(/\s+/g, " ").trim();
+  }
+  return msg;
 }
