@@ -209,144 +209,150 @@ export default function DoorPrizeSpinPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Link
             href={`/activities/agustusan/${year}/doorprize`}
-            className="text-sm text-slate-500 hover:underline"
+            className="text-sm text-slate-500 hover:text-[#7a1218]"
           >
-            ← Door Prize dashboard
+            ← Door Prize
           </Link>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-wide text-[#7a1218]">
-            DOOR PRIZE
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Door Prize Live
           </h1>
-          <p className="text-sm text-slate-600">
-            Eligible: {eligible.length} peserta · undian ditentukan server
+          <p className="mt-0.5 text-sm text-slate-500">
+            {eligible.length} peserta eligible
           </p>
         </div>
-        <button
-          type="button"
-          className={`btn-secondary ${soundOn ? "" : "opacity-60"}`}
-          onClick={() => {
-            unlockAudio();
-            setSoundOn((v) => !v);
-          }}
-        >
-          <Volume2 className="mr-1.5 h-4 w-4" />
-          Sound {soundOn ? "On" : "Off"}
-        </button>
-      </div>
 
-      <div className="card space-y-4">
-        <label className="label" htmlFor="prize">
-          Pilih hadiah
-        </label>
-        <select
-          id="prize"
-          className="input max-w-md"
-          value={prizeId}
-          onChange={(e) => setPrizeId(e.target.value)}
-          disabled={spinning}
-        >
-          {prizes.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} (kuota {p.quantity})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div
-        className={`relative overflow-hidden rounded-3xl px-6 py-14 text-center text-white shadow-xl transition ${
-          spinning
-            ? "bg-gradient-to-br from-[#9b1b23] via-[#7a1218] to-[#3f0a0e] ring-4 ring-[#c9a84c]/50"
-            : reveal
-              ? "bg-gradient-to-br from-[#7a1218] via-[#9b1b23] to-[#c9a84c] ring-4 ring-[#f0d78c]/70"
-              : "bg-gradient-to-br from-[#7a1218] via-[#9b1b23] to-[#5c0e12]"
-        }`}
-      >
-        {/* festive backdrop */}
-        <div
-          className={`pointer-events-none absolute inset-0 opacity-30 ${
-            spinning ? "animate-pulse" : ""
-          }`}
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 20%, #f0d78c55, transparent 40%), radial-gradient(circle at 80% 30%, #ffffff33, transparent 35%), radial-gradient(circle at 50% 80%, #c9a84c44, transparent 45%)",
-          }}
-          aria-hidden
-        />
-        <DoorPrizeConfetti burstKey={burstKey} />
-
-        <p className="relative z-10 text-sm tracking-[0.35em] text-[#f0d78c] uppercase">
-          {spinning ? "Mengundi…" : reveal ? "Pemenang" : "Siap undi"}
-        </p>
-
-        <div
-          className={`relative z-10 mx-auto mt-6 max-w-3xl rounded-2xl border-2 border-[#f0d78c]/40 bg-black/25 px-4 py-8 backdrop-blur-sm transition-transform duration-150 ${
-            spinning && reelPulse ? "scale-[1.03]" : "scale-100"
-          } ${reveal ? "animate-[bounce_0.6s_ease]" : ""}`}
-        >
-          <p
-            className={`font-display font-bold tabular-nums tracking-wide transition-all duration-100 ${
-              spinning ? "text-5xl sm:text-7xl text-white" : "text-5xl sm:text-7xl text-[#f0d78c]"
-            }`}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            id="prize"
+            className="input min-w-[12rem] border-slate-200 bg-white py-2 text-sm"
+            value={prizeId}
+            onChange={(e) => setPrizeId(e.target.value)}
+            disabled={spinning}
+            aria-label="Pilih hadiah"
           >
-            {displayLabel}
-          </p>
-          {displayName && (
-            <p
-              className={`mt-3 text-lg sm:text-2xl ${
-                spinning ? "text-white/70" : "text-white"
-              }`}
-            >
-              {displayName}
-            </p>
-          )}
-        </div>
-
-        {result && !spinning && (
-          <div className="relative z-10 mx-auto mt-10 max-w-lg rounded-2xl bg-white/15 px-6 py-6 shadow-lg ring-1 ring-[#f0d78c]/50 backdrop-blur">
-            <p className="font-display text-3xl font-bold text-[#f0d78c] drop-shadow">
-              SELAMAT!
-            </p>
-            <p className="mt-3 text-lg">
-              Blok {result.registration.blok_row} — Rumah{" "}
-              {String(result.registration.nomor_kavling).padStart(2, "0")}
-            </p>
-            <p className="mt-1 text-2xl font-semibold">
-              {result.registration.participant_name}
-            </p>
-            <p className="mt-3 inline-block rounded-full bg-[#c9a84c] px-4 py-1.5 text-sm font-semibold text-white">
-              {result.prize.name}
-            </p>
-          </div>
-        )}
-
-        <div className="relative z-10 mt-10 flex flex-wrap justify-center gap-3">
+            {prizes.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} · sisa kuota {p.quantity}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
-            className="inline-flex items-center rounded-xl bg-[#c9a84c] px-10 py-3.5 text-base font-semibold text-white shadow-lg shadow-black/20 transition hover:bg-[#b8963f] hover:scale-[1.02] disabled:opacity-60"
-            disabled={spinning || !prizeId}
-            onClick={spin}
+            className={`inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition ${
+              soundOn
+                ? "border-[#c9a84c]/40 bg-[#c9a84c]/10 text-[#7a1218]"
+                : "border-slate-200 bg-white text-slate-500"
+            }`}
+            onClick={() => {
+              unlockAudio();
+              setSoundOn((v) => !v);
+            }}
           >
-            {spinning ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Spinning...
-              </>
-            ) : result ? (
-              "Spin Lagi"
-            ) : (
-              "Spin"
-            )}
+            <Volume2 className="h-4 w-4" />
+            {soundOn ? "On" : "Off"}
           </button>
         </div>
       </div>
 
+      {/* Stage — one composition */}
+      <section
+        className={`relative isolate min-h-[70vh] overflow-hidden rounded-[2rem] text-white sm:min-h-[75vh] ${
+          spinning ? "doorprize-stage-spin" : reveal ? "doorprize-stage-win" : "doorprize-stage-idle"
+        }`}
+      >
+        <div className="doorprize-stage-mesh pointer-events-none absolute inset-0" aria-hidden />
+        <div
+          className={`doorprize-orb doorprize-orb-a pointer-events-none absolute -left-16 -top-20 h-72 w-72 rounded-full blur-3xl ${
+            spinning ? "opacity-80" : "opacity-50"
+          }`}
+          aria-hidden
+        />
+        <div
+          className={`doorprize-orb doorprize-orb-b pointer-events-none absolute -bottom-24 -right-10 h-80 w-80 rounded-full blur-3xl ${
+            spinning ? "opacity-70" : "opacity-40"
+          }`}
+          aria-hidden
+        />
+        <DoorPrizeConfetti burstKey={burstKey} />
+
+        <div className="relative z-10 flex min-h-[70vh] flex-col items-center justify-center px-5 py-12 sm:min-h-[75vh] sm:px-10">
+          {!reveal || spinning ? (
+            <>
+              <p className="text-[11px] font-semibold tracking-[0.4em] text-white/55 uppercase">
+                {spinning ? "Mengundi" : "Siap undi"}
+              </p>
+              <div
+                className={`mt-8 text-center transition duration-150 ${
+                  spinning && reelPulse ? "scale-[1.04] opacity-100" : "scale-100 opacity-95"
+                }`}
+              >
+                <p className="font-display text-[clamp(3rem,12vw,7rem)] font-bold leading-none tracking-tight text-white drop-shadow-[0_8px_40px_rgba(0,0,0,0.35)]">
+                  {displayLabel}
+                </p>
+                {displayName ? (
+                  <p className="mt-4 text-base text-white/55 sm:text-xl">{displayName}</p>
+                ) : (
+                  <p className="mt-4 text-base text-white/35 sm:text-lg">
+                    Tekan spin untuk mengundi pemenang
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="doorprize-reveal mx-auto w-full max-w-2xl text-center">
+              <p className="text-[11px] font-semibold tracking-[0.45em] text-[#f0d78c] uppercase">
+                Selamat
+              </p>
+              <p className="mt-5 font-display text-[clamp(3.25rem,11vw,6.5rem)] font-bold leading-[0.95] tracking-tight text-white drop-shadow-[0_12px_50px_rgba(0,0,0,0.4)]">
+                {result?.registration.household_label ?? displayLabel}
+              </p>
+              <p className="mt-5 text-xl font-medium text-white/90 sm:text-2xl">
+                {result?.registration.participant_name ?? displayName}
+              </p>
+              {result?.prize.name && (
+                <p className="mt-6 text-sm tracking-wide text-[#f0d78c]/90">
+                  {result.prize.name}
+                </p>
+              )}
+              <div className="mx-auto mt-8 h-px w-24 bg-gradient-to-r from-transparent via-[#f0d78c]/70 to-transparent" />
+              <p className="mt-6 text-xs tracking-[0.2em] text-white/40 uppercase">
+                Agustusan Nahara {year}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-12">
+            <button
+              type="button"
+              className="group relative inline-flex min-w-[10.5rem] items-center justify-center overflow-hidden rounded-full bg-white px-9 py-3.5 text-sm font-semibold text-[#7a1218] shadow-[0_10px_40px_rgba(0,0,0,0.25)] transition hover:scale-[1.03] hover:shadow-[0_14px_50px_rgba(201,168,76,0.35)] disabled:opacity-50"
+              disabled={spinning || !prizeId}
+              onClick={spin}
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-[#f0d78c]/0 via-[#f0d78c]/35 to-[#f0d78c]/0 opacity-0 transition group-hover:opacity-100" />
+              <span className="relative inline-flex items-center">
+                {spinning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Spinning
+                  </>
+                ) : result ? (
+                  "Spin Lagi"
+                ) : (
+                  "Spin"
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       )}
     </div>
   );

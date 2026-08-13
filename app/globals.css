@@ -119,3 +119,59 @@
   animation: landing-rise 0.75s ease-out 0.3s both;
 }
 
+/* Door prize live stage */
+.doorprize-stage-idle {
+  background: radial-gradient(120% 90% at 50% 0%, #9b1b23 0%, #5c0e12 45%, #1a0508 100%);
+}
+
+.doorprize-stage-spin {
+  background: radial-gradient(100% 80% at 50% 20%, #c4232e 0%, #7a1218 40%, #1a0508 100%);
+}
+
+.doorprize-stage-win {
+  background: radial-gradient(110% 90% at 50% 10%, #b8963f 0%, #9b1b23 35%, #3f0a0e 100%);
+}
+
+.doorprize-stage-mesh {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+.doorprize-orb-a {
+  background: #c9a84c;
+  animation: doorprize-orb-drift 8s ease-in-out infinite alternate;
+}
+
+.doorprize-orb-b {
+  background: #ff6b6b;
+  animation: doorprize-orb-drift 10s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes doorprize-orb-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(24px, 18px, 0) scale(1.12);
+  }
+}
+
+@keyframes doorprize-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.doorprize-reveal {
+  animation: doorprize-reveal-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+

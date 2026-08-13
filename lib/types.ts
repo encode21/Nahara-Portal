@@ -297,6 +297,44 @@ export type EventPeakPushSubscription = {
   created_at: string;
 };
 
+export type DuckRaceStatus =
+  | "ready"
+  | "preparing"
+  | "running"
+  | "finished"
+  | "cancelled";
+
+export type DuckRaceParticipant = {
+  household_label: string;
+  blok_row: string;
+  nomor_kavling: number;
+};
+
+export type DuckRaceRandomResult = {
+  method: string;
+  winner_index: number;
+  participant_count: number;
+  entropy?: string;
+};
+
+export type EventDuckRace = {
+  id: string;
+  edition_id: string;
+  race_code: string;
+  status: DuckRaceStatus;
+  participant_count: number;
+  participant_snapshot: DuckRaceParticipant[];
+  winner_household_label: string | null;
+  winner_blok_row: string | null;
+  winner_nomor_kavling: number | null;
+  random_result: DuckRaceRandomResult | null;
+  exclude_previous_winners: boolean;
+  started_at: string | null;
+  finished_at: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type KasSummary = {
   totalPemasukan: number;
   totalPengeluaran: number;
