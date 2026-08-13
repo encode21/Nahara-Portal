@@ -50,6 +50,7 @@ export default function DoorPrizeSpinPage() {
   const [reelPulse, setReelPulse] = useState(false);
   const [reveal, setReveal] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [forceId, setForceId] = useState("");
   const cancelRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -137,7 +138,20 @@ export default function DoorPrizeSpinPage() {
     setDisplayName(final.participant_name);
   }
 
-  async function spin() {
+  async function finishWin(payload: SpinResult, pool: EventPeakRegistration[]) {
+    await runReel(pool, payload.registration);
+    setResult(payload);
+    setDisplayLabel(payload.registration.household_label);
+    setDisplayName(payload.registration.participant_name);
+    setSpinning(false);
+    setReveal(true);
+    setBurstKey((k) => k + 1);
+    if (soundOn) playWinnerFanfare();
+    void notifyWinner(payload.registration.id, year);
+    await load();
+  }
+
+  async function spinRandom() {
     unlockAudio();
     setError(null);
     setResult(null);
@@ -170,7 +184,6 @@ export default function DoorPrizeSpinPage() {
       p_prize_id: prizeId,
     });
 
-    // Keep fast reel visible briefly for drama
     await sleep(900);
     window.clearInterval(fastId);
 
@@ -182,18 +195,57 @@ export default function DoorPrizeSpinPage() {
       return;
     }
 
-    const payload = data as SpinResult;
-    await runReel(pool, payload.registration);
+    await finishWin(data as SpinResult, pool);
+  }
 
-    setResult(payload);
-    setDisplayLabel(payload.registration.household_label);
-    setDisplayName(payload.registration.participant_name);
-    setSpinning(false);
-    setReveal(true);
-    setBurstKey((k) => k + 1);
-    if (soundOn) playWinnerFanfare();
-    void notifyWinner(payload.registration.id, year);
-    await load();
+  /** Tetapkan pemenang spesifik (uji push / demo). */
+  async function spinForced() {
+    unlockAudio();
+    setError(null);
+    setResult(null);
+    setReveal(false);
+    if (!prizeId) {
+      setError("Pilih hadiah terlebih dahulu.");
+      return;
+    }
+    const target = eligible.find((r) => r.id === forceId);
+    if (!target) {
+      setError("Pilih peserta yang ingin dijadikan pemenang.");
+      return;
+    }
+
+    cancelRef.current = false;
+    setSpinning(true);
+    if (soundOn) playSpinStart();
+
+    const pool = eligible.length ? eligible : [target];
+    let i = 0;
+    const fastId = window.setInterval(() => {
+      const row = pool[i % pool.length];
+      setDisplayLabel(row.household_label);
+      setDisplayName(row.participant_name);
+      setReelPulse((p) => !p);
+      if (soundOn) playSpinTick(1);
+      i += 1;
+    }, 55);
+
+    const { data, error: rpcError } = await supabase.rpc("award_door_prize", {
+      p_prize_id: prizeId,
+      p_registration_id: target.id,
+    });
+
+    await sleep(900);
+    window.clearInterval(fastId);
+
+    if (rpcError) {
+      setSpinning(false);
+      setError(getSupabaseErrorMessage(rpcError) ?? "Gagal menetapkan pemenang.");
+      setDisplayLabel("—");
+      setDisplayName("");
+      return;
+    }
+
+    await finishWin(data as SpinResult, pool);
   }
 
   if (loading) {
@@ -237,7 +289,7 @@ export default function DoorPrizeSpinPage() {
           >
             {prizes.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} · sisa kuota {p.quantity}
+                {p.name} · kuota {p.quantity}
               </option>
             ))}
           </select>
@@ -255,6 +307,37 @@ export default function DoorPrizeSpinPage() {
           >
             <Volume2 className="h-4 w-4" />
             {soundOn ? "On" : "Off"}
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-dashed border-[#c9a84c]/40 bg-[#faf7f0] p-4">
+        <p className="text-sm font-medium text-slate-900">Uji pemenang (manual)</p>
+        <p className="mt-1 text-xs text-slate-600">
+          Pilih akun/peserta Anda, lalu tekan tombol di bawah agar undian pasti jatuh ke orang itu
+          (berguna untuk test push).
+        </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <select
+            className="input flex-1 text-sm"
+            value={forceId}
+            disabled={spinning}
+            onChange={(e) => setForceId(e.target.value)}
+          >
+            <option value="">Pilih peserta…</option>
+            {eligible.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.household_label} — {r.participant_name} ({r.registration_code})
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn-primary shrink-0"
+            disabled={spinning || !forceId || !prizeId}
+            onClick={spinForced}
+          >
+            Spin ke peserta ini
           </button>
         </div>
       </div>
@@ -331,7 +414,7 @@ export default function DoorPrizeSpinPage() {
               type="button"
               className="group relative inline-flex min-w-[10.5rem] items-center justify-center overflow-hidden rounded-full bg-white px-9 py-3.5 text-sm font-semibold text-[#7a1218] shadow-[0_10px_40px_rgba(0,0,0,0.25)] transition hover:scale-[1.03] hover:shadow-[0_14px_50px_rgba(201,168,76,0.35)] disabled:opacity-50"
               disabled={spinning || !prizeId}
-              onClick={spin}
+              onClick={spinRandom}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-[#f0d78c]/0 via-[#f0d78c]/35 to-[#f0d78c]/0 opacity-0 transition group-hover:opacity-100" />
               <span className="relative inline-flex items-center">

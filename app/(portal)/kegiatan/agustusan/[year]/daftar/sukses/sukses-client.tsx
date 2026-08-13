@@ -20,6 +20,21 @@ function urlBase64ToUint8Array(base64String: string) {
   return output;
 }
 
+function isIos(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function isStandalonePwa(): boolean {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  return (
+    window.matchMedia("(display-mode: standalone)").matches
+    || nav.standalone === true
+  );
+}
+
 export default function PeakDaftarSuksesInner() {
   const params = useParams();
   const search = useSearchParams();
@@ -30,6 +45,8 @@ export default function PeakDaftarSuksesInner() {
   const [loading, setLoading] = useState(true);
   const [pushMsg, setPushMsg] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
   const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
   useEffect(() => {
@@ -54,21 +71,35 @@ export default function PeakDaftarSuksesInner() {
     };
   }, [code, supabase]);
 
+  useEffect(() => {
+    const supported =
+      typeof window !== "undefined"
+      && "serviceWorker" in navigator
+      && "PushManager" in window
+      && "Notification" in window;
+    setPushSupported(supported);
+    setIosHint(isIos() && (!supported || !isStandalonePwa()));
+  }, []);
+
   async function enablePush() {
     setPushMsg(null);
     if (!vapidPublic || !row) {
-      setPushMsg("Notifikasi belum dikonfigurasi.");
+      setPushMsg("Notifikasi belum dikonfigurasi di server.");
       return;
     }
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setPushMsg("Browser ini tidak mendukung notifikasi push.");
+    if (!pushSupported) {
+      setPushMsg(
+        isIos()
+          ? "Di iPhone: buka Safari → Share → Add to Home Screen, lalu buka lagi dari ikon Home Screen."
+          : "Browser ini tidak mendukung notifikasi push."
+      );
       return;
     }
     setPushBusy(true);
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setPushMsg("Izin notifikasi tidak diberikan.");
+        setPushMsg("Izin notifikasi tidak diberikan. Cek Settings → Notifications.");
         setPushBusy(false);
         return;
       }
@@ -91,7 +122,11 @@ export default function PeakDaftarSuksesInner() {
         setPushMsg("Notifikasi hadiah diaktifkan. Kami akan memberitahu jika Anda menang.");
       }
     } catch {
-      setPushMsg("Gagal mengaktifkan notifikasi.");
+      setPushMsg(
+        isIos()
+          ? "Gagal aktifkan. Pastikan app dibuka dari Home Screen (bukan tab Safari biasa)."
+          : "Gagal mengaktifkan notifikasi. Coba di Chrome desktop / Android."
+      );
     }
     setPushBusy(false);
   }
@@ -162,16 +197,31 @@ export default function PeakDaftarSuksesInner() {
         )}
       </div>
 
-      {vapidPublic && (
+      {vapidPublic ? (
         <div className="card space-y-3">
           <p className="text-sm font-medium text-slate-900">Notifikasi hadiah (opsional)</p>
-          <p className="text-sm text-slate-600">
-            Aktifkan agar browser memberi tahu jika Anda terpilih saat undian door prize.
-          </p>
+          {iosHint ? (
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <p className="font-medium">iPhone: langkah khusus</p>
+              <ol className="mt-1 list-decimal space-y-1 pl-4 text-amber-800">
+                <li>Buka halaman ini di <strong>Safari</strong></li>
+                <li>Tap Share → <strong>Add to Home Screen</strong></li>
+                <li>Buka lagi dari ikon Home Screen</li>
+                <li>Baru tap tombol aktifkan notifikasi</li>
+              </ol>
+              <p className="mt-2 text-xs">
+                Push di iOS hanya jalan jika app terpasang ke Home Screen (PWA), iOS 16.4+.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">
+              Aktifkan agar browser memberi tahu jika Anda terpilih saat undian door prize.
+            </p>
+          )}
           <button
             type="button"
             className="btn-secondary w-full"
-            disabled={pushBusy}
+            disabled={pushBusy || (!pushSupported && !iosHint)}
             onClick={enablePush}
           >
             {pushBusy ? (
@@ -181,7 +231,16 @@ export default function PeakDaftarSuksesInner() {
             )}
             Aktifkan notifikasi hadiah
           </button>
+          {!pushSupported && !iosHint && (
+            <p className="text-xs text-slate-500">
+              Browser ini belum mendukung Web Push. Coba Chrome di Android/desktop.
+            </p>
+          )}
           {pushMsg && <p className="text-sm text-slate-600">{pushMsg}</p>}
+        </div>
+      ) : (
+        <div className="card text-sm text-slate-600">
+          Notifikasi push belum dikonfigurasi (VAPID). Fitur daftar tetap berjalan.
         </div>
       )}
 
