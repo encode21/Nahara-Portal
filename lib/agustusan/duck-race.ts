@@ -98,8 +98,8 @@ export function buildDuckRaceWhatsAppText(race: EventDuckRace): string {
 }
 
 /**
- * Build per-duck progress curves so only the server winner reaches finish.
- * Visual jitter does not change the outcome.
+ * Build per-duck final positions so only the server winner hits the finish line.
+ * Non-winners stop just short; all movement is forward-only in the animator.
  */
 export function buildDuckRaceCurves(
   labels: string[],
@@ -113,8 +113,8 @@ export function buildDuckRaceCurves(
   return labels.map((_, i) => {
     const hash = ((seed + i * 9973) % 1000) / 1000;
     if (i === winnerIdx) return 1;
-    // Non-winners finish between ~55% and ~92% of the track
-    return 0.55 + hash * 0.37;
+    // Non-winners finish near the line (88%–97%), never past the winner
+    return 0.88 + hash * 0.09;
   });
 }
 

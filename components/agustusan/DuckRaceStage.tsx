@@ -28,7 +28,7 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 
 type Phase = "ready" | "preparing" | "countdown" | "racing" | "finished";
 
-const RACE_MS = 22_000;
+const RACE_MS = 15_000;
 const COUNTDOWN_STEPS = ["3", "2", "1", "GO!"] as const;
 
 type Props = {
@@ -169,18 +169,8 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
       if (cancelRef.current) return;
       const t = Math.min(1, (now - start) / RACE_MS);
       const eased = easeInOutCubic(t);
-      // Slight lead variance mid-race, converge to planned finals
-      const midNoise = Math.sin(t * Math.PI);
-      setProgress(
-        finals.map((final, i) => {
-          const base = eased * final;
-          const jitter =
-            i === labels.indexOf(winner)
-              ? 0
-              : midNoise * 0.04 * Math.sin(i * 1.7 + t * 8);
-          return Math.max(0, Math.min(final, base + jitter));
-        })
-      );
+      // Monotonic forward only — no back-and-forth jitter
+      setProgress(finals.map((final) => eased * final));
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick);
       } else {

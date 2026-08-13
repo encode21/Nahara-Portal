@@ -15,7 +15,6 @@ export function DuckRaceTrack({
   participants,
   progress,
   winnerLabel,
-  racing,
   finished,
 }: Props) {
   const count = participants.length;
@@ -34,25 +33,17 @@ export function DuckRaceTrack({
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-        {/* finish line */}
-        <div
-          className="pointer-events-none absolute bottom-0 right-[8%] top-0 z-[1] w-0.5 bg-gradient-to-b from-[#f0d78c]/80 via-white/60 to-[#f0d78c]/80"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-[12%] top-0 z-[1] w-px bg-white/20"
-          aria-hidden
-        />
-
         <ul className="relative z-0 py-1">
+          {/* Finish line at the right edge of the track (progress = 1) */}
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-0.5 bg-gradient-to-b from-[#f0d78c]/90 via-white/70 to-[#f0d78c]/90"
+            aria-hidden
+          />
+
           {participants.map((p, i) => {
             const pct = Math.max(0, Math.min(1, progress[i] ?? 0));
             const isWinner =
               finished && winnerLabel != null && p.household_label === winnerLabel;
-            const wobble =
-              racing && pct > 0.02 && pct < 0.98
-                ? Math.sin(pct * 40 + i) * 2
-                : 0;
 
             return (
               <li
@@ -70,11 +61,13 @@ export function DuckRaceTrack({
                 </span>
                 <div className="relative h-full flex-1">
                   <span
-                    className={`absolute top-1/2 left-0 inline-block -translate-y-1/2 will-change-transform ${duckSize} ${
+                    className={`absolute top-1/2 will-change-transform ${duckSize} ${
                       isWinner ? "drop-shadow-[0_0_8px_#f0d78c]" : ""
                     }`}
                     style={{
-                      transform: `translate3d(calc(${pct * 88}% + ${wobble}px), -50%, 0)`,
+                      // Forward-only; at pct=1 duck sits on the finish line
+                      left: `calc(${pct} * (100% - 1.75rem))`,
+                      transform: "translateY(-50%)",
                     }}
                     aria-hidden
                   >
@@ -82,7 +75,7 @@ export function DuckRaceTrack({
                   </span>
                   {isWinner && (
                     <span
-                      className="absolute top-1/2 right-[2%] -translate-y-1/2 text-lg sm:text-xl"
+                      className="absolute top-1/2 right-1 -translate-y-1/2 text-lg sm:text-xl"
                       aria-hidden
                     >
                       🏆

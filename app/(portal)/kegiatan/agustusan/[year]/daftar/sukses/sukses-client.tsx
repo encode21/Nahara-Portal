@@ -22,17 +22,37 @@ function urlBase64ToUint8Array(base64String: string) {
 
 function isIos(): boolean {
   if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }
 
 function isStandalonePwa(): boolean {
   if (typeof window === "undefined") return false;
   const nav = window.navigator as Navigator & { standalone?: boolean };
   return (
-    window.matchMedia("(display-mode: standalone)").matches
-    || nav.standalone === true
+    window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true
   );
+}
+
+function isSecurePushContext(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.isSecureContext ||
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1"
+  );
+}
+
+async function ensurePushServiceWorker(): Promise<ServiceWorkerRegistration> {
+  // Prefer dedicated push SW so it works even when next-pwa is disabled in development.
+  const existing = await navigator.serviceWorker.getRegistration("/push-sw.js");
+  if (existing) {
+    await existing.update().catch(() => undefined);
+    return existing;
+  }
+  return navigator.serviceWorker.register("/push-sw.js", { scope: "/" });
 }
 
 export default function PeakDaftarSuksesInner() {
@@ -45,8 +65,15 @@ export default function PeakDaftarSuksesInner() {
   const [loading, setLoading] = useState(true);
   const [pushMsg, setPushMsg] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
-  const [pushSupported, setPushSupported] = useState(false);
-  const [iosHint, setIosHint] = useState(false);
+  const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+  const [diag, setDiag] = useState({
+    vapid: false,
+    secure: false,
+    sw: false,
+    pushManager: false,
+    ios: false,
+    standalone: false,
+  });
   const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
   useEffect(() => {
@@ -72,61 +99,96 @@ export default function PeakDaftarSuksesInner() {
   }, [code, supabase]);
 
   useEffect(() => {
-    const supported =
-      typeof window !== "undefined"
-      && "serviceWorker" in navigator
-      && "PushManager" in window
-      && "Notification" in window;
-    setPushSupported(supported);
-    setIosHint(isIos() && (!supported || !isStandalonePwa()));
-  }, []);
+    const pushManager = typeof window !== "undefined" && "PushManager" in window;
+    const sw = typeof navigator !== "undefined" && "serviceWorker" in navigator;
+    const notificationOk = typeof window !== "undefined" && "Notification" in window;
+    setDiag({
+      vapid: Boolean(vapidPublic),
+      secure: isSecurePushContext(),
+      sw,
+      pushManager,
+      ios: isIos(),
+      standalone: isStandalonePwa(),
+    });
+    if (!notificationOk) setPerm("unsupported");
+    else setPerm(Notification.permission);
+  }, [vapidPublic]);
 
   async function enablePush() {
     setPushMsg(null);
     if (!vapidPublic || !row) {
-      setPushMsg("Notifikasi belum dikonfigurasi di server.");
+      setPushMsg("VAPID belum terbaca di browser. Restart npm run dev / redeploy dulu.");
       return;
     }
-    if (!pushSupported) {
+    if (!isSecurePushContext()) {
       setPushMsg(
-        isIos()
-          ? "Di iPhone: buka Safari → Share → Add to Home Screen, lalu buka lagi dari ikon Home Screen."
-          : "Browser ini tidak mendukung notifikasi push."
+        "Halaman harus HTTPS (atau localhost). Buka lewat portal.nahara.id, jangan IP HTTP biasa."
       );
       return;
     }
+    if (!("Notification" in window)) {
+      setPushMsg("Browser ini tidak mendukung Notification API.");
+      return;
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushMsg(
+        isIos()
+          ? "Di iPhone: Add to Home Screen dulu, lalu buka dari ikon tersebut."
+          : "Browser tidak mendukung Web Push."
+      );
+      return;
+    }
+
     setPushBusy(true);
     try {
-      const permission = await Notification.requestPermission();
+      // Explicit permission prompt (Android Chrome shows system dialog here)
+      let permission = Notification.permission;
+      if (permission === "default") {
+        permission = await Notification.requestPermission();
+      }
+      setPerm(permission);
+
       if (permission !== "granted") {
-        setPushMsg("Izin notifikasi tidak diberikan. Cek Settings → Notifications.");
+        setPushMsg(
+          permission === "denied"
+            ? "Izin ditolak. Di Chrome Android: ikon gembok/info situs → Izin → Notifikasi → Izinkan, lalu refresh."
+            : "Izin notifikasi tidak diberikan."
+        );
         setPushBusy(false);
         return;
       }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
+
+      const registration = await ensurePushServiceWorker();
+      await navigator.serviceWorker.ready;
+
+      const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublic),
       });
       const json = sub.toJSON();
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+        setPushMsg("Subscription tidak lengkap. Coba lagi.");
+        setPushBusy(false);
+        return;
+      }
+
       const { error } = await supabase.rpc("upsert_peak_push_subscription", {
         p_registration_code: row.registration_code,
         p_endpoint: json.endpoint,
-        p_p256dh: json.keys?.p256dh,
-        p_auth: json.keys?.auth,
+        p_p256dh: json.keys.p256dh,
+        p_auth: json.keys.auth,
         p_user_agent: navigator.userAgent.slice(0, 200),
       });
       if (error) {
-        setPushMsg(getSupabaseErrorMessage(error) ?? "Gagal menyimpan subscription.");
+        setPushMsg(getSupabaseErrorMessage(error) ?? "Gagal menyimpan subscription di database.");
       } else {
-        setPushMsg("Notifikasi hadiah diaktifkan. Kami akan memberitahu jika Anda menang.");
+        setPushMsg(
+          "Berhasil! Notifikasi aktif. Uji dengan Spin ke peserta ini di halaman admin door prize."
+        );
       }
-    } catch {
-      setPushMsg(
-        isIos()
-          ? "Gagal aktifkan. Pastikan app dibuka dari Home Screen (bukan tab Safari biasa)."
-          : "Gagal mengaktifkan notifikasi. Coba di Chrome desktop / Android."
-      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      setPushMsg(`Gagal mengaktifkan notifikasi: ${msg}`);
     }
     setPushBusy(false);
   }
@@ -197,52 +259,53 @@ export default function PeakDaftarSuksesInner() {
         )}
       </div>
 
-      {vapidPublic ? (
-        <div className="card space-y-3">
-          <p className="text-sm font-medium text-slate-900">Notifikasi hadiah (opsional)</p>
-          {iosHint ? (
-            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <p className="font-medium">iPhone: langkah khusus</p>
-              <ol className="mt-1 list-decimal space-y-1 pl-4 text-amber-800">
-                <li>Buka halaman ini di <strong>Safari</strong></li>
-                <li>Tap Share → <strong>Add to Home Screen</strong></li>
-                <li>Buka lagi dari ikon Home Screen</li>
-                <li>Baru tap tombol aktifkan notifikasi</li>
-              </ol>
-              <p className="mt-2 text-xs">
-                Push di iOS hanya jalan jika app terpasang ke Home Screen (PWA), iOS 16.4+.
-              </p>
-            </div>
+      <div className="card space-y-3">
+        <p className="text-sm font-medium text-slate-900">Notifikasi hadiah (opsional)</p>
+        <p className="text-sm text-slate-600">
+          Tekan tombol di bawah — Chrome Android akan menampilkan popup izin sistem.
+        </p>
+
+        <ul className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 space-y-1">
+          <li>VAPID: {diag.vapid ? "OK" : "TIDAK TERBACA — restart server"}</li>
+          <li>HTTPS/secure: {diag.secure ? "OK" : "TIDAK — wajib HTTPS"}</li>
+          <li>Service Worker API: {diag.sw ? "OK" : "TIDAK"}</li>
+          <li>PushManager: {diag.pushManager ? "OK" : "TIDAK"}</li>
+          <li>
+            Izin saat ini:{" "}
+            <strong>
+              {perm === "unsupported" ? "tidak didukung" : perm}
+            </strong>
+          </li>
+        </ul>
+
+        {diag.ios && !diag.standalone && (
+          <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            iPhone: Add to Home Screen dulu, lalu buka dari ikon tersebut.
+          </div>
+        )}
+
+        {perm === "denied" && (
+          <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
+            Izin sudah ditolak sebelumnya, jadi popup tidak muncul lagi. Reset di pengaturan
+            situs Chrome → Notifikasi → Izinkan.
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="btn-primary w-full"
+          disabled={pushBusy || !diag.vapid}
+          onClick={enablePush}
+        >
+          {pushBusy ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <p className="text-sm text-slate-600">
-              Aktifkan agar browser memberi tahu jika Anda terpilih saat undian door prize.
-            </p>
+            <Bell className="mr-2 h-4 w-4" />
           )}
-          <button
-            type="button"
-            className="btn-secondary w-full"
-            disabled={pushBusy || (!pushSupported && !iosHint)}
-            onClick={enablePush}
-          >
-            {pushBusy ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Bell className="mr-2 h-4 w-4" />
-            )}
-            Aktifkan notifikasi hadiah
-          </button>
-          {!pushSupported && !iosHint && (
-            <p className="text-xs text-slate-500">
-              Browser ini belum mendukung Web Push. Coba Chrome di Android/desktop.
-            </p>
-          )}
-          {pushMsg && <p className="text-sm text-slate-600">{pushMsg}</p>}
-        </div>
-      ) : (
-        <div className="card text-sm text-slate-600">
-          Notifikasi push belum dikonfigurasi (VAPID). Fitur daftar tetap berjalan.
-        </div>
-      )}
+          {perm === "denied" ? "Coba aktifkan lagi" : "Aktifkan notifikasi hadiah"}
+        </button>
+        {pushMsg && <p className="text-sm text-slate-700">{pushMsg}</p>}
+      </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Link href={`/kegiatan/agustusan/${year}`} className="btn-primary flex-1 text-center">
