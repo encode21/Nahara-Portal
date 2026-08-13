@@ -15,6 +15,7 @@ export function DuckRaceTrack({
   participants,
   progress,
   winnerLabel,
+  racing,
   finished,
 }: Props) {
   const count = participants.length;
@@ -44,6 +45,8 @@ export function DuckRaceTrack({
             const pct = Math.max(0, Math.min(1, progress[i] ?? 0));
             const isWinner =
               finished && winnerLabel != null && p.household_label === winnerLabel;
+            // Vertical bob only (not left-right) while racing — looks alive, never reverses
+            const bob = racing ? Math.sin(pct * 26 + i * 1.7) * 1.6 : 0;
 
             return (
               <li
@@ -65,9 +68,8 @@ export function DuckRaceTrack({
                       isWinner ? "drop-shadow-[0_0_8px_#f0d78c]" : ""
                     }`}
                     style={{
-                      // Forward-only; at pct=1 duck sits on the finish line
                       left: `calc(${pct} * (100% - 1.75rem))`,
-                      transform: "translateY(-50%)",
+                      transform: `translateY(calc(-50% + ${bob}px))`,
                     }}
                     aria-hidden
                   >

@@ -8,12 +8,12 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import type { DuckRaceParticipant, EventDuckRace, EventEdition } from "@/lib/types";
 import {
-  buildDuckRaceCurves,
+  buildDuckMotionProfiles,
   buildDuckRaceWhatsAppText,
-  easeInOutCubic,
   formatDuckRaceWhen,
   formatDuckRaceWinnerHouse,
   normalizeDuckRace,
+  sampleDuckProgress,
 } from "@/lib/agustusan/duck-race";
 import {
   playSpinStart,
@@ -161,16 +161,17 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
       activeRace.random_result?.winner_index != null
         ? activeRace.random_result.winner_index * 17 + labels.length
         : labels.length * 31;
-    const finals = buildDuckRaceCurves(labels, winner, seed);
+    const profiles = buildDuckMotionProfiles(labels, winner, seed);
+    const finals = profiles.map(
+      (p) => p.positions[p.positions.length - 1] ?? 0
+    );
     const start = performance.now();
     setPhase("racing");
 
     const tick = (now: number) => {
       if (cancelRef.current) return;
       const t = Math.min(1, (now - start) / RACE_MS);
-      const eased = easeInOutCubic(t);
-      // Monotonic forward only — no back-and-forth jitter
-      setProgress(finals.map((final) => eased * final));
+      setProgress(profiles.map((profile) => sampleDuckProgress(t, profile)));
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick);
       } else {
