@@ -45,8 +45,8 @@ export function DuckRaceTrack({
             const pct = Math.max(0, Math.min(1, progress[i] ?? 0));
             const isWinner =
               finished && winnerLabel != null && p.household_label === winnerLabel;
-            // Vertical bob only (not left-right) while racing — looks alive, never reverses
-            const bob = racing ? Math.sin(pct * 26 + i * 1.7) * 1.6 : 0;
+            // Soft vertical bob — slow, subtle (not a flashy effect)
+            const bob = racing ? Math.sin(pct * 14 + i * 1.1) * 0.9 : 0;
 
             return (
               <li

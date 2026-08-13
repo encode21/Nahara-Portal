@@ -105,19 +105,31 @@ function hash01(seed: number, i: number, salt: number): number {
   return x - Math.floor(x);
 }
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, n));
-}
-
-/** Monotonic keyframes: progress only moves forward over time. */
-export type DuckMotionProfile = {
-  times: number[];
-  positions: number[];
-};
+type SpeedWave = { amp: number; freq: number; phase: number };
 
 /**
- * Per-duck speed profiles so the pack looks chaotic mid-race,
- * while only the server winner reaches the finish line.
+ * Continuous speed profile: progress = integral of always-positive speed.
+ * Overtaking comes from overlapping sine waves — no staged “sudden surge”.
+ */
+export type DuckMotionProfile = {
+  final: number;
+  waves: SpeedWave[];
+};
+
+/** ∫₀ᵗ (1 + Σ amp·sin(2π·freq·s + phase)) ds — speed stays > 0 when Σ|amp| < 1. */
+function integrateSpeed(t: number, waves: SpeedWave[]): number {
+  let s = t;
+  for (const w of waves) {
+    const omega = Math.PI * 2 * w.freq;
+    if (omega < 1e-6) continue;
+    s += (w.amp / omega) * (Math.cos(w.phase) - Math.cos(omega * t + w.phase));
+  }
+  return s;
+}
+
+/**
+ * Per-duck continuous speed profiles: pack salip-menyalip sepanjang race,
+ * hanya pemenang server yang sampai finish (final = 1).
  */
 export function buildDuckMotionProfiles(
   labels: string[],
@@ -132,77 +144,68 @@ export function buildDuckMotionProfiles(
   return labels.map((_, i) => {
     const r = (salt: number) => hash01(seed, i, salt);
     const isWinner = i === winnerIdx;
-    const style = Math.floor(r(2) * 3); // 0 early rabbit, 1 steady, 2 late push
 
-    const final = isWinner ? 1 : 0.48 + r(1) * 0.44; // non-winners end 48%–92%
+    // Spread finish positions so the pack doesn't look "lined up"
+    const final = isWinner ? 1 : 0.52 + r(1) * 0.4; // 52%–92%
 
-    let p1: number;
-    let p2: number;
-    let p3: number;
+    // 2 soft waves — gentle lead changes, never a hard acceleration switch
+    const waves: SpeedWave[] = [
+      {
+        amp: 0.18 + r(3) * 0.22, // 0.18–0.40
+        freq: 0.7 + r(4) * 0.6, // ~0.7–1.3 cycles over the race
+        phase: r(5) * Math.PI * 2,
+      },
+      {
+        amp: 0.1 + r(6) * 0.16, // 0.10–0.26
+        freq: 1.3 + r(7) * 0.9, // ~1.3–2.2 — finer salip-salipan
+        phase: r(8) * Math.PI * 2,
+      },
+    ];
 
+    // Winner uses same style of waves so they don't look scripted — only final=1 differs
     if (isWinner) {
-      // Contested mid-pack early — late surge so winner isn't obvious from the start
-      p1 = 0.06 + r(3) * 0.14;
-      p2 = 0.22 + r(4) * 0.2;
-      p3 = 0.52 + r(5) * 0.16;
-    } else if (style === 0) {
-      // Early rabbit: leads early, fades before the line
-      p1 = 0.2 + r(3) * 0.28;
-      p2 = Math.min(final - 0.1, p1 + 0.12 + r(4) * 0.22);
-      p3 = Math.min(final - 0.03, p2 + 0.06 + r(5) * 0.14);
-    } else if (style === 1) {
-      // Steady middle pack
-      p1 = final * (0.12 + r(3) * 0.12);
-      p2 = final * (0.35 + r(4) * 0.15);
-      p3 = final * (0.65 + r(5) * 0.15);
-    } else {
-      // Slow start, late chase (still short of finish)
-      p1 = 0.03 + r(3) * 0.08;
-      p2 = 0.12 + r(4) * 0.16;
-      p3 = final * (0.5 + r(5) * 0.25);
+      waves[0] = {
+        amp: 0.2 + r(3) * 0.18,
+        freq: 0.75 + r(4) * 0.5,
+        phase: r(5) * Math.PI * 2,
+      };
+      waves[1] = {
+        amp: 0.12 + r(6) * 0.14,
+        freq: 1.4 + r(7) * 0.7,
+        phase: r(8) * Math.PI * 2,
+      };
     }
 
-    p1 = clamp(p1, 0.02, final - 0.08);
-    p2 = clamp(Math.max(p2, p1 + 0.05), p1 + 0.04, final - 0.04);
-    p3 = clamp(Math.max(p3, p2 + 0.05), p2 + 0.04, final - 0.01);
-
-    return {
-      times: [0, 0.18, 0.42, 0.68, 1],
-      positions: [0, p1, p2, p3, final],
-    };
+    return { final, waves };
   });
 }
 
-/** Sample progress at time t ∈ [0,1] — always forward-only. */
+/** Sample progress at time t ∈ [0,1] — always forward-only, continuous overtaking. */
 export function sampleDuckProgress(
   t: number,
   profile: DuckMotionProfile
 ): number {
-  const { times, positions } = profile;
   if (t <= 0) return 0;
-  if (t >= 1) return positions[positions.length - 1] ?? 0;
+  if (t >= 1) return profile.final;
 
-  let i = 0;
-  while (i < times.length - 1 && t > times[i + 1]) i += 1;
-  const t0 = times[i] ?? 0;
-  const t1 = times[i + 1] ?? 1;
-  const p0 = positions[i] ?? 0;
-  const p1 = positions[i + 1] ?? p0;
-  const u = (t - t0) / Math.max(1e-6, t1 - t0);
-  // smoothstep within segment — accel/decel without reversing
-  const s = u * u * (3 - 2 * u);
-  return p0 + (p1 - p0) * s;
+  const total = integrateSpeed(1, profile.waves);
+  if (total <= 1e-6) return profile.final * t;
+
+  const at = integrateSpeed(t, profile.waves);
+  return profile.final * clamp01(at / total);
 }
 
-/** @deprecated Prefer buildDuckMotionProfiles — kept for simple final positions. */
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
+}
+
+/** Final positions only (for end-of-race snap). */
 export function buildDuckRaceCurves(
   labels: string[],
   winnerLabel: string,
   seed: number
 ): number[] {
-  return buildDuckMotionProfiles(labels, winnerLabel, seed).map(
-    (p) => p.positions[p.positions.length - 1] ?? 0
-  );
+  return buildDuckMotionProfiles(labels, winnerLabel, seed).map((p) => p.final);
 }
 
 export function easeInOutCubic(t: number): number {

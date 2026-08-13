@@ -162,9 +162,7 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
         ? activeRace.random_result.winner_index * 17 + labels.length
         : labels.length * 31;
     const profiles = buildDuckMotionProfiles(labels, winner, seed);
-    const finals = profiles.map(
-      (p) => p.positions[p.positions.length - 1] ?? 0
-    );
+    const finals = profiles.map((p) => p.final);
     const start = performance.now();
     setPhase("racing");
 
