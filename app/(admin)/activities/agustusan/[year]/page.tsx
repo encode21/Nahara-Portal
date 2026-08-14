@@ -34,6 +34,29 @@ import {
 
 type Tab = "lomba" | "peserta" | "juara" | "galeri" | "sop";
 
+const NEW_CONTEST_ID = "__new__";
+
+function blankContest(editionId: string, sortOrder: number): EventContest {
+  return {
+    id: "",
+    edition_id: editionId,
+    sort_order: sortOrder,
+    title: "",
+    category: "umum",
+    category_note: null,
+    location: null,
+    starts_at: null,
+    ends_at: null,
+    equipment: null,
+    rules: null,
+    team_size: 1,
+    max_entries: null,
+    registration_open: true,
+    is_competition: true,
+    created_at: "",
+  };
+}
+
 export default function AdminEditionPage() {
   const params = useParams();
   const year = Number(params.year);
@@ -75,7 +98,13 @@ export default function AdminEditionPage() {
   const [savingDrive, setSavingDrive] = useState(false);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
-  const editing = contests.find((c) => c.id === editingId) ?? null;
+  const editing =
+    editingId === NEW_CONTEST_ID && edition
+      ? blankContest(
+          edition.id,
+          contests.reduce((max, c) => Math.max(max, c.sort_order), 0) + 1,
+        )
+      : contests.find((c) => c.id === editingId) ?? null;
 
   const loadGallery = useCallback(
     async (editionId: string) => {
@@ -111,7 +140,7 @@ export default function AdminEditionPage() {
       .order("sort_order");
     const list = (ct ?? []) as EventContest[];
     setContests(list);
-    setSelectedId((prev) => prev || list[0]?.id || "");
+    setSelectedId((prev) => (list.some((c) => c.id === prev) ? prev : list[0]?.id || ""));
     setLoading(false);
   }, [supabase, year]);
 
@@ -168,20 +197,38 @@ export default function AdminEditionPage() {
   }
 
   async function saveContest(payload: ContestEditPayload) {
-    if (!editingId) return;
+    if (!editingId || !edition) return;
     setSavingContest(true);
     setError(null);
-    const { error: err } = await supabase
-      .from("event_contests")
-      .update(payload)
-      .eq("id", editingId);
+    const isNew = editingId === NEW_CONTEST_ID;
+    const { data, error: err } = isNew
+      ? await supabase
+          .from("event_contests")
+          .insert({ ...payload, edition_id: edition.id })
+          .select("id")
+          .maybeSingle()
+      : await supabase.from("event_contests").update(payload).eq("id", editingId).select("id").maybeSingle();
     setSavingContest(false);
     if (err) {
       setError(getSupabaseErrorMessage(err) ?? "Gagal menyimpan lomba");
       return;
     }
-    setMessage("Lomba diperbarui.");
+    setMessage(isNew ? "Lomba ditambahkan." : "Lomba diperbarui.");
     setEditingId(null);
+    if (data?.id) setSelectedId(data.id);
+    await loadEdition();
+  }
+
+  async function deleteContest(contest: EventContest) {
+    if (!confirm(`Hapus lomba “${contest.title}”? Peserta dan juara lomba ini ikut terhapus.`)) return;
+    setError(null);
+    const { error: err } = await supabase.from("event_contests").delete().eq("id", contest.id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal menghapus lomba");
+      return;
+    }
+    if (editingId === contest.id) setEditingId(null);
+    setMessage("Lomba dihapus.");
     await loadEdition();
   }
 
@@ -658,6 +705,20 @@ export default function AdminEditionPage() {
 
       {tab === "lomba" && (
         <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="btn-primary text-sm"
+              disabled={!edition}
+              onClick={() => {
+                setEditingId(NEW_CONTEST_ID);
+                setMessage(null);
+                setError(null);
+              }}
+            >
+              Tambah lomba
+            </button>
+          </div>
           {editing && (
             <ContestEditForm
               contest={editing}
@@ -720,6 +781,13 @@ export default function AdminEditionPage() {
                           }}
                         >
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs text-red-700"
+                          onClick={() => deleteContest(c)}
+                        >
+                          Hapus
                         </button>
                         {c.is_competition && (
                           <button

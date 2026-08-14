@@ -90,4 +90,5 @@ export const CONTEST_CATEGORIES: EventContestCategory[] = [
   "preteen",
   "art",
   "umum",
+  "esport",
 ];

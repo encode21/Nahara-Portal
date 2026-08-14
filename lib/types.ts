@@ -160,7 +160,8 @@ export type EventContestCategory =
   | "balita"
   | "preteen"
   | "art"
-  | "umum";
+  | "umum"
+  | "esport";
 
 export type EventEdition = {
   id: string;

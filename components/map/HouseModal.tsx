@@ -190,7 +190,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                                       row.status
                                         ? "Lunas"
                                         : waived
-                                          ? "Dibebaskan"
+                                          ? "Diputihkan"
                                           : "Belum Bayar"
                                     }
                                     variant={

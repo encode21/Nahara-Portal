@@ -46,6 +46,7 @@ export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
   preteen: "Lomba Pre-Teen",
   art: "Lomba ART",
   umum: "Acara Umum",
+  esport: "Esport",
 };
 
 /** Circle hole on twibbon-frame-circle.png (canvas coords, size 1024) */

@@ -83,6 +83,8 @@ export function ContestFormModal({ contest, onClose }: Props) {
               <option value="preteen">Preteen</option>
               <option value="art">Art</option>
               <option value="umum">Umum</option>
+              <option value="esport">Esport</option>
+              <option value="dewasa_remaja">Dewasa & Remaja</option>
             </select>
           </div>
 

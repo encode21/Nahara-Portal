@@ -1,5 +1,6 @@
 -- Extra seed: Esport additional night for Agustusan 2026
--- Adds "Esport — Turnamen Agustusan (Perempat/Semi/Bronze/Final)" contest on 2026-08-15
+-- Requires: event_contests_category_check includes 'esport'
+-- Idempotent: upsert by id
 BEGIN;
 
 INSERT INTO event_contests (
@@ -16,6 +17,19 @@ INSERT INTO event_contests (
   E'TV dan PS',
   E'Format: Perempat final → Semi final → Bronze match → Final.\nSistem gugur.\nDurasi total acara: 2.5 jam.',
   1, true, true
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  sort_order = EXCLUDED.sort_order,
+  title = EXCLUDED.title,
+  category = EXCLUDED.category,
+  category_note = EXCLUDED.category_note,
+  location = EXCLUDED.location,
+  starts_at = EXCLUDED.starts_at,
+  ends_at = EXCLUDED.ends_at,
+  equipment = EXCLUDED.equipment,
+  rules = EXCLUDED.rules,
+  team_size = EXCLUDED.team_size,
+  registration_open = EXCLUDED.registration_open,
+  is_competition = EXCLUDED.is_competition;
 
 COMMIT;

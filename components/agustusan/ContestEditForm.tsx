@@ -116,7 +116,9 @@ export function ContestEditForm({ contest, saving, onCancel, onSave }: Props) {
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="font-semibold text-slate-900">Edit lomba</h3>
+          <h3 className="font-semibold text-slate-900">
+            {contest.id ? "Edit lomba" : "Tambah lomba"}
+          </h3>
           <p className="text-xs text-slate-500">Waktu disimpan sebagai Asia/Jakarta (+07).</p>
         </div>
         <button type="button" className="btn-secondary text-xs" onClick={onCancel} disabled={saving}>

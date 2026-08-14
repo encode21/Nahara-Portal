@@ -83,7 +83,7 @@ export function normalizeMonthDate(value: string | null | undefined): string {
   return `${ymd.slice(0, 7)}-01`;
 }
 
-/** Kas/iuran wajib mulai Juni 2026; Mar–Mei 2026 dibebaskan. */
+/** Kas/iuran wajib mulai Juni 2026; Mar–Mei 2026 diputihkan. */
 export const IURAN_START_MONTH = "2026-06-01";
 
 export function isIuranWaivedMonth(bulan: string): boolean {
