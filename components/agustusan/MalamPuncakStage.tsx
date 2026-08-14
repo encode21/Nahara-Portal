@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AGUSTUSAN_MEDIA } from "@/lib/constants/agustusan";
 import {
-  AGUSTUSAN_MEDIA,
-  AGUSTUSAN_TITLE,
-  PEAK_EVENT,
-} from "@/lib/constants/agustusan";
-import { MALAM_PUNCAK_ASSETS } from "@/lib/constants/agustusan-rundown";
+  MALAM_PUNCAK_BACKDROP_INTERVAL_MS,
+  MALAM_PUNCAK_BACKDROP_SLIDES,
+} from "@/lib/constants/agustusan-rundown";
 import {
   createMalamPuncakChannel,
   readStoredCue,
@@ -84,11 +83,6 @@ export function MalamPuncakStage({ year }: { year: number }) {
   const missingSrc =
     (cue.mode === "video" || cue.mode === "audio" || cue.mode === "embed") &&
     !cue.src;
-
-  const idleTitle = useMemo(
-    () => cue.title || PEAK_EVENT.title,
-    [cue.title],
-  );
 
   if (!armed) {
     return (
@@ -171,24 +165,7 @@ export function MalamPuncakStage({ year }: { year: number }) {
         </>
       )}
       {(cue.mode === "idle" || missingSrc) && !showVideo && !showAudio && !showEmbed && (
-        <div className="relative flex h-full w-full items-end justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={MALAM_PUNCAK_ASSETS.idlePoster}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-          <div className="relative z-10 mb-16 px-8 text-center">
-            <p className="text-sm uppercase tracking-[0.35em] text-white/70">
-              {AGUSTUSAN_TITLE}
-            </p>
-            <h1 className="mt-3 font-display text-4xl font-bold md:text-6xl">
-              {idleTitle}
-            </h1>
-            <p className="mt-3 text-lg text-white/80">{PEAK_EVENT.location}</p>
-          </div>
-        </div>
+        <BackdropCoverCarousel />
       )}
       {(mediaError || missingSrc) && cue.mode !== "idle" && (
         <div className="absolute inset-x-0 top-8 z-20 mx-auto max-w-lg rounded-xl bg-black/75 px-6 py-4 text-center text-sm">
@@ -198,6 +175,33 @@ export function MalamPuncakStage({ year }: { year: number }) {
           ) : null}
         </div>
       )}
+    </div>
+  );
+}
+
+function BackdropCoverCarousel() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % MALAM_PUNCAK_BACKDROP_SLIDES.length);
+    }, MALAM_PUNCAK_BACKDROP_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-black">
+      {MALAM_PUNCAK_BACKDROP_SLIDES.map((src, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+            i === index ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
     </div>
   );
 }

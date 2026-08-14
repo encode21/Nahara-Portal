@@ -62,15 +62,6 @@ export default function AdminPeakQrPage() {
       >
         Status:{" "}
         <strong>{regOpen ? "Pendaftaran DIBUKA" : "Pendaftaran DITUTUP"}</strong>
-        {!regOpen && (
-          <span className="mt-1 block text-xs">
-            Set{" "}
-            <code className="rounded bg-white/70 px-1">
-              NEXT_PUBLIC_PEAK_REGISTRATION_OPEN=true
-            </code>{" "}
-            lalu restart/redeploy sebelum acara.
-          </span>
-        )}
       </div>
 
       <div className="card flex flex-col items-center gap-4 text-center">
