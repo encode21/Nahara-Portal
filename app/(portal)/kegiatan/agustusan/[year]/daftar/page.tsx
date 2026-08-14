@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { EventEdition } from "@/lib/types";
 import { PEAK_EVENT } from "@/lib/constants/agustusan";
 import { PeakRegistrationForm } from "@/components/agustusan/PeakRegistrationForm";
+import { AgustusanFeedbackForm } from "@/components/agustusan/AgustusanFeedbackForm";
 import { LoadingSpinner } from "@/components/ui/Loading";
 
 export default function PeakDaftarPage() {
@@ -77,6 +78,13 @@ export default function PeakDaftarPage() {
         </p>
       </div>
       <PeakRegistrationForm edition={edition} year={year} />
+      <div id="masukan" className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="font-display text-lg font-bold text-slate-900">Rating & masukan</h2>
+        <p className="mt-1 mb-4 text-sm text-slate-600">
+          Tamu undangan dan peserta boleh menilai acara serta mengusulkan lomba tahun depan.
+        </p>
+        <AgustusanFeedbackForm editionId={edition.id} source="daftar" compact />
+      </div>
     </div>
   );
 }

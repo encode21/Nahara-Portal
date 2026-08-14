@@ -242,6 +242,19 @@ export type EventGalleryItem = {
   created_at: string;
 };
 
+export type EventEditionFeedbackSource = "daftar" | "sukses" | "hub";
+
+export type EventEditionFeedback = {
+  id: string;
+  edition_id: string;
+  rating: number;
+  body: string;
+  display_name: string | null;
+  registration_id: string | null;
+  source: EventEditionFeedbackSource;
+  created_at: string;
+};
+
 export type PeakParticipantRole = "suami" | "istri";
 export type PeakRegistrationStatus = "pending" | "verified" | "cancelled";
 export type DoorPrizeKind = "door" | "utama";

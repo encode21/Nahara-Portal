@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images, Camera, ExternalLink } from "lucide-react";
+import { Check, Copy, CalendarDays, Trophy, Users, FileText, HeartHandshake, Images, Camera, ExternalLink, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type {
   Activity,
@@ -31,6 +31,7 @@ import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { AgustusanFab } from "@/components/agustusan/AgustusanFab";
 import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
+import { AgustusanFeedbackForm } from "@/components/agustusan/AgustusanFeedbackForm";
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 
@@ -168,6 +169,11 @@ export default function AgustusanEditionPage() {
     document.getElementById("donasi")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function scrollToMasukan(e: React.MouseEvent) {
+    e.preventDefault();
+    document.getElementById("masukan")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -289,6 +295,14 @@ export default function AgustusanEditionPage() {
                 <Camera className="mr-2 h-4 w-4" />
                 Buat Twibbon
               </Link>
+              <a
+                href="#masukan"
+                onClick={scrollToMasukan}
+                className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Rating & masukan
+              </a>
               <a
                 href="#donasi"
                 onClick={scrollToDonasi}
@@ -499,6 +513,19 @@ export default function AgustusanEditionPage() {
             </pre>
           </section>
         )}
+
+        <section id="masukan" className="scroll-mt-24 space-y-4">
+          <h2 className="font-display text-2xl font-bold text-slate-900">
+            Rating & masukan warga
+          </h2>
+          <p className="text-sm text-slate-600">
+            Tanpa login. Boleh anonim. Bantu panitia evaluasi apa yang bagus, kurang, dan
+            lomba apa yang perlu diadakan tahun depan.
+          </p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <AgustusanFeedbackForm editionId={edition.id} source="hub" />
+          </div>
+        </section>
 
         {/* Always render so #donasi / tombol hero selalu bisa scroll */}
         <section className="space-y-4">

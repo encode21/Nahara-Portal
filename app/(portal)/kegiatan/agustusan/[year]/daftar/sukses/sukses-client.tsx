@@ -10,6 +10,7 @@ import { PEAK_EVENT } from "@/lib/constants/agustusan";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
+import { AgustusanFeedbackForm } from "@/components/agustusan/AgustusanFeedbackForm";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -257,6 +258,20 @@ export default function PeakDaftarSuksesInner() {
             />
           </div>
         )}
+      </div>
+
+      <div className="card space-y-3">
+        <h2 className="font-display text-lg font-bold text-slate-900">Rating & masukan</h2>
+        <p className="text-sm text-slate-600">
+          Setelah daftar, bantu panitia evaluasi acara tahun ini dan ide lomba tahun depan.
+        </p>
+        <AgustusanFeedbackForm
+          editionId={row.edition_id}
+          source="sukses"
+          registrationId={row.id}
+          defaultName={row.participant_name}
+          compact
+        />
       </div>
 
       <div className="card space-y-3">

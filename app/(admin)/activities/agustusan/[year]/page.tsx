@@ -9,6 +9,7 @@ import type {
   EventContestEntry,
   EventContestResult,
   EventEdition,
+  EventEditionFeedback,
   EventGalleryItem,
   GalleryMediaType,
 } from "@/lib/types";
@@ -32,7 +33,7 @@ import {
   type ContestEditPayload,
 } from "@/components/agustusan/ContestEditForm";
 
-type Tab = "lomba" | "peserta" | "juara" | "galeri" | "sop";
+type Tab = "lomba" | "peserta" | "juara" | "galeri" | "sop" | "masukan";
 
 const NEW_CONTEST_ID = "__new__";
 
@@ -96,6 +97,7 @@ export default function AdminEditionPage() {
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [driveUrlDraft, setDriveUrlDraft] = useState("");
   const [savingDrive, setSavingDrive] = useState(false);
+  const [feedback, setFeedback] = useState<EventEditionFeedback[]>([]);
 
   const selected = contests.find((c) => c.id === selectedId) ?? null;
   const editing =
@@ -115,6 +117,18 @@ export default function AdminEditionPage() {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
       setGallery((data ?? []) as EventGalleryItem[]);
+    },
+    [supabase]
+  );
+
+  const loadFeedback = useCallback(
+    async (editionId: string) => {
+      const { data } = await supabase
+        .from("event_edition_feedback")
+        .select("*")
+        .eq("edition_id", editionId)
+        .order("created_at", { ascending: false });
+      setFeedback((data ?? []) as EventEditionFeedback[]);
     },
     [supabase]
   );
@@ -180,7 +194,8 @@ export default function AdminEditionPage() {
 
   useEffect(() => {
     if (tab === "galeri" && edition?.id) loadGallery(edition.id);
-  }, [tab, edition?.id, loadGallery]);
+    if (tab === "masukan" && edition?.id) loadFeedback(edition.id);
+  }, [tab, edition?.id, loadGallery, loadFeedback]);
 
   async function toggleRegistration(contest: EventContest) {
     setError(null);
@@ -230,6 +245,18 @@ export default function AdminEditionPage() {
     if (editingId === contest.id) setEditingId(null);
     setMessage("Lomba dihapus.");
     await loadEdition();
+  }
+
+  async function deleteFeedback(row: EventEditionFeedback) {
+    if (!confirm("Hapus masukan ini?")) return;
+    setError(null);
+    const { error: err } = await supabase.from("event_edition_feedback").delete().eq("id", row.id);
+    if (err) {
+      setError(getSupabaseErrorMessage(err) ?? "Gagal menghapus masukan");
+      return;
+    }
+    setMessage("Masukan dihapus.");
+    if (edition) await loadFeedback(edition.id);
   }
 
   async function saveSop() {
@@ -582,6 +609,7 @@ export default function AdminEditionPage() {
     { id: "peserta", label: "Peserta" },
     { id: "juara", label: "Juara" },
     { id: "galeri", label: "Galeri" },
+    { id: "masukan", label: "Masukan" },
     { id: "sop", label: "SOP" },
   ];
 
@@ -1177,6 +1205,55 @@ export default function AdminEditionPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      )}
+
+      {tab === "masukan" && (
+        <div className="space-y-4">
+          {feedback.length > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+              <span className="font-semibold text-slate-900">
+                {(
+                  feedback.reduce((s, r) => s + r.rating, 0) / feedback.length
+                ).toFixed(1)}
+              </span>
+              <span className="text-slate-500"> / 5 rata-rata</span>
+              <span className="text-slate-400"> · {feedback.length} masukan</span>
+            </div>
+          )}
+          {feedback.length === 0 ? (
+            <p className="text-sm text-slate-500">Belum ada masukan.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+              {feedback.map((row) => (
+                <li key={row.id} className="space-y-2 px-4 py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {"★".repeat(row.rating)}
+                        <span className="ml-2 font-normal text-slate-400">
+                          {row.display_name || "Anonim"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {formatDateTime(row.created_at)} · {row.source}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => deleteFeedback(row)}
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm text-slate-700">{row.body}</p>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
