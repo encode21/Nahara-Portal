@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AGUSTUSAN_MEDIA } from "@/lib/constants/agustusan";
+import { AGUSTUSAN_MEDIA, PEAK_EVENT } from "@/lib/constants/agustusan";
 import {
   MALAM_PUNCAK_BACKDROP_INTERVAL_MS,
   MALAM_PUNCAK_BACKDROP_SLIDES,
@@ -165,7 +165,10 @@ export function MalamPuncakStage({ year }: { year: number }) {
         </>
       )}
       {(cue.mode === "idle" || missingSrc) && !showVideo && !showAudio && !showEmbed && (
-        <BackdropCoverCarousel />
+        <BackdropContainCarousel
+          title={cue.title}
+          location={PEAK_EVENT.location}
+        />
       )}
       {(mediaError || missingSrc) && cue.mode !== "idle" && (
         <div className="absolute inset-x-0 top-8 z-20 mx-auto max-w-lg rounded-xl bg-black/75 px-6 py-4 text-center text-sm">
@@ -179,7 +182,13 @@ export function MalamPuncakStage({ year }: { year: number }) {
   );
 }
 
-function BackdropCoverCarousel() {
+function BackdropContainCarousel({
+  title,
+  location,
+}: {
+  title: string;
+  location: string;
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -197,11 +206,19 @@ function BackdropCoverCarousel() {
           key={src}
           src={src}
           alt=""
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+          className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-1000 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         />
       ))}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/35 to-transparent pb-10 pt-28">
+        <p className="px-8 text-center font-display text-4xl font-bold tracking-wide text-white drop-shadow-md md:text-6xl lg:text-7xl">
+          {title}
+        </p>
+        <p className="mt-3 px-8 text-center text-base text-white/90 drop-shadow md:text-xl">
+          {location}
+        </p>
+      </div>
     </div>
   );
 }

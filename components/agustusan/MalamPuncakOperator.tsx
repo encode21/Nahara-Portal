@@ -98,7 +98,13 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   }
 
   function stopToLogo() {
-    publish({ ...IDLE_CUE, volume, at: Date.now() });
+    publish({
+      ...IDLE_CUE,
+      slotId: cue.slotId,
+      title: cue.title || IDLE_CUE.title,
+      volume,
+      at: Date.now(),
+    });
   }
 
   function openStage() {
