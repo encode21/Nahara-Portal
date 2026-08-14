@@ -568,8 +568,14 @@ export default function AdminEditionPage() {
             </Link>
           )}
           <Link
-            href={`/activities/agustusan/${year}/doorprize`}
+            href={`/activities/agustusan/${year}/malam-puncak`}
             className="rounded-lg border border-[#7a1218]/30 bg-[#7a1218]/10 px-3 py-1.5 text-sm font-medium text-[#7a1218] hover:bg-[#7a1218]/15"
+          >
+            Operator Malam Puncak
+          </Link>
+          <Link
+            href={`/activities/agustusan/${year}/doorprize`}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Door Prize / Acara Puncak
           </Link>

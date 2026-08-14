@@ -22,6 +22,7 @@ import { useAppSurface } from "@/lib/hooks/useAppSurface";
 import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 import { SecurityNotificationBell } from "./SecurityNotificationBell";
+import { isMalamPuncakStagePath } from "@/lib/agustusan/malam-puncak-path";
 
 function UserMenu({
   userName,
@@ -207,6 +208,8 @@ export function HeaderNav() {
         ? "nav-active"
         : "text-slate-600 hover:bg-gold/5 hover:text-gold-dark",
     );
+
+  if (isMalamPuncakStagePath(pathname)) return null;
 
   return (
     <header
@@ -449,10 +452,13 @@ export function HeaderNav() {
 }
 
 export function Footer() {
+  const pathname = usePathname();
   const surface = useAppSurface();
   const portalHome = buildPortalUrl("/dashboard");
   const opsLogin = buildOpsUrl("/login");
   const landingHome = buildLandingUrl("/");
+
+  if (isMalamPuncakStagePath(pathname)) return null;
 
   if (surface === "landing") {
     return (
