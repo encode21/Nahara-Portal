@@ -39,6 +39,7 @@ function cueFromSlot(
     src: slot.cue.src,
     title: slot.cue.label ?? slot.title,
     playing: playing && slot.cue.kind !== "idle",
+    loop: Boolean(slot.cue.loop),
     volume,
     at: Date.now(),
   };

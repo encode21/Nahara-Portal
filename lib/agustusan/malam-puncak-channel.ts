@@ -6,6 +6,7 @@ export type MalamPuncakCue = {
   src: string | null;
   title: string;
   playing: boolean;
+  loop: boolean;
   volume: number;
   at: number;
 };
@@ -21,6 +22,7 @@ export const IDLE_CUE: MalamPuncakCue = {
   src: null,
   title: "Malam Puncak",
   playing: false,
+  loop: false,
   volume: 1,
   at: 0,
 };

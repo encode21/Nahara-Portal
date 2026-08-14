@@ -11,6 +11,7 @@ export type RundownCue = {
   kind: RundownCueKind;
   src: string | null;
   label?: string;
+  loop?: boolean;
 };
 
 export type RundownSlot = {
@@ -27,6 +28,7 @@ export type RundownSlot = {
 
 export const MALAM_PUNCAK_ASSETS = {
   indonesiaRaya: "/assets/agustusan/malam-puncak/indonesia-raya.mp4",
+  registrasiLoop: "/assets/agustusan/malam-puncak/registrasi.mp4",
   idlePoster: AGUSTUSAN_MEDIA.hero,
   teaser: AGUSTUSAN_MEDIA.video,
   crazyGames: "https://www.crazygames.com/t/quiz",
@@ -40,8 +42,13 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     durationLabel: "90 menit",
     title: "Registrasi",
     presenter: "MC Meryka",
-    notes: "QR code absensi untuk doorprize",
-    cue: { kind: "idle", src: null },
+    notes: "Video loop di projector + QR daftar",
+    cue: {
+      kind: "video",
+      src: MALAM_PUNCAK_ASSETS.registrasiLoop,
+      label: "Video Registrasi",
+      loop: true,
+    },
     shortcuts: ["qr"],
   },
   {

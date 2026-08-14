@@ -123,6 +123,7 @@ export function MalamPuncakStage({ year }: { year: number }) {
           src={cue.src ?? undefined}
           className="h-full w-full object-contain"
           playsInline
+          loop={cue.loop}
           onError={() => setMediaError(true)}
           onEnded={() => setMediaError(false)}
         />
