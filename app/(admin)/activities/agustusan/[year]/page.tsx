@@ -1209,8 +1209,6 @@ export default function AdminEditionPage() {
         </div>
       )}
 
-      )}
-
       {tab === "masukan" && (
         <div className="space-y-4">
           {feedback.length > 0 && (
