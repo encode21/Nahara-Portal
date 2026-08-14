@@ -9,6 +9,7 @@ import {
   formatCurrency,
   formatMonthShort,
   getCurrentMonthStart,
+  isIuranWaivedMonth,
   normalizeMonthDate,
   toMonthStart,
 } from "@/lib/utils";
@@ -173,22 +174,37 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                           </tr>
                         </thead>
                         <tbody>
-                          {historyRows.map((row) => (
-                            <tr key={row.bulan} className="border-b border-slate-100">
-                              <td className="px-3 py-2 text-slate-600">
-                                {formatMonthShort(row.bulan)}
-                              </td>
-                              <td className="px-3 py-2 text-slate-400">
-                                {formatCurrency(row.nominal)}
-                              </td>
-                              <td className="px-3 py-2">
-                                <StatusBadge
-                                  status={row.status ? "Lunas" : "Belum Bayar"}
-                                  variant={getIuranVariant(row.status)}
-                                />
-                              </td>
-                            </tr>
-                          ))}
+                          {historyRows.map((row) => {
+                            const waived = !row.status && isIuranWaivedMonth(row.bulan);
+                            return (
+                              <tr key={row.bulan} className="border-b border-slate-100">
+                                <td className="px-3 py-2 text-slate-600">
+                                  {formatMonthShort(row.bulan)}
+                                </td>
+                                <td className="px-3 py-2 text-slate-400">
+                                  {waived ? "—" : formatCurrency(row.nominal)}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <StatusBadge
+                                    status={
+                                      row.status
+                                        ? "Lunas"
+                                        : waived
+                                          ? "Dibebaskan"
+                                          : "Belum Bayar"
+                                    }
+                                    variant={
+                                      row.status
+                                        ? "success"
+                                        : waived
+                                          ? "neutral"
+                                          : getIuranVariant(false)
+                                    }
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

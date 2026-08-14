@@ -83,6 +83,14 @@ export function normalizeMonthDate(value: string | null | undefined): string {
   return `${ymd.slice(0, 7)}-01`;
 }
 
+/** Kas/iuran wajib mulai Juni 2026; Mar–Mei 2026 dibebaskan. */
+export const IURAN_START_MONTH = "2026-06-01";
+
+export function isIuranWaivedMonth(bulan: string): boolean {
+  const m = normalizeMonthDate(bulan);
+  return Boolean(m) && m < IURAN_START_MONTH;
+}
+
 export function formatMonthShort(monthDate: string): string {
   const d = new Date(`${normalizeMonthDate(monthDate).slice(0, 7)}-01T12:00:00`);
   return new Intl.DateTimeFormat("id-ID", { month: "short", year: "numeric" }).format(d);
