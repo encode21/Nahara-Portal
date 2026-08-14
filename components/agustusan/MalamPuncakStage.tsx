@@ -181,6 +181,8 @@ export function MalamPuncakStage({ year }: { year: number }) {
 
 function BackdropCoverCarousel({ title }: { title: string }) {
   const [index, setIndex] = useState(0);
+  const slide = MALAM_PUNCAK_BACKDROP_SLIDES[index];
+  const showTitle = slide?.overlayTitle !== false && Boolean(title);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -191,22 +193,24 @@ function BackdropCoverCarousel({ title }: { title: string }) {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      {MALAM_PUNCAK_BACKDROP_SLIDES.map((src, i) => (
+      {MALAM_PUNCAK_BACKDROP_SLIDES.map((item, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          key={src}
-          src={src}
+          key={item.src}
+          src={item.src}
           alt=""
           className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         />
       ))}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/25 to-transparent pb-12 pt-24">
-        <p className="px-8 text-center font-display text-4xl font-bold tracking-wide text-white drop-shadow-md md:text-6xl lg:text-7xl">
-          {title}
-        </p>
-      </div>
+      {showTitle && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/25 to-transparent pb-12 pt-24">
+          <p className="px-8 text-center font-display text-4xl font-bold tracking-wide text-white drop-shadow-md md:text-6xl lg:text-7xl">
+            {title}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,10 +36,22 @@ export const MALAM_PUNCAK_ASSETS = {
 
 /** Cover carousel saat operator klik Logo / Tampilkan logo. */
 export const MALAM_PUNCAK_BACKDROP_SLIDES = [
-  "/assets/agustusan/malam-puncak/backdrop-hut-ri.png",
-  "/assets/agustusan/nahara-flags-banner.png",
-  "/assets/agustusan/cluster-flags.png",
-  "/assets/agustusan/aerial-minigolf.png",
+  {
+    src: "/assets/agustusan/malam-puncak/backdrop-hut-ri.png",
+    overlayTitle: false,
+  },
+  {
+    src: "/assets/agustusan/nahara-flags-banner.png",
+    overlayTitle: true,
+  },
+  {
+    src: "/assets/agustusan/cluster-flags.png",
+    overlayTitle: true,
+  },
+  {
+    src: "/assets/agustusan/aerial-minigolf.png",
+    overlayTitle: true,
+  },
 ] as const;
 
 export const MALAM_PUNCAK_BACKDROP_INTERVAL_MS = 8000;
