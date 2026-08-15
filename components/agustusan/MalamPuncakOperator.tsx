@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PEAK_EVENT } from "@/lib/constants/agustusan";
 import {
+  MALAM_PUNCAK_ASSETS,
   MALAM_PUNCAK_RUNDOWN,
   formatJakartaClock,
   isSlotCurrent,
@@ -21,6 +22,8 @@ import {
 import {
   IDLE_CUE,
   createMalamPuncakChannel,
+  malamPuncakPlaylistUrlKey,
+  parseYoutubePlaylistId,
   postCue,
   readStoredCue,
   type MalamPuncakCue,
@@ -41,6 +44,7 @@ function cueFromSlot(
     playing: playing && slot.cue.kind !== "idle",
     loop: Boolean(slot.cue.loop),
     volume,
+    youtubeList: null,
     at: Date.now(),
   };
 }
@@ -51,6 +55,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   const [volume, setVolume] = useState(1);
   const [cue, setCue] = useState<MalamPuncakCue>(() => readStoredCue(year));
   const [lastPong, setLastPong] = useState(0);
+  const [playlistUrl, setPlaylistUrl] = useState("");
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   const connected = lastPong > 0 && now.getTime() - lastPong < STAGE_PING_MS;
@@ -74,6 +79,12 @@ export function MalamPuncakOperator({ year }: { year: number }) {
       }
     });
     channelRef.current = channel;
+    try {
+      const saved = window.localStorage.getItem(malamPuncakPlaylistUrlKey(year));
+      setPlaylistUrl(saved || MALAM_PUNCAK_ASSETS.youtubePlaylistUrl);
+    } catch {
+      setPlaylistUrl(MALAM_PUNCAK_ASSETS.youtubePlaylistUrl);
+    }
     return () => {
       channel?.close();
       channelRef.current = null;
@@ -93,18 +104,30 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   }
 
   function pause() {
-    if (cue.mode === "idle") return;
+    if (cue.mode === "idle" && !cue.youtubeList) return;
     publish({ ...cue, playing: false, at: Date.now() });
   }
 
-  function stopToLogo() {
+  function showLogo(title?: string, slotId?: string | null) {
+    const list = parseYoutubePlaylistId(playlistUrl);
+    try {
+      window.localStorage.setItem(malamPuncakPlaylistUrlKey(year), playlistUrl.trim());
+    } catch {
+      /* ignore */
+    }
     publish({
       ...IDLE_CUE,
-      slotId: cue.slotId,
-      title: cue.title || IDLE_CUE.title,
+      slotId: slotId ?? cue.slotId,
+      title: title || cue.title || IDLE_CUE.title,
       volume,
+      youtubeList: list,
+      playing: Boolean(list),
       at: Date.now(),
     });
+  }
+
+  function stopToLogo() {
+    showLogo(cue.title || IDLE_CUE.title, cue.slotId);
   }
 
   function openStage() {
@@ -114,7 +137,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
 
   function onVolume(next: number) {
     setVolume(next);
-    if (cue.mode === "video" || cue.mode === "audio") {
+    if (cue.mode === "video" || cue.mode === "audio" || cue.youtubeList) {
       publish({ ...cue, volume: next, at: Date.now() });
     }
   }
@@ -194,7 +217,9 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           type="button"
           className="btn-secondary gap-1.5"
           onClick={pause}
-          disabled={cue.mode === "idle" || !cue.playing}
+          disabled={
+            !cue.playing || (cue.mode === "idle" && !cue.youtubeList)
+          }
         >
           <Pause className="h-4 w-4" />
           Pause
@@ -219,7 +244,32 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           <strong className="text-slate-700">
             {cue.slotId ?? "logo"} · {cue.mode}
             {cue.playing ? " · playing" : ""}
+            {cue.youtubeList ? " · YouTube" : ""}
           </strong>
+        </p>
+        <label className="w-full text-sm text-slate-600">
+          Playlist YouTube (saat Logo)
+          <input
+            className="input mt-1"
+            type="url"
+            placeholder="https://www.youtube.com/playlist?list=…"
+            value={playlistUrl}
+            onChange={(e) => setPlaylistUrl(e.target.value)}
+            onBlur={() => {
+              try {
+                window.localStorage.setItem(
+                  malamPuncakPlaylistUrlKey(year),
+                  playlistUrl.trim(),
+                );
+              } catch {
+                /* ignore */
+              }
+            }}
+          />
+        </label>
+        <p className="w-full text-xs text-slate-500">
+          Tempel playlist-mu. Tombol Logo menampilkan foto carousel sambil memutar lagu
+          (video YouTube tidak tampil di projector). Pause menghentikan lagunya.
         </p>
       </div>
 
@@ -279,15 +329,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
                       <button
                         type="button"
                         className="btn-secondary py-1.5 text-xs"
-                        onClick={() =>
-                          publish({
-                            ...IDLE_CUE,
-                            slotId: slot.id,
-                            title: slot.title,
-                            volume,
-                            at: Date.now(),
-                          })
-                        }
+                        onClick={() => showLogo(slot.title, slot.id)}
                       >
                         Tampilkan logo
                       </button>

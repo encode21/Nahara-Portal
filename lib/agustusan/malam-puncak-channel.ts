@@ -9,6 +9,8 @@ export type MalamPuncakCue = {
   loop: boolean;
   volume: number;
   at: number;
+  /** YouTube playlist id (PL…) diputar di belakang logo */
+  youtubeList: string | null;
 };
 
 export type MalamPuncakMessage =
@@ -25,6 +27,7 @@ export const IDLE_CUE: MalamPuncakCue = {
   loop: false,
   volume: 1,
   at: 0,
+  youtubeList: null,
 };
 
 export function malamPuncakChannelName(year: number): string {
@@ -46,6 +49,10 @@ export function readStoredCue(year: number): MalamPuncakCue {
       ...IDLE_CUE,
       ...parsed,
       volume: clampVolume(parsed.volume),
+      youtubeList:
+        typeof parsed.youtubeList === "string" && parsed.youtubeList
+          ? parsed.youtubeList
+          : null,
     };
   } catch {
     return { ...IDLE_CUE };
@@ -85,4 +92,23 @@ export function postCue(
 ): void {
   writeStoredCue(year, cue);
   channel?.postMessage({ type: "cue", cue } satisfies MalamPuncakMessage);
+}
+
+export function malamPuncakPlaylistUrlKey(year: number): string {
+  return `nahara:malam-puncak:${year}:yt-playlist-url`;
+}
+
+/** Ambil id playlist dari tautan YouTube (playlist?list= / watch?list= / id mentah). */
+export function parseYoutubePlaylistId(input: string): string | null {
+  const t = input.trim();
+  if (!t) return null;
+  try {
+    const u = new URL(t);
+    const list = u.searchParams.get("list");
+    if (list && list.length >= 10) return list;
+  } catch {
+    /* not a URL */
+  }
+  if (/^PL[\w-]+$/i.test(t)) return t;
+  return null;
 }

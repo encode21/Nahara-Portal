@@ -32,26 +32,16 @@ export const MALAM_PUNCAK_ASSETS = {
   idlePoster: AGUSTUSAN_MEDIA.hero,
   teaser: AGUSTUSAN_MEDIA.video,
   crazyGames: "https://www.crazygames.com/t/quiz",
+  /** Tempel playlist YouTube di operator; boleh dikosongkan. */
+  youtubePlaylistUrl: "",
 } as const;
 
 /** Cover carousel saat operator klik Logo / Tampilkan logo. */
 export const MALAM_PUNCAK_BACKDROP_SLIDES = [
-  {
-    src: "/assets/agustusan/malam-puncak/backdrop-hut-ri.png",
-    overlayTitle: false,
-  },
-  {
-    src: "/assets/agustusan/nahara-flags-banner.png",
-    overlayTitle: true,
-  },
-  {
-    src: "/assets/agustusan/cluster-flags.png",
-    overlayTitle: true,
-  },
-  {
-    src: "/assets/agustusan/aerial-minigolf.png",
-    overlayTitle: true,
-  },
+  { src: "/assets/agustusan/malam-puncak/backdrop-hut-ri.png?v=20260815" },
+  { src: "/assets/agustusan/nahara-flags-banner.png" },
+  { src: "/assets/agustusan/cluster-flags.png" },
+  { src: "/assets/agustusan/aerial-minigolf.png" },
 ] as const;
 
 export const MALAM_PUNCAK_BACKDROP_INTERVAL_MS = 8000;

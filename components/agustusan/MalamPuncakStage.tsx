@@ -12,12 +12,41 @@ import {
   type MalamPuncakCue,
 } from "@/lib/agustusan/malam-puncak-channel";
 
+function youtubePlaylistEmbedSrc(listId: string, playing: boolean): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "";
+  const params = new URLSearchParams({
+    list: listId,
+    autoplay: playing ? "1" : "0",
+    loop: "1",
+    rel: "0",
+    modestbranding: "1",
+    playsinline: "1",
+    enablejsapi: "1",
+    controls: "0",
+  });
+  if (origin) params.set("origin", origin);
+  return `https://www.youtube.com/embed/videoseries?${params.toString()}`;
+}
+
+function postYoutubeCommand(
+  iframe: HTMLIFrameElement | null,
+  func: string,
+  args: unknown[] = [],
+) {
+  iframe?.contentWindow?.postMessage(
+    JSON.stringify({ event: "command", func, args }),
+    "*",
+  );
+}
+
 export function MalamPuncakStage({ year }: { year: number }) {
   const [armed, setArmed] = useState(false);
   const [cue, setCue] = useState<MalamPuncakCue>(() => readStoredCue(year));
   const [mediaError, setMediaError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const youtubeRef = useRef<HTMLIFrameElement>(null);
 
   const applyCue = useCallback((next: MalamPuncakCue) => {
     setCue(next);
@@ -74,6 +103,12 @@ export function MalamPuncakStage({ year }: { year: number }) {
       } else {
         audio.pause();
       }
+    }
+
+    const yt = youtubeRef.current;
+    if (cue.mode === "idle" && cue.youtubeList && yt) {
+      postYoutubeCommand(yt, "setVolume", [Math.round(cue.volume * 100)]);
+      postYoutubeCommand(yt, cue.playing ? "playVideo" : "pauseVideo");
     }
   }, [armed, cue]);
 
@@ -164,14 +199,35 @@ export function MalamPuncakStage({ year }: { year: number }) {
           </a>
         </>
       )}
-      {(cue.mode === "idle" || missingSrc) && !showVideo && !showAudio && !showEmbed && (
-        <BackdropCoverCarousel title={cue.title} />
-      )}
+      {(cue.mode === "idle" || missingSrc) &&
+        !showVideo &&
+        !showAudio &&
+        !showEmbed && (
+          <>
+            {cue.youtubeList && (
+              <iframe
+                ref={youtubeRef}
+                key={cue.youtubeList}
+                title="Playlist YouTube"
+                src={youtubePlaylistEmbedSrc(cue.youtubeList, cue.playing && armed)}
+                allow="autoplay; encrypted-media"
+                className="pointer-events-none absolute inset-0 z-0 h-full w-full border-0 opacity-0"
+                tabIndex={-1}
+                aria-hidden
+              />
+            )}
+            <div className="relative z-10 h-full w-full">
+              <BackdropCoverCarousel title={cue.title} />
+            </div>
+          </>
+        )}
       {(mediaError || missingSrc) && cue.mode !== "idle" && (
         <div className="absolute inset-x-0 top-8 z-20 mx-auto max-w-lg rounded-xl bg-black/75 px-6 py-4 text-center text-sm">
           File belum ada atau gagal diputar
           {cue.src ? (
-            <span className="mt-1 block break-all text-white/50">{cue.src}</span>
+            <span className="mt-1 block break-all text-white/50">
+              {cue.src}
+            </span>
           ) : null}
         </div>
       )}
@@ -181,8 +237,7 @@ export function MalamPuncakStage({ year }: { year: number }) {
 
 function BackdropCoverCarousel({ title }: { title: string }) {
   const [index, setIndex] = useState(0);
-  const slide = MALAM_PUNCAK_BACKDROP_SLIDES[index];
-  const showTitle = slide?.overlayTitle !== false && Boolean(title);
+  const showTitle = Boolean(title);
 
   useEffect(() => {
     const id = window.setInterval(() => {
