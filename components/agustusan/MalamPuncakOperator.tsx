@@ -22,8 +22,9 @@ import {
 import {
   IDLE_CUE,
   createMalamPuncakChannel,
+  hasYoutubeMedia,
   malamPuncakPlaylistUrlKey,
-  parseYoutubePlaylistId,
+  parseYoutubeMedia,
   postCue,
   readStoredCue,
   type MalamPuncakCue,
@@ -45,20 +46,21 @@ function cueFromSlot(
     loop: Boolean(slot.cue.loop),
     volume,
     youtubeList: null,
+    youtubeVideo: null,
     at: Date.now(),
   };
 }
 
 export function MalamPuncakOperator({ year }: { year: number }) {
-  const [clock, setClock] = useState(() => formatJakartaClock());
-  const [now, setNow] = useState(() => new Date());
+  const [clock, setClock] = useState("");
+  const [now, setNow] = useState<Date | null>(null);
   const [volume, setVolume] = useState(1);
-  const [cue, setCue] = useState<MalamPuncakCue>(() => readStoredCue(year));
+  const [cue, setCue] = useState<MalamPuncakCue>(IDLE_CUE);
   const [lastPong, setLastPong] = useState(0);
   const [playlistUrl, setPlaylistUrl] = useState("");
   const channelRef = useRef<BroadcastChannel | null>(null);
 
-  const connected = lastPong > 0 && now.getTime() - lastPong < STAGE_PING_MS;
+  const connected = lastPong > 0 && now != null && now.getTime() - lastPong < STAGE_PING_MS;
 
   const publish = useCallback(
     (next: MalamPuncakCue) => {
@@ -79,6 +81,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
       }
     });
     channelRef.current = channel;
+    setCue(readStoredCue(year));
     try {
       const saved = window.localStorage.getItem(malamPuncakPlaylistUrlKey(year));
       setPlaylistUrl(saved || MALAM_PUNCAK_ASSETS.youtubePlaylistUrl);
@@ -104,24 +107,34 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   }
 
   function pause() {
-    if (cue.mode === "idle" && !cue.youtubeList) return;
+    if (cue.mode === "idle" && !hasYoutubeMedia(cue)) return;
     publish({ ...cue, playing: false, at: Date.now() });
   }
 
+  function resume() {
+    if (cue.mode === "idle" && !hasYoutubeMedia(cue)) {
+      showLogo(cue.title || IDLE_CUE.title, cue.slotId);
+      return;
+    }
+    publish({ ...cue, playing: true, at: Date.now() });
+  }
+
   function showLogo(title?: string, slotId?: string | null) {
-    const list = parseYoutubePlaylistId(playlistUrl);
+    const media = parseYoutubeMedia(playlistUrl);
     try {
       window.localStorage.setItem(malamPuncakPlaylistUrlKey(year), playlistUrl.trim());
     } catch {
       /* ignore */
     }
+    const hasMedia = Boolean(media.listId || media.videoId);
     publish({
       ...IDLE_CUE,
       slotId: slotId ?? cue.slotId,
       title: title || cue.title || IDLE_CUE.title,
       volume,
-      youtubeList: list,
-      playing: Boolean(list),
+      youtubeList: media.listId,
+      youtubeVideo: media.videoId,
+      playing: hasMedia,
       at: Date.now(),
     });
   }
@@ -137,7 +150,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
 
   function onVolume(next: number) {
     setVolume(next);
-    if (cue.mode === "video" || cue.mode === "audio" || cue.youtubeList) {
+    if (cue.mode === "video" || cue.mode === "audio" || hasYoutubeMedia(cue)) {
       publish({ ...cue, volume: next, at: Date.now() });
     }
   }
@@ -145,7 +158,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   const currentIds = useMemo(
     () =>
       new Set(
-        MALAM_PUNCAK_RUNDOWN.filter((s) => isSlotCurrent(s, now)).map(
+        MALAM_PUNCAK_RUNDOWN.filter((s) => now != null && isSlotCurrent(s, now)).map(
           (s) => s.id,
         ),
       ),
@@ -169,7 +182,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
         </div>
         <div className="text-right">
           <p className="font-mono text-3xl font-semibold tabular-nums text-slate-900">
-            {clock}
+            {clock || "—:—:—"}
           </p>
           <p className="text-xs text-slate-500">WIB</p>
         </div>
@@ -216,9 +229,21 @@ export function MalamPuncakOperator({ year }: { year: number }) {
         <button
           type="button"
           className="btn-secondary gap-1.5"
+          onClick={resume}
+          disabled={
+            cue.playing ||
+            (cue.mode === "idle" && !hasYoutubeMedia(cue) && !playlistUrl.trim())
+          }
+        >
+          <Play className="h-4 w-4" />
+          Play
+        </button>
+        <button
+          type="button"
+          className="btn-secondary gap-1.5"
           onClick={pause}
           disabled={
-            !cue.playing || (cue.mode === "idle" && !cue.youtubeList)
+            !cue.playing || (cue.mode === "idle" && !hasYoutubeMedia(cue))
           }
         >
           <Pause className="h-4 w-4" />
@@ -244,15 +269,15 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           <strong className="text-slate-700">
             {cue.slotId ?? "logo"} · {cue.mode}
             {cue.playing ? " · playing" : ""}
-            {cue.youtubeList ? " · YouTube" : ""}
+            {hasYoutubeMedia(cue) ? " · YouTube" : ""}
           </strong>
         </p>
         <label className="w-full text-sm text-slate-600">
-          Playlist YouTube (saat Logo)
+          Playlist YouTube / video (saat Logo)
           <input
             className="input mt-1"
             type="url"
-            placeholder="https://www.youtube.com/playlist?list=…"
+            placeholder="https://www.youtube.com/watch?v=… atau playlist?list=…"
             value={playlistUrl}
             onChange={(e) => setPlaylistUrl(e.target.value)}
             onBlur={() => {
@@ -268,8 +293,8 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           />
         </label>
         <p className="w-full text-xs text-slate-500">
-          Tempel playlist-mu. Tombol Logo menampilkan foto carousel sambil memutar lagu
-          (video YouTube tidak tampil di projector). Pause menghentikan lagunya.
+          Tempel tautan video atau playlist. Tombol Logo menampilkan foto sambil memutar
+          audio YouTube (gambar YouTube tidak tampil). Pause lalu Play untuk lanjut.
         </p>
       </div>
 

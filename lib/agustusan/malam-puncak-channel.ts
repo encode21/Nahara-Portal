@@ -9,8 +9,10 @@ export type MalamPuncakCue = {
   loop: boolean;
   volume: number;
   at: number;
-  /** YouTube playlist id (PL…) diputar di belakang logo */
+  /** YouTube playlist id (PL…) */
   youtubeList: string | null;
+  /** YouTube video id (11 karakter, dari watch?v=) */
+  youtubeVideo: string | null;
 };
 
 export type MalamPuncakMessage =
@@ -28,6 +30,7 @@ export const IDLE_CUE: MalamPuncakCue = {
   volume: 1,
   at: 0,
   youtubeList: null,
+  youtubeVideo: null,
 };
 
 export function malamPuncakChannelName(year: number): string {
@@ -52,6 +55,10 @@ export function readStoredCue(year: number): MalamPuncakCue {
       youtubeList:
         typeof parsed.youtubeList === "string" && parsed.youtubeList
           ? parsed.youtubeList
+          : null,
+      youtubeVideo:
+        typeof parsed.youtubeVideo === "string" && parsed.youtubeVideo
+          ? parsed.youtubeVideo
           : null,
     };
   } catch {
@@ -98,17 +105,34 @@ export function malamPuncakPlaylistUrlKey(year: number): string {
   return `nahara:malam-puncak:${year}:yt-playlist-url`;
 }
 
-/** Ambil id playlist dari tautan YouTube (playlist?list= / watch?list= / id mentah). */
-export function parseYoutubePlaylistId(input: string): string | null {
+/** Playlist id dan/atau video id dari tautan YouTube. */
+export function parseYoutubeMedia(input: string): {
+  listId: string | null;
+  videoId: string | null;
+} {
   const t = input.trim();
-  if (!t) return null;
+  if (!t) return { listId: null, videoId: null };
+  if (/^PL[\w-]+$/i.test(t)) return { listId: t, videoId: null };
+  if (/^[\w-]{11}$/.test(t)) return { listId: null, videoId: t };
   try {
     const u = new URL(t);
-    const list = u.searchParams.get("list");
-    if (list && list.length >= 10) return list;
+    let listId = u.searchParams.get("list");
+    let videoId = u.searchParams.get("v");
+    if (u.hostname.replace(/^www\./, "") === "youtu.be") {
+      videoId = u.pathname.replace(/^\//, "").split("/")[0] || videoId;
+    }
+    const embed = u.pathname.match(/\/embed\/([^/?]+)/);
+    if (embed && embed[1] !== "videoseries") videoId = embed[1];
+    const shorts = u.pathname.match(/\/shorts\/([^/?]+)/);
+    if (shorts) videoId = shorts[1];
+    if (listId && listId.length < 10) listId = null;
+    if (videoId && !/^[\w-]{11}$/.test(videoId)) videoId = null;
+    return { listId, videoId };
   } catch {
-    /* not a URL */
+    return { listId: null, videoId: null };
   }
-  if (/^PL[\w-]+$/i.test(t)) return t;
-  return null;
+}
+
+export function hasYoutubeMedia(cue: Pick<MalamPuncakCue, "youtubeList" | "youtubeVideo">): boolean {
+  return Boolean(cue.youtubeList || cue.youtubeVideo);
 }

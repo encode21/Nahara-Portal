@@ -8,15 +8,16 @@ import {
 } from "@/lib/constants/agustusan-rundown";
 import {
   createMalamPuncakChannel,
+  hasYoutubeMedia,
+  IDLE_CUE,
   readStoredCue,
   type MalamPuncakCue,
 } from "@/lib/agustusan/malam-puncak-channel";
 
-function youtubePlaylistEmbedSrc(listId: string, playing: boolean): string {
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
+function youtubeEmbedSrc(cue: MalamPuncakCue, playing: boolean): string | null {
+  if (!hasYoutubeMedia(cue)) return null;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const params = new URLSearchParams({
-    list: listId,
     autoplay: playing ? "1" : "0",
     loop: "1",
     rel: "0",
@@ -26,7 +27,13 @@ function youtubePlaylistEmbedSrc(listId: string, playing: boolean): string {
     controls: "0",
   });
   if (origin) params.set("origin", origin);
-  return `https://www.youtube.com/embed/videoseries?${params.toString()}`;
+  if (cue.youtubeList) {
+    params.set("list", cue.youtubeList);
+    return `https://www.youtube.com/embed/videoseries?${params.toString()}`;
+  }
+  const videoId = cue.youtubeVideo!;
+  params.set("playlist", videoId);
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
 }
 
 function postYoutubeCommand(
@@ -42,7 +49,7 @@ function postYoutubeCommand(
 
 export function MalamPuncakStage({ year }: { year: number }) {
   const [armed, setArmed] = useState(false);
-  const [cue, setCue] = useState<MalamPuncakCue>(() => readStoredCue(year));
+  const [cue, setCue] = useState<MalamPuncakCue>(IDLE_CUE);
   const [mediaError, setMediaError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -58,6 +65,7 @@ export function MalamPuncakStage({ year }: { year: number }) {
       if (msg.type === "cue") applyCue(msg.cue);
     });
     channel?.postMessage({ type: "hello" });
+    applyCue(readStoredCue(year));
 
     const ping = window.setInterval(() => {
       channel?.postMessage({ type: "pong", at: Date.now() });
@@ -106,7 +114,7 @@ export function MalamPuncakStage({ year }: { year: number }) {
     }
 
     const yt = youtubeRef.current;
-    if (cue.mode === "idle" && cue.youtubeList && yt) {
+    if (cue.mode === "idle" && hasYoutubeMedia(cue) && yt) {
       postYoutubeCommand(yt, "setVolume", [Math.round(cue.volume * 100)]);
       postYoutubeCommand(yt, cue.playing ? "playVideo" : "pauseVideo");
     }
@@ -204,14 +212,14 @@ export function MalamPuncakStage({ year }: { year: number }) {
         !showAudio &&
         !showEmbed && (
           <>
-            {cue.youtubeList && (
+            {hasYoutubeMedia(cue) && youtubeEmbedSrc(cue, cue.playing && armed) && (
               <iframe
                 ref={youtubeRef}
-                key={cue.youtubeList}
-                title="Playlist YouTube"
-                src={youtubePlaylistEmbedSrc(cue.youtubeList, cue.playing && armed)}
+                key={`${cue.youtubeList ?? ""}-${cue.youtubeVideo ?? ""}`}
+                title="YouTube"
+                src={youtubeEmbedSrc(cue, cue.playing && armed) ?? undefined}
                 allow="autoplay; encrypted-media"
-                className="pointer-events-none absolute inset-0 z-0 h-full w-full border-0 opacity-0"
+                className="pointer-events-none absolute inset-0 z-0 h-full w-full border-0"
                 tabIndex={-1}
                 aria-hidden
               />
