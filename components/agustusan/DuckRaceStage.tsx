@@ -74,7 +74,7 @@ function DuckRaceStageInner({ year, variant = "stage" }: Props) {
   const [soundOn, setSoundOn] = useState(true);
   const [kahootPin, setKahootPin] = useState("");
   const [lobbyOpen, setLobbyOpen] = useState(
-    () => searchParams.get("lobby") !== "0"
+    () => searchParams.get("lobby") === "1"
   );
   const rafRef = useRef<number | null>(null);
   const cancelRef = useRef(false);
@@ -320,7 +320,7 @@ function DuckRaceStageInner({ year, variant = "stage" }: Props) {
         <DuckRaceJoinLobby
           pin={kahootPin}
           onPinChange={isAdmin ? persistKahootPin : undefined}
-          onClose={isAdmin ? () => setLobbyOpen(false) : undefined}
+          onClose={() => setLobbyOpen(false)}
           showStart={isAdmin}
           onStart={() => setLobbyOpen(false)}
         />

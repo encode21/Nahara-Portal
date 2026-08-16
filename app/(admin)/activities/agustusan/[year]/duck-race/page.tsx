@@ -138,8 +138,8 @@ export default function AdminDuckRacePage() {
   const tvHref = `/kegiatan/agustusan/${year}/duck-race`;
   const pinDigits = normalizeKahootPin(kahootPin);
   const tvKahootHref = pinDigits
-    ? `${tvHref}?pin=${pinDigits}`
-    : tvHref;
+    ? `${tvHref}?lobby=1&pin=${pinDigits}`
+    : `${tvHref}?lobby=1`;
 
   async function copyList() {
     await navigator.clipboard.writeText(labels.join("\n"));
@@ -198,8 +198,11 @@ export default function AdminDuckRacePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={tvKahootHref} target="_blank" className="btn-primary">
+          <Link href={tvHref} target="_blank" className="btn-primary">
             Buka mode TV
+          </Link>
+          <Link href={tvKahootHref} target="_blank" className="btn-secondary">
+            QR Kahoot (TV)
           </Link>
           <button
             type="button"
@@ -218,10 +221,10 @@ export default function AdminDuckRacePage() {
       )}
 
       <div className="card space-y-3">
-        <p className="text-sm font-medium text-slate-900">QR join Kahoot (hadiah utama)</p>
+        <p className="text-sm font-medium text-slate-900">QR join Kahoot (opsional)</p>
         <p className="text-sm text-slate-600">
-          Isi Game PIN dari host Kahoot, lalu buka mode TV. PIN berubah setiap sesi — jangan
-          hardcode.
+          Overlay terpisah — tidak mengganti Duck Race. Isi Game PIN, lalu buka QR Kahoot
+          (TV). Tutup overlay untuk kembali ke lintasan bebek.
         </p>
         <label className="block text-xs font-medium text-slate-500">
           Game PIN
