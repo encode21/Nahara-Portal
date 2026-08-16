@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
 import {
   ExternalLink,
@@ -112,15 +112,17 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   }
 
   function resume() {
+    const slot = MALAM_PUNCAK_RUNDOWN.find((s) => s.id === cue.slotId);
+    if (slot?.silent) return;
     if (cue.mode === "idle" && !hasYoutubeMedia(cue)) {
-      showLogo(cue.title || IDLE_CUE.title, cue.slotId);
+      showLogo(cue.title || IDLE_CUE.title, cue.slotId, true);
       return;
     }
     publish({ ...cue, playing: true, at: Date.now() });
   }
 
-  function showLogo(title?: string, slotId?: string | null) {
-    const media = parseYoutubeMedia(playlistUrl);
+  function showLogo(title?: string, slotId?: string | null, withBgm = true) {
+    const media = withBgm ? parseYoutubeMedia(playlistUrl) : { listId: null, videoId: null };
     try {
       window.localStorage.setItem(malamPuncakPlaylistUrlKey(year), playlistUrl.trim());
     } catch {
@@ -140,7 +142,8 @@ export function MalamPuncakOperator({ year }: { year: number }) {
   }
 
   function stopToLogo() {
-    showLogo(cue.title || IDLE_CUE.title, cue.slotId);
+    const slot = MALAM_PUNCAK_RUNDOWN.find((s) => s.id === cue.slotId);
+    showLogo(cue.title || IDLE_CUE.title, cue.slotId, !slot?.silent);
   }
 
   function openStage() {
@@ -232,6 +235,7 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           onClick={resume}
           disabled={
             cue.playing ||
+            Boolean(MALAM_PUNCAK_RUNDOWN.find((s) => s.id === cue.slotId)?.silent) ||
             (cue.mode === "idle" && !hasYoutubeMedia(cue) && !playlistUrl.trim())
           }
         >
@@ -299,21 +303,30 @@ export function MalamPuncakOperator({ year }: { year: number }) {
       </div>
 
       <ol className="space-y-2">
-        {MALAM_PUNCAK_RUNDOWN.map((slot) => {
+        {MALAM_PUNCAK_RUNDOWN.map((slot, i) => {
           const current = currentIds.has(slot.id);
           const active = cue.slotId === slot.id;
           const canPlay = slot.cue.kind !== "idle";
+          const prev = MALAM_PUNCAK_RUNDOWN[i - 1];
+          const showGroup = Boolean(slot.group && slot.group !== prev?.group);
           return (
-            <li
-              key={slot.id}
-              className={`rounded-xl border p-4 ${
-                active
-                  ? "border-[#7a1218]/50 bg-[#7a1218]/5"
-                  : current
-                    ? "border-gold/50 bg-gold/5"
-                    : "border-slate-200 bg-white"
-              }`}
-            >
+            <Fragment key={slot.id}>
+              {showGroup && (
+                <li className="list-none pt-4 first:pt-0">
+                  <p className="border-b border-slate-200 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {slot.group}
+                  </p>
+                </li>
+              )}
+              <li
+                className={`rounded-xl border p-4 ${
+                  active
+                    ? "border-[#7a1218]/50 bg-[#7a1218]/5"
+                    : current
+                      ? "border-gold/50 bg-gold/5"
+                      : "border-slate-200 bg-white"
+                }`}
+              >
               <div className="flex flex-wrap items-start gap-3">
                 <div className="w-28 shrink-0 font-mono text-sm text-slate-600">
                   {slot.start}–{slot.end}
@@ -322,6 +335,11 @@ export function MalamPuncakOperator({ year }: { year: number }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="font-semibold text-slate-900">{slot.title}</h2>
+                    {slot.silent && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                        Hening
+                      </span>
+                    )}
                     {current && (
                       <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
                         Sekarang
@@ -354,9 +372,9 @@ export function MalamPuncakOperator({ year }: { year: number }) {
                       <button
                         type="button"
                         className="btn-secondary py-1.5 text-xs"
-                        onClick={() => showLogo(slot.title, slot.id)}
+                        onClick={() => showLogo(slot.title, slot.id, !slot.silent)}
                       >
-                        Tampilkan logo
+                        {slot.silent ? "Tampilkan (hening)" : "Tampilkan + lagu"}
                       </button>
                     )}
                     {(slot.shortcuts ?? []).map((kind) => {
@@ -376,7 +394,8 @@ export function MalamPuncakOperator({ year }: { year: number }) {
                   </div>
                 </div>
               </div>
-            </li>
+              </li>
+            </Fragment>
           );
         })}
       </ol>

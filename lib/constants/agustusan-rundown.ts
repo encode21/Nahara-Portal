@@ -24,6 +24,10 @@ export type RundownSlot = {
   notes: string;
   cue: RundownCue;
   shortcuts?: RundownShortcut[];
+  /** Judul pemisah di daftar operator */
+  group?: string;
+  /** Idle tanpa YouTube (mis. Pembacaan Doa) */
+  silent?: boolean;
 };
 
 export const MALAM_PUNCAK_ASSETS = {
@@ -49,6 +53,7 @@ export const MALAM_PUNCAK_BACKDROP_INTERVAL_MS = 8000;
 export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   {
     id: "registrasi",
+    group: "Registrasi",
     start: "18:00",
     end: "19:30",
     durationLabel: "90 menit",
@@ -65,6 +70,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "pembukaan",
+    group: "Pembukaan",
     start: "19:30",
     end: "19:35",
     durationLabel: "5 menit",
@@ -75,6 +81,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "indonesia-raya",
+    group: "Pembukaan",
     start: "19:35",
     end: "19:40",
     durationLabel: "5 menit",
@@ -89,16 +96,19 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "doa",
+    group: "Doa",
     start: "19:40",
     end: "19:45",
     durationLabel: "5 menit",
     title: "Pembacaan Doa",
     presenter: "Mas Catur",
-    notes: "Organ: background music saja",
+    notes: "Hening — tanpa lagu YouTube / organ",
+    silent: true,
     cue: { kind: "idle", src: null },
   },
   {
     id: "sambutan",
+    group: "Sambutan",
     start: "19:45",
     end: "20:00",
     durationLabel: "15 menit",
@@ -110,6 +120,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "tumpeng",
+    group: "Sambutan",
     start: "20:00",
     end: "20:05",
     durationLabel: "5 menit",
@@ -120,6 +131,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "makan",
+    group: "Makan & hiburan",
     start: "20:05",
     end: "23:00",
     durationLabel: "sd selesai",
@@ -130,6 +142,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "hadiah",
+    group: "Makan & hiburan",
     start: "20:05",
     end: "20:20",
     durationLabel: "15 menit",
@@ -140,16 +153,29 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "organ-awal",
+    group: "Makan & hiburan",
     start: "20:05",
-    end: "21:00",
+    end: "23:00",
     durationLabel: "sd selesai",
     title: "Hiburan (Organ Tunggal)",
     presenter: "",
-    notes: "Diselingi acara lain: organ hanya background music",
+    notes: "Background music; jeda saat Doa / acara resmi",
+    cue: { kind: "idle", src: null },
+  },
+  {
+    id: "tebak-cermat",
+    group: "Makan & hiburan",
+    start: "20:20",
+    end: "20:30",
+    durationLabel: "10 menit",
+    title: "Games Tebak Cermat",
+    presenter: "MC",
+    notes: "Games di panggung",
     cue: { kind: "idle", src: null },
   },
   {
     id: "doorprize",
+    group: "Makan & hiburan",
     start: "21:00",
     end: "21:15",
     durationLabel: "15 menit",
@@ -165,9 +191,10 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "organ-lanjutan",
+    group: "Makan & hiburan",
     start: "21:15",
     end: "23:00",
-    durationLabel: "75 menit",
+    durationLabel: "sd selesai",
     title: "Hiburan (Organ Tunggal) — Lanjutan",
     presenter: "",
     notes: "",
@@ -175,6 +202,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
   },
   {
     id: "closing",
+    group: "Penutup",
     start: "23:00",
     end: "23:59",
     durationLabel: "selesai",
