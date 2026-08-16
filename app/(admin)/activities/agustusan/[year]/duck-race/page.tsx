@@ -12,7 +12,10 @@ import type {
 } from "@/lib/types";
 import {
   buildDuckRaceWhatsAppText,
+  DUCK_RACE_KAHOOT_PIN_KEY,
+  formatKahootPin,
   normalizeDuckRace,
+  normalizeKahootPin,
 } from "@/lib/agustusan/duck-race";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { LoadingSpinner } from "@/components/ui/Loading";
@@ -31,6 +34,7 @@ export default function AdminDuckRacePage() {
   const [copiedWa, setCopiedWa] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showStage, setShowStage] = useState(false);
+  const [kahootPin, setKahootPin] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,11 +122,24 @@ export default function AdminDuckRacePage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DUCK_RACE_KAHOOT_PIN_KEY) ?? "";
+      if (stored) setKahootPin(normalizeKahootPin(stored));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const labels = participants.map((p) => p.household_label);
   const lastFinished = history.find(
     (r) => r.status === "finished" || r.winner_household_label
   );
   const tvHref = `/kegiatan/agustusan/${year}/duck-race`;
+  const pinDigits = normalizeKahootPin(kahootPin);
+  const tvKahootHref = pinDigits
+    ? `${tvHref}?pin=${pinDigits}`
+    : tvHref;
 
   async function copyList() {
     await navigator.clipboard.writeText(labels.join("\n"));
@@ -181,7 +198,7 @@ export default function AdminDuckRacePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={tvHref} target="_blank" className="btn-primary">
+          <Link href={tvKahootHref} target="_blank" className="btn-primary">
             Buka mode TV
           </Link>
           <button
@@ -199,6 +216,41 @@ export default function AdminDuckRacePage() {
           {error}
         </p>
       )}
+
+      <div className="card space-y-3">
+        <p className="text-sm font-medium text-slate-900">QR join Kahoot (hadiah utama)</p>
+        <p className="text-sm text-slate-600">
+          Isi Game PIN dari host Kahoot, lalu buka mode TV. PIN berubah setiap sesi — jangan
+          hardcode.
+        </p>
+        <label className="block text-xs font-medium text-slate-500">
+          Game PIN
+          <input
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="955754"
+            value={kahootPin}
+            onChange={(e) => {
+              const digits = normalizeKahootPin(e.target.value);
+              setKahootPin(digits);
+              try {
+                localStorage.setItem(DUCK_RACE_KAHOOT_PIN_KEY, digits);
+              } catch {
+                /* ignore */
+              }
+            }}
+            className="mt-1 w-full max-w-xs rounded-lg border border-slate-200 px-3 py-2 font-mono text-lg tabular-nums text-slate-900"
+          />
+        </label>
+        {pinDigits ? (
+          <p className="text-sm text-slate-700">
+            PIN tampilan:{" "}
+            <span className="font-display text-xl font-bold">
+              {formatKahootPin(pinDigits)}
+            </span>
+          </p>
+        ) : null}
+      </div>
 
       <div className="card space-y-4">
         <p className="text-sm font-medium text-slate-900">

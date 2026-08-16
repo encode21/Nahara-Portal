@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, HelpCircle, Loader2, Volume2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Check, Copy, HelpCircle, Loader2, QrCode, Volume2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
@@ -10,9 +11,11 @@ import type { DuckRaceParticipant, EventDuckRace, EventEdition } from "@/lib/typ
 import {
   buildDuckMotionProfiles,
   buildDuckRaceWhatsAppText,
+  DUCK_RACE_KAHOOT_PIN_KEY,
   formatDuckRaceWhen,
   formatDuckRaceWinnerHouse,
   normalizeDuckRace,
+  normalizeKahootPin,
   sampleDuckProgress,
 } from "@/lib/agustusan/duck-race";
 import {
@@ -24,6 +27,7 @@ import {
 import { DoorPrizeConfetti } from "@/components/agustusan/DoorPrizeConfetti";
 import { DuckRaceTrack } from "@/components/agustusan/DuckRaceTrack";
 import { DuckRaceFairnessModal } from "@/components/agustusan/DuckRaceFairnessModal";
+import { DuckRaceJoinLobby } from "@/components/agustusan/DuckRaceJoinLobby";
 import { LoadingSpinner } from "@/components/ui/Loading";
 
 type Phase = "ready" | "preparing" | "countdown" | "racing" | "finished";
@@ -37,8 +41,23 @@ type Props = {
   variant?: "stage" | "admin-preview";
 };
 
-export function DuckRaceStage({ year, variant = "stage" }: Props) {
+export function DuckRaceStage(props: Props) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20">
+          <LoadingSpinner className="h-8 w-8" />
+        </div>
+      }
+    >
+      <DuckRaceStageInner {...props} />
+    </Suspense>
+  );
+}
+
+function DuckRaceStageInner({ year, variant = "stage" }: Props) {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
   const { isAdmin, loading: authLoading } = useAuth();
   const [edition, setEdition] = useState<EventEdition | null>(null);
   const [preview, setPreview] = useState<DuckRaceParticipant[]>([]);
@@ -53,8 +72,41 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
   const [copied, setCopied] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
+  const [kahootPin, setKahootPin] = useState("");
+  const [lobbyOpen, setLobbyOpen] = useState(
+    () => searchParams.get("lobby") !== "0"
+  );
   const rafRef = useRef<number | null>(null);
   const cancelRef = useRef(false);
+
+  useEffect(() => {
+    const fromUrl = normalizeKahootPin(searchParams.get("pin") ?? "");
+    if (fromUrl) {
+      setKahootPin(fromUrl);
+      try {
+        localStorage.setItem(DUCK_RACE_KAHOOT_PIN_KEY, fromUrl);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(DUCK_RACE_KAHOOT_PIN_KEY) ?? "";
+      if (stored) setKahootPin(normalizeKahootPin(stored));
+    } catch {
+      /* ignore */
+    }
+  }, [searchParams]);
+
+  function persistKahootPin(raw: string) {
+    const digits = normalizeKahootPin(raw);
+    setKahootPin(digits);
+    try {
+      localStorage.setItem(DUCK_RACE_KAHOOT_PIN_KEY, digits);
+    } catch {
+      /* ignore */
+    }
+  }
 
   const participants: DuckRaceParticipant[] =
     race?.participant_snapshot?.length ? race.participant_snapshot : preview;
@@ -187,6 +239,7 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
     if (!edition || !isAdmin) return;
     unlockAudio();
     cancelRef.current = false;
+    setLobbyOpen(false);
     setError(null);
     setPhase("preparing");
     if (soundOn) playSpinStart();
@@ -262,6 +315,16 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
       }
     >
       <DoorPrizeConfetti burstKey={burstKey} />
+
+      {lobbyOpen && phase === "ready" && (
+        <DuckRaceJoinLobby
+          pin={kahootPin}
+          onPinChange={isAdmin ? persistKahootPin : undefined}
+          onClose={isAdmin ? () => setLobbyOpen(false) : undefined}
+          showStart={isAdmin}
+          onStart={() => setLobbyOpen(false)}
+        />
+      )}
 
       <header className="relative z-10 shrink-0 border-b border-white/10 px-4 py-4 text-center sm:px-6">
         <p className="font-display text-xl font-bold tracking-wide sm:text-3xl">
@@ -359,6 +422,14 @@ export function DuckRaceStage({ year, variant = "stage" }: Props) {
               >
                 <Volume2 className="mr-1 h-3.5 w-3.5" />
                 Sound {soundOn ? "On" : "Off"}
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center rounded-lg bg-white/10 px-3 py-1.5 text-xs"
+                onClick={() => setLobbyOpen(true)}
+              >
+                <QrCode className="mr-1 h-3.5 w-3.5" />
+                QR Kahoot
               </button>
               <button
                 type="button"

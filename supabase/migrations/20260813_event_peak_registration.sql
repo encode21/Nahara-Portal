@@ -521,9 +521,9 @@ VALUES
   (
     'a0812026-0000-4000-8000-000000000301',
     'a0812026-0000-4000-8000-000000000010',
-    'Door Prize 1',
-    'Undian door prize sesi 1',
-    5,
+    'Vacuum',
+    'Door prize — 1 unit',
+    1,
     1,
     true,
     'door'
@@ -531,8 +531,8 @@ VALUES
   (
     'a0812026-0000-4000-8000-000000000302',
     'a0812026-0000-4000-8000-000000000010',
-    'Door Prize 2',
-    'Undian door prize sesi 2',
+    'Payung',
+    'Door prize — 5 unit',
     5,
     2,
     true,
@@ -541,10 +541,30 @@ VALUES
   (
     'a0812026-0000-4000-8000-000000000303',
     'a0812026-0000-4000-8000-000000000010',
-    'Door Prize 3',
-    'Undian door prize sesi 3',
-    5,
+    'Voucher Perawatan',
+    'Door prize — 8 voucher',
+    8,
     3,
+    true,
+    'door'
+  ),
+  (
+    'a0812026-0000-4000-8000-000000000305',
+    'a0812026-0000-4000-8000-000000000010',
+    'Magic Com',
+    'Door prize — 1 unit',
+    1,
+    4,
+    true,
+    'door'
+  ),
+  (
+    'a0812026-0000-4000-8000-000000000306',
+    'a0812026-0000-4000-8000-000000000010',
+    'Chopper',
+    'Door prize — 1 unit',
+    1,
+    5,
     true,
     'door'
   ),

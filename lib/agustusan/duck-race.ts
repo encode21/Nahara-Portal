@@ -1,5 +1,23 @@
 import type { DuckRaceParticipant, EventDuckRace } from "@/lib/types";
 
+export const DUCK_RACE_KAHOOT_JOIN_HOST = "www.kahoot.it";
+export const DUCK_RACE_KAHOOT_PIN_KEY = "nahara:duck-race:kahoot-pin";
+
+export function normalizeKahootPin(raw: string): string {
+  return raw.replace(/\D/g, "").slice(0, 8);
+}
+
+export function formatKahootPin(raw: string): string {
+  const d = normalizeKahootPin(raw);
+  if (d.length <= 3) return d;
+  return `${d.slice(0, 3)} ${d.slice(3)}`;
+}
+
+export function kahootJoinUrl(pin: string): string {
+  const d = normalizeKahootPin(pin);
+  return d ? `https://kahoot.it/?pin=${d}` : "https://kahoot.it/";
+}
+
 export const DUCK_RACE_FAIRNESS_STEPS = [
   "Sistem mengunci daftar rumah yang memenuhi syarat.",
   "Setiap rumah mendapatkan satu kesempatan.",
