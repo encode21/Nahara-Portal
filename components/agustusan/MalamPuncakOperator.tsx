@@ -206,6 +206,13 @@ export function MalamPuncakOperator({ year }: { year: number }) {
           {connected ? "Layar terhubung" : "Layar belum terhubung"}
         </span>
         <Link
+          href={`/kegiatan/agustusan/${year}/rundown`}
+          target="_blank"
+          className="btn-secondary gap-1.5 py-2 text-xs"
+        >
+          Rundown MC <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+        <Link
           href={`/activities/agustusan/${year}/qr`}
           target="_blank"
           className="btn-secondary gap-1.5 py-2 text-xs"

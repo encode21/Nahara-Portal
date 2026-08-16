@@ -28,6 +28,8 @@ export type RundownSlot = {
   group?: string;
   /** Idle tanpa YouTube (mis. Pembacaan Doa) */
   silent?: boolean;
+  /** Contek MC (halaman rundown publik) */
+  mcNotes?: string;
 };
 
 export const MALAM_PUNCAK_ASSETS = {
@@ -60,6 +62,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Registrasi",
     presenter: "MC Meryka",
     notes: "Video loop di projector + QR daftar",
+    mcNotes:
+      "Sambut tamu. Arahkan scan QR daftar malam puncak. Cek kuota 2 peserta per rumah.",
     cue: {
       kind: "video",
       src: MALAM_PUNCAK_ASSETS.registrasiLoop,
@@ -77,6 +81,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Pembukaan",
     presenter: "MC Umi",
     notes: "",
+    mcNotes:
+      "Umi buka acara. Ucapkan selamat datang, sebut HUT ke-81 RI Cluster Nahara, Mini Golf.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -88,6 +94,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Menyanyikan Indonesia Raya",
     presenter: "MC Umi",
     notes: "Putar di layar projector",
+    mcNotes:
+      "Minta hadirin berdiri. Hormat bendera. Menyanyikan Indonesia Raya. Tunggu video selesai.",
     cue: {
       kind: "video",
       src: MALAM_PUNCAK_ASSETS.indonesiaRaya,
@@ -103,6 +111,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Pembacaan Doa",
     presenter: "Mas Catur",
     notes: "Hening — tanpa lagu YouTube / organ",
+    mcNotes:
+      "Persilakan Mas Catur. Hening: minta organ/YouTube berhenti. Setelah amin, ucapkan terima kasih.",
     silent: true,
     cue: { kind: "idle", src: null },
   },
@@ -116,6 +126,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     presenter:
       "Ketua Panitia (Mas Desandri), Ketua Paguyuban (Mba Widuri), Ketua RT (Pak Radar)",
     notes: "",
+    mcNotes:
+      "Urutan: (1) Ketua Panitia Mas Desandri, (2) Ketua Paguyuban Mba Widuri, (3) Ketua RT Pak Radar. Antar tiap pembicara.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -127,6 +139,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Potong Tumpeng",
     presenter: "Ketua RT (Pak Radar)",
     notes: "",
+    mcNotes: "Persilakan Ketua RT Pak Radar memotong tumpeng. Ajak tepuk tangan.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -138,6 +151,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Makan Bersama",
     presenter: "",
     notes: "Bersamaan dengan hiburan organ",
+    mcNotes: "Persilakan makan. Organ mengiringi. Acara lain tetap jalan paralel.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -149,6 +163,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Pembagian Hadiah",
     presenter: "",
     notes: "Diutamakan sesepuh, ketua panitia, ketua paguyuban, ketua RT",
+    mcNotes:
+      "Bagikan hadiah. Utamakan sesepuh, ketua panitia, ketua paguyuban, ketua RT. Ajak tepuk tangan.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -160,6 +176,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Hiburan (Organ Tunggal)",
     presenter: "",
     notes: "Background music; jeda saat Doa / acara resmi",
+    mcNotes: "Organ background. Jeda jika ada pengumuman resmi.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -171,6 +188,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Games Tebak Cermat",
     presenter: "MC",
     notes: "Games di panggung",
+    mcNotes: "Pimpin games Tebak Cermat di panggung. Jelasin aturan singkat, ramaiin peserta.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -182,6 +200,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Doorprize",
     presenter: "MC Meryka, sesepuh",
     notes: "Kuis Crazy Games (Sony dan Ari)",
+    mcNotes:
+      "MC Meryka. Doorprize + kuis. Koordinasi Sony/Ari untuk layar. Panggil pemenang jelas (nama + blok).",
     cue: {
       kind: "embed",
       src: MALAM_PUNCAK_ASSETS.crazyGames,
@@ -198,6 +218,7 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Hiburan (Organ Tunggal) — Lanjutan",
     presenter: "",
     notes: "",
+    mcNotes: "Kembalikan ke hiburan organ sampai closing.",
     cue: { kind: "idle", src: null },
   },
   {
@@ -209,6 +230,8 @@ export const MALAM_PUNCAK_RUNDOWN: RundownSlot[] = [
     title: "Closing",
     presenter: "MC",
     notes: "Semua rangkaian dikontrol oleh MC",
+    mcNotes:
+      "Tutup acara: terima kasih panitia, donatur, warga. Doa singkat opsional. Hati-hati di jalan. Merdeka!",
     cue: {
       kind: "video",
       src: MALAM_PUNCAK_ASSETS.teaser,
