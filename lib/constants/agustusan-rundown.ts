@@ -34,7 +34,8 @@ export type RundownSlot = {
 
 export const MALAM_PUNCAK_ASSETS = {
   indonesiaRaya: "/assets/agustusan/malam-puncak/indonesia-raya.mp4",
-  registrasiLoop: "/assets/agustusan/malam-puncak/registrasi.mp4",
+  registrasiLoop:
+    "https://storage.googleapis.com/niflheim/Nahara%20Video%202.mov",
   idlePoster: AGUSTUSAN_MEDIA.hero,
   teaser: AGUSTUSAN_MEDIA.video,
   crazyGames: "https://www.crazygames.com/t/quiz",
