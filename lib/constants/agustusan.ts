@@ -36,6 +36,19 @@ export const GALLERY_CATEGORY_LABELS: Record<GalleryCategory, string> = {
   persiapan: "Persiapan",
 };
 
+/** Filter publik galeri — termasuk twibbon upload saat daftar malam puncak. */
+export const GALLERY_FILTER_CATEGORIES = [
+  ...GALLERY_CATEGORIES,
+  "registrasi",
+] as const;
+
+export type GalleryFilterCategory = (typeof GALLERY_FILTER_CATEGORIES)[number];
+
+export const GALLERY_FILTER_LABELS: Record<GalleryFilterCategory, string> = {
+  ...GALLERY_CATEGORY_LABELS,
+  registrasi: "Registrasi",
+};
+
 export const CONTEST_CATEGORY_LABELS: Record<string, string> = {
   ibu: "Lomba Ibu-Ibu",
   bapak: "Lomba Bapak-Bapak",

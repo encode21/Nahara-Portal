@@ -6,19 +6,20 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { ExternalLink, Images, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { EventEdition, EventGalleryItem, GalleryMediaType } from "@/lib/types";
+import type { EventEdition, EventGalleryItem, EventPeakRegistration, GalleryMediaType } from "@/lib/types";
 import {
   AGUSTUSAN_MEDIA,
   AGUSTUSAN_YEAR,
-  GALLERY_CATEGORIES,
-  GALLERY_CATEGORY_LABELS,
-  type GalleryCategory,
+  GALLERY_FILTER_CATEGORIES,
+  GALLERY_FILTER_LABELS,
+  type GalleryFilterCategory,
 } from "@/lib/constants/agustusan";
+import { peakRegistrationsToGalleryItems } from "@/lib/agustusan/gallery";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { Skeleton } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 
-type FilterKey = "all" | GalleryCategory;
+type FilterKey = "all" | GalleryFilterCategory;
 type MediaTab = GalleryMediaType;
 
 function GaleriSkeleton() {
@@ -103,18 +104,33 @@ export default function GaleriDokumentasiPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("event_gallery_items")
-        .select("*")
-        .eq("edition_id", editionRow.id)
-        .eq("is_published", true)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+      const [galleryRes, peakRes] = await Promise.all([
+        supabase
+          .from("event_gallery_items")
+          .select("*")
+          .eq("edition_id", editionRow.id)
+          .eq("is_published", true)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("event_peak_registrations")
+          .select("*")
+          .eq("edition_id", editionRow.id)
+          .neq("status", "cancelled")
+          .not("twibbon_url", "is", null)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      const { data, error } = galleryRes;
+      const regItems = peakRegistrationsToGalleryItems(
+        (peakRes.data ?? []) as EventPeakRegistration[],
+        editionRow.id
+      );
 
       if (error || !data?.length) {
         if (year === AGUSTUSAN_YEAR) {
-          setItems(
-            AGUSTUSAN_MEDIA.gallery.map((g, i) => ({
+          setItems([
+            ...AGUSTUSAN_MEDIA.gallery.map((g, i) => ({
               id: `local-${i}`,
               edition_id: editionRow.id,
               image_url: g.src,
@@ -125,13 +141,17 @@ export default function GaleriDokumentasiPage() {
               sort_order: i,
               is_published: true,
               created_at: new Date().toISOString(),
-            }))
-          );
+            })),
+            ...regItems,
+          ]);
         } else {
-          setItems([]);
+          setItems(regItems);
         }
       } else {
-        setItems((data as EventGalleryItem[]).map(asGalleryItem));
+        setItems([
+          ...(data as EventGalleryItem[]).map(asGalleryItem),
+          ...regItems,
+        ]);
       }
       setLoading(false);
     }
@@ -157,7 +177,7 @@ export default function GaleriDokumentasiPage() {
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { all: tabItems.length };
-    for (const c of GALLERY_CATEGORIES) map[c] = 0;
+    for (const c of GALLERY_FILTER_CATEGORIES) map[c] = 0;
     for (const item of tabItems) {
       const key = item.category in map ? item.category : "dokumentasi";
       map[key] = (map[key] ?? 0) + 1;
@@ -182,9 +202,9 @@ export default function GaleriDokumentasiPage() {
 
   const chips: { key: FilterKey; label: string }[] = [
     { key: "all", label: "Semua" },
-    ...GALLERY_CATEGORIES.map((key) => ({
+    ...GALLERY_FILTER_CATEGORIES.map((key) => ({
       key,
-      label: GALLERY_CATEGORY_LABELS[key],
+      label: GALLERY_FILTER_LABELS[key],
     })),
   ];
 
