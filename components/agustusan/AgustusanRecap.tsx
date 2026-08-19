@@ -35,86 +35,57 @@ type Polaroid = {
   caption: string;
 };
 
-/** Backsound halaman kenangan — loop satu video YouTube. */
-const RECAP_BGM_VIDEO_ID = "eIrS1_47Eng";
+/** Backsound halaman kenangan — file lokal (honk! / no na). */
+const RECAP_BGM_SRC = "/assets/agustusan/kenangan-bgm.m4a";
 
 function RecapBacksound() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [playing, setPlaying] = useState(true);
-
-  const src = useMemo(() => {
-    const params = new URLSearchParams({
-      autoplay: "1",
-      mute: "0",
-      loop: "1",
-      playlist: RECAP_BGM_VIDEO_ID,
-      rel: "0",
-      modestbranding: "1",
-      playsinline: "1",
-      enablejsapi: "1",
-      controls: "0",
-    });
-    if (typeof window !== "undefined") {
-      params.set("origin", window.location.origin);
-    }
-    return `https://www.youtube.com/embed/${RECAP_BGM_VIDEO_ID}?${params.toString()}`;
-  }, []);
-
-  function send(func: string, args: unknown[] = []) {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: "command", func, args }),
-      "*"
-    );
-  }
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    function kick() {
-      send("playVideo");
-      send("unMute");
-      send("setVolume", [80]);
-    }
-    const t = window.setTimeout(kick, 500);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const sync = () => setPlaying(!audio.paused);
+    audio.addEventListener("play", sync);
+    audio.addEventListener("pause", sync);
+    audio.addEventListener("ended", sync);
+
+    const tryPlay = () => {
+      const p = audio.play();
+      if (p) void p.catch(() => setPlaying(false));
+    };
+
+    tryPlay();
+
     const onGesture = () => {
-      kick();
-      window.removeEventListener("pointerdown", onGesture);
-      window.removeEventListener("keydown", onGesture);
-      window.removeEventListener("touchstart", onGesture);
-      window.removeEventListener("wheel", onGesture);
+      if (audio.paused) tryPlay();
     };
     window.addEventListener("pointerdown", onGesture, { passive: true });
     window.addEventListener("keydown", onGesture);
-    window.addEventListener("touchstart", onGesture, { passive: true });
-    window.addEventListener("wheel", onGesture, { passive: true });
+
     return () => {
-      window.clearTimeout(t);
+      audio.removeEventListener("play", sync);
+      audio.removeEventListener("pause", sync);
+      audio.removeEventListener("ended", sync);
       window.removeEventListener("pointerdown", onGesture);
       window.removeEventListener("keydown", onGesture);
-      window.removeEventListener("touchstart", onGesture);
-      window.removeEventListener("wheel", onGesture);
     };
   }, []);
 
   function toggle() {
-    if (playing) {
-      send("pauseVideo");
-      setPlaying(false);
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      void audio.play().catch(() => setPlaying(false));
     } else {
-      send("playVideo");
-      send("unMute");
-      setPlaying(true);
+      audio.pause();
     }
   }
 
   return (
     <>
-      <iframe
-        ref={iframeRef}
-        title="Backsound kenangan"
-        src={src}
-        allow="autoplay; encrypted-media"
-        className="pointer-events-none fixed -left-[320px] bottom-0 h-[180px] w-[320px] opacity-0"
-        tabIndex={-1}
-      />
+      <audio ref={audioRef} src={RECAP_BGM_SRC} loop preload="auto" playsInline autoPlay />
       <button
         type="button"
         onClick={toggle}
