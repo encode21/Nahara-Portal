@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Images, Sparkles, Trophy } from "lucide-react";
+import { Images, Music2, Sparkles, Trophy, VolumeX } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CONTEST_CATEGORY_LABELS } from "@/lib/constants/agustusan";
 import { peakRegistrationsToGalleryItems } from "@/lib/agustusan/gallery";
@@ -15,7 +15,6 @@ import type {
   EventDoorPrizeWinner,
   EventDuckRace,
   EventEdition,
-  EventGalleryItem,
   EventPeakRegistration,
 } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/Loading";
@@ -35,6 +34,108 @@ type Polaroid = {
   src: string;
   caption: string;
 };
+
+/** Backsound halaman kenangan — loop satu video YouTube. */
+const RECAP_BGM_VIDEO_ID = "eIrS1_47Eng";
+
+function RecapBacksound() {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [playing, setPlaying] = useState(true);
+
+  const src = useMemo(() => {
+    const params = new URLSearchParams({
+      autoplay: "1",
+      mute: "0",
+      loop: "1",
+      playlist: RECAP_BGM_VIDEO_ID,
+      rel: "0",
+      modestbranding: "1",
+      playsinline: "1",
+      enablejsapi: "1",
+      controls: "0",
+    });
+    if (typeof window !== "undefined") {
+      params.set("origin", window.location.origin);
+    }
+    return `https://www.youtube.com/embed/${RECAP_BGM_VIDEO_ID}?${params.toString()}`;
+  }, []);
+
+  function send(func: string, args: unknown[] = []) {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func, args }),
+      "*"
+    );
+  }
+
+  useEffect(() => {
+    function kick() {
+      send("playVideo");
+      send("unMute");
+      send("setVolume", [80]);
+    }
+    const t = window.setTimeout(kick, 500);
+    const onGesture = () => {
+      kick();
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+      window.removeEventListener("wheel", onGesture);
+    };
+    window.addEventListener("pointerdown", onGesture, { passive: true });
+    window.addEventListener("keydown", onGesture);
+    window.addEventListener("touchstart", onGesture, { passive: true });
+    window.addEventListener("wheel", onGesture, { passive: true });
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+      window.removeEventListener("wheel", onGesture);
+    };
+  }, []);
+
+  function toggle() {
+    if (playing) {
+      send("pauseVideo");
+      setPlaying(false);
+    } else {
+      send("playVideo");
+      send("unMute");
+      setPlaying(true);
+    }
+  }
+
+  return (
+    <>
+      <iframe
+        ref={iframeRef}
+        title="Backsound kenangan"
+        src={src}
+        allow="autoplay; encrypted-media"
+        className="pointer-events-none fixed -left-[320px] bottom-0 h-[180px] w-[320px] opacity-0"
+        tabIndex={-1}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-[60] inline-flex items-center gap-2 rounded-full bg-[#1a0508]/90 px-4 py-2.5 text-sm font-medium text-white shadow-lg ring-1 ring-white/20 backdrop-blur hover:bg-[#7a1218]"
+        aria-pressed={playing}
+      >
+        {playing ? (
+          <>
+            <VolumeX className="h-4 w-4" />
+            Matikan lagu
+          </>
+        ) : (
+          <>
+            <Music2 className="h-4 w-4" />
+            Putar lagu
+          </>
+        )}
+      </button>
+    </>
+  );
+}
 
 function RecapImg({
   src,
@@ -120,7 +221,7 @@ export function AgustusanRecap({ year }: { year: number }) {
   const [doorWinners, setDoorWinners] = useState<DoorWinner[]>([]);
   const [races, setRaces] = useState<EventDuckRace[]>([]);
   const [results, setResults] = useState<ResultRow[]>([]);
-  const [photos, setPhotos] = useState<Polaroid[]>([]);
+  const [regPhotos, setRegPhotos] = useState<Polaroid[]>([]);
   const [regCount, setRegCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [burstKey, setBurstKey] = useState(0);
@@ -140,7 +241,7 @@ export function AgustusanRecap({ year }: { year: number }) {
         return;
       }
 
-      const [winnersRes, racesRes, contestsRes, regsRes, galleryRes] = await Promise.all([
+      const [winnersRes, racesRes, contestsRes, regsRes] = await Promise.all([
         supabase
           .from("event_door_prize_winners")
           .select("*, prize:event_door_prizes(*), registration:event_peak_registrations(*)")
@@ -163,14 +264,6 @@ export function AgustusanRecap({ year }: { year: number }) {
           .eq("edition_id", editionRow.id)
           .neq("status", "cancelled")
           .order("created_at", { ascending: false }),
-        supabase
-          .from("event_gallery_items")
-          .select("*")
-          .eq("edition_id", editionRow.id)
-          .eq("is_published", true)
-          .eq("media_type", "image")
-          .order("sort_order")
-          .limit(24),
       ]);
 
       const contestList = (contestsRes.data ?? []) as EventContest[];
@@ -198,19 +291,13 @@ export function AgustusanRecap({ year }: { year: number }) {
       setDoorWinners((winnersRes.data ?? []) as DoorWinner[]);
       setRaces((racesRes.data ?? []) as EventDuckRace[]);
 
-      const regPhotos = peakRegistrationsToGalleryItems(regs, editionRow.id).map((g) => ({
-        id: g.id,
-        src: g.image_url,
-        caption: g.caption ?? "",
-      }));
-      const galleryPhotos = ((galleryRes.data ?? []) as EventGalleryItem[])
-        .filter((g) => g.image_url)
-        .map((g) => ({
+      setRegPhotos(
+        peakRegistrationsToGalleryItems(regs, editionRow.id).map((g) => ({
           id: g.id,
           src: g.image_url,
-          caption: g.caption ?? "Dokumentasi",
-        }));
-      setPhotos([...regPhotos, ...galleryPhotos]);
+          caption: g.caption ?? "",
+        }))
+      );
       setLoading(false);
     }
     if (Number.isFinite(year)) void load();
@@ -259,8 +346,8 @@ export function AgustusanRecap({ year }: { year: number }) {
     }));
   }, [results]);
 
-  const marquee = photos.slice(0, 18);
-  const story = photos.slice(0, 36);
+  const marquee = regPhotos;
+  const story = regPhotos;
 
   if (loading) {
     return (
@@ -456,13 +543,13 @@ export function AgustusanRecap({ year }: { year: number }) {
           <div className="mx-auto max-w-5xl">
             <div className="mb-10 text-center text-slate-900">
               <p className="text-xs tracking-[0.3em] text-[#9a7b2e] uppercase">
-                Upload registrasi & dokumentasi
+                Peserta registrasi malam puncak
               </p>
               <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
                 Wajah-wajah yang hadir
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                Scroll pelan — fotonya muncul satu per satu.
+                {story.length} peserta · scroll pelan, fotonya muncul satu per satu.
               </p>
             </div>
             <div className="columns-2 gap-5 sm:columns-3 lg:columns-4">
@@ -500,6 +587,7 @@ export function AgustusanRecap({ year }: { year: number }) {
           </Link>
         </div>
       </section>
+      <RecapBacksound />
     </div>
   );
 }
