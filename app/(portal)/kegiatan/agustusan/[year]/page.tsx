@@ -255,6 +255,12 @@ export default function AgustusanEditionPage() {
               </>
             )}
             <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
+              <Link
+                href={`/kegiatan/agustusan/${year}/kenangan`}
+                className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-[#1a0508] hover:bg-[#f0d78c]"
+              >
+                Kenangan Agustusan {year}
+              </Link>
               {peakRegOpen ? (
                 <Link
                   href={`/kegiatan/agustusan/${year}/daftar`}
@@ -262,14 +268,10 @@ export default function AgustusanEditionPage() {
                 >
                   Daftar Acara Puncak
                 </Link>
-              ) : (
-                <span className="inline-flex items-center justify-center rounded-lg bg-white/15 px-5 py-3 text-sm font-semibold text-white/80 ring-1 ring-white/25">
-                  Daftar Acara Puncak (segera)
-                </span>
-              )}
+              ) : null}
               <Link
                 href={`/kegiatan/agustusan/${year}/lomba`}
-                className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
+                className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
               >
                 <Users className="mr-2 h-4 w-4" />
                 Daftar Lomba ({competitionCount})

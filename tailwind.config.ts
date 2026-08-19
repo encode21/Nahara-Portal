@@ -28,6 +28,7 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.3s ease-out",
         "slide-in": "slideIn 0.3s ease-out",
+        "recap-marquee": "recapMarquee 48s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -37,6 +38,10 @@ const config: Config = {
         slideIn: {
           "0%": { transform: "translateX(-8px)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        recapMarquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
     },
