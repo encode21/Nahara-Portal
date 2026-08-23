@@ -75,12 +75,12 @@ export function AgustusanMasukanPage({
       <div>
         <Link
           href={backHref}
-          className="text-sm font-medium text-[#7a1218] hover:underline"
+          className="inline-block text-sm font-medium text-[#7a1218] hover:underline"
         >
           ← {backLabel}
         </Link>
-        <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium tracking-[0.18em] text-[#9b1b23] uppercase">
-          <MessageSquareHeart className="h-3.5 w-3.5" />
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-medium tracking-[0.18em] text-[#9b1b23] uppercase">
+          <MessageSquareHeart className="h-3.5 w-3.5 shrink-0" />
           Evaluasi warga
         </p>
         <h1 className="mt-1 font-display text-2xl font-bold text-slate-900">
