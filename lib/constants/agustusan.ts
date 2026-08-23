@@ -70,7 +70,7 @@ export const TWIBBON_PHOTO_CIRCLE = {
 } as const;
 
 export const AGUSTUSAN_MEDIA = {
-  hero: "/assets/agustusan/hero-banner.png",
+  hero: "/assets/agustusan/banner_hut_ri_81_nahara.png",
   video: "/assets/agustusan/teaser.mp4",
   videoPoster: "/assets/agustusan/nahara-flags-banner.png",
   twibbonFrame: "/assets/agustusan/twibbon-frame-circle.png",

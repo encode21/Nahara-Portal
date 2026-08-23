@@ -13,12 +13,16 @@ import {
   ExternalLink,
   HeartHandshake,
   Images,
+  MessageSquare,
   Play,
   Trophy,
   Users,
 } from "lucide-react";
 import { ContestEntryPanel } from "@/components/agustusan/ContestEntryPanel";
 import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
+import { AgustusanFeedbackForm } from "@/components/agustusan/AgustusanFeedbackForm";
+import { AgustusanFeedbackList } from "@/components/agustusan/AgustusanFeedbackList";
+import { AgustusanFeedbackShareButton } from "@/components/agustusan/AgustusanFeedbackShareButton";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
 import { groupContestsByDay } from "@/lib/agustusan";
@@ -79,6 +83,7 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
   const [openContestId, setOpenContestId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<EventGalleryItem | null>(null);
   const [galleryMediaTab, setGalleryMediaTab] = useState<"image" | "video">("image");
+  const [feedbackRefreshKey, setFeedbackRefreshKey] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -386,6 +391,14 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
               >
                 <HeartHandshake className="mr-2 h-4 w-4" />
                 Donasi
+              </a>
+              <a
+                href="#masukan"
+                onClick={(e) => onNavClick(e, "masukan")}
+                className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Rating & usulan
               </a>
             </div>
           </div>
@@ -731,6 +744,47 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
                 </>
               )}
             </button>
+          </div>
+        </section>
+
+        <section id="masukan" className="scroll-mt-24 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-slate-900">
+                Rating & usulan warga
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Tanpa login. Boleh anonim. Review warga ditampilkan agar Agustusan berikutnya
+                lebih proper.
+              </p>
+            </div>
+            <AgustusanFeedbackShareButton year={edition.year} title={edition.title} />
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <AgustusanFeedbackForm
+              editionId={edition.id}
+              source="hub"
+              onSubmitted={() => setFeedbackRefreshKey((k) => k + 1)}
+            />
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <h3 className="font-display text-lg font-bold text-slate-900">
+                Review & usulan warga
+              </h3>
+              <Link
+                href="/agustusan/masukan"
+                className="text-sm font-medium text-[#9a7b2e] hover:underline"
+              >
+                Buka halaman rating →
+              </Link>
+            </div>
+            <AgustusanFeedbackList
+              editionId={edition.id}
+              refreshKey={feedbackRefreshKey}
+              limit={12}
+              compact
+            />
           </div>
         </section>
 

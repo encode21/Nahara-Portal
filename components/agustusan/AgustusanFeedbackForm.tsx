@@ -22,6 +22,7 @@ type Props = {
   registrationId?: string | null;
   defaultName?: string;
   compact?: boolean;
+  onSubmitted?: () => void;
 };
 
 export function AgustusanFeedbackForm({
@@ -30,6 +31,7 @@ export function AgustusanFeedbackForm({
   registrationId,
   defaultName,
   compact,
+  onSubmitted,
 }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const [open, setOpen] = useState(!compact);
@@ -69,6 +71,7 @@ export function AgustusanFeedbackForm({
       return;
     }
     setDone(true);
+    onSubmitted?.();
   }
 
   if (done) {

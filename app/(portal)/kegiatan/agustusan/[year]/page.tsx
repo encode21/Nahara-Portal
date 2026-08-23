@@ -32,6 +32,8 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { AgustusanFab } from "@/components/agustusan/AgustusanFab";
 import { GalleryVideoReels } from "@/components/agustusan/GalleryVideoReels";
 import { AgustusanFeedbackForm } from "@/components/agustusan/AgustusanFeedbackForm";
+import { AgustusanFeedbackList } from "@/components/agustusan/AgustusanFeedbackList";
+import { AgustusanFeedbackShareButton } from "@/components/agustusan/AgustusanFeedbackShareButton";
 
 type Donor = Pick<Participant, "id" | "name" | "block_number" | "payment_status">;
 
@@ -49,6 +51,7 @@ export default function AgustusanEditionPage() {
   const [activeVideo, setActiveVideo] = useState<EventGalleryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [feedbackRefreshKey, setFeedbackRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!Number.isFinite(year)) {
@@ -517,15 +520,47 @@ export default function AgustusanEditionPage() {
         )}
 
         <section id="masukan" className="scroll-mt-24 space-y-4">
-          <h2 className="font-display text-2xl font-bold text-slate-900">
-            Rating & masukan warga
-          </h2>
-          <p className="text-sm text-slate-600">
-            Tanpa login. Boleh anonim. Bantu panitia evaluasi apa yang bagus, kurang, dan
-            lomba apa yang perlu diadakan tahun depan.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-slate-900">
+                Rating & masukan warga
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Tanpa login. Boleh anonim. Bantu panitia evaluasi apa yang bagus, kurang, dan
+                lomba apa yang perlu diadakan tahun depan.
+              </p>
+            </div>
+            <AgustusanFeedbackShareButton
+              year={edition.year}
+              title={edition.title}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            />
+          </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <AgustusanFeedbackForm editionId={edition.id} source="hub" />
+            <AgustusanFeedbackForm
+              editionId={edition.id}
+              source="hub"
+              onSubmitted={() => setFeedbackRefreshKey((k) => k + 1)}
+            />
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <h3 className="font-display text-lg font-bold text-slate-900">
+                Review & usulan warga
+              </h3>
+              <Link
+                href={`/kegiatan/agustusan/${year}/masukan`}
+                className="text-sm font-medium text-[#9a7b2e] hover:underline"
+              >
+                Buka halaman rating →
+              </Link>
+            </div>
+            <AgustusanFeedbackList
+              editionId={edition.id}
+              refreshKey={feedbackRefreshKey}
+              limit={12}
+              compact
+            />
           </div>
         </section>
 

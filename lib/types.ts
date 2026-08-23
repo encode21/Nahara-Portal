@@ -242,7 +242,7 @@ export type EventGalleryItem = {
   created_at: string;
 };
 
-export type EventEditionFeedbackSource = "daftar" | "sukses" | "hub";
+export type EventEditionFeedbackSource = "daftar" | "sukses" | "hub" | "share";
 
 export type EventEditionFeedback = {
   id: string;

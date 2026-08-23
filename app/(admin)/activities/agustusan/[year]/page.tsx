@@ -28,6 +28,7 @@ import { uploadPortalImage, uploadPortalVideo, removePortalImage } from "@/lib/s
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
+import { AgustusanFeedbackShareButton } from "@/components/agustusan/AgustusanFeedbackShareButton";
 import {
   ContestEditForm,
   type ContestEditPayload,
@@ -1211,6 +1212,21 @@ export default function AdminEditionPage() {
 
       {tab === "masukan" && (
         <div className="space-y-4">
+          <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-900">Tautan publik rating</p>
+              <p className="text-xs text-slate-500">
+                Bagikan ke warga supaya mereka bisa kirim usulan dan lihat review bersama.
+              </p>
+            </div>
+            {edition && (
+              <AgustusanFeedbackShareButton
+                year={edition.year}
+                title={edition.title}
+                label="Bagikan ke warga"
+              />
+            )}
+          </div>
           {feedback.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
               <span className="font-semibold text-slate-900">
