@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }[] = [
     { path: "/", changeFrequency: "daily", priority: 1 },
     { path: "/agustusan", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/agustusan/lpj", changeFrequency: "monthly", priority: 0.7 },
     { path: "/pengumuman", changeFrequency: "daily", priority: 0.8 },
     { path: "/pengaduan", changeFrequency: "daily", priority: 0.7 },
   ];

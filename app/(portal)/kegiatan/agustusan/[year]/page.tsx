@@ -264,6 +264,13 @@ export default function AgustusanEditionPage() {
               >
                 Kenangan Agustusan {year}
               </Link>
+              <Link
+                href={`/kegiatan/agustusan/${year}/lpj`}
+                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#7a1218] hover:bg-[#faf7f0]"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                LPJ Dana
+              </Link>
               {peakRegOpen ? (
                 <Link
                   href={`/kegiatan/agustusan/${year}/daftar`}

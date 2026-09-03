@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Camera, Check, MessageSquare, Share2, X } from "lucide-react";
+import { Camera, Check, FileText, MessageSquare, Share2, X } from "lucide-react";
 
 type AgustusanFabProps = {
   year: number;
@@ -78,6 +78,14 @@ export function AgustusanFab({ year, title }: AgustusanFabProps) {
                 </>
               )}
             </button>
+            <Link
+              href={`/kegiatan/agustusan/${year}/lpj`}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-lg ring-1 ring-black/5"
+            >
+              <FileText className="h-4 w-4 text-[#7a1218]" />
+              LPJ dana
+            </Link>
             <Link
               href={`/kegiatan/agustusan/${year}/masukan`}
               onClick={() => setOpen(false)}

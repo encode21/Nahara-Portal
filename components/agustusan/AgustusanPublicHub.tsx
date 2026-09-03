@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Copy,
   ExternalLink,
+  FileText,
   HeartHandshake,
   Images,
   MessageSquare,
@@ -352,10 +353,17 @@ export function AgustusanPublicHub({ year = AGUSTUSAN_YEAR }: { year?: number })
               </>
             )}
             <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
+              <Link
+                href="/agustusan/lpj"
+                className="inline-flex items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-[#1a0508] hover:bg-[#f0d78c]"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                LPJ Dana
+              </Link>
               <a
                 href="#daftar"
                 onClick={(e) => onNavClick(e, "daftar")}
-                className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-[#c9a84c] px-5 py-3 text-sm font-semibold text-white hover:bg-[#b8963f]"
+                className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-medium hover:bg-white/20"
               >
                 <Users className="mr-2 h-4 w-4" />
                 Daftar Lomba ({competitionCount})
