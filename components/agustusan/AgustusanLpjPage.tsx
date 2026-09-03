@@ -43,10 +43,7 @@ export function AgustusanLpjPage({
 
   const donorsSorted = useMemo(() => {
     if (!lpj) return [];
-    return [...lpj.donors].sort((a, b) => {
-      if (b.amount !== a.amount) return b.amount - a.amount;
-      return a.name.localeCompare(b.name, "id");
-    });
+    return [...lpj.donors].sort((a, b) => a.name.localeCompare(b.name, "id"));
   }, [lpj]);
 
   const donorsFiltered = useMemo(() => {
@@ -226,8 +223,7 @@ export function AgustusanLpjPage({
           <div>
             <h2 className="font-display text-xl font-bold text-slate-900">Donatur tunai</h2>
             <p className="mt-1 text-sm text-slate-600">
-              {lpj.donors.length} warga · {formatCurrency(lpj.donorTotal)}. Diurutkan dari
-              nominal terbesar.
+              {lpj.donors.length} warga, diurutkan abjad.
             </p>
           </div>
 
@@ -246,12 +242,7 @@ export function AgustusanLpjPage({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Bukan donasi warga
             </p>
-            <div className="mt-1 flex items-baseline justify-between gap-3">
-              <span className="text-sm font-medium text-slate-800">Subsidi Kas Nahara</span>
-              <span className="shrink-0 text-sm font-bold tabular-nums text-[#7a1218]">
-                {formatCurrency(lpj.income.find((l) => l.id === "kas")?.amount ?? 0)}
-              </span>
-            </div>
+            <p className="mt-1 text-sm font-medium text-slate-800">Subsidi Kas Nahara</p>
           </div>
 
           <ol className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -263,15 +254,10 @@ export function AgustusanLpjPage({
               donorsFiltered.map((donor, i) => (
                 <li
                   key={`${donor.name}-${i}`}
-                  className="flex items-baseline justify-between gap-3 border-b border-slate-100 px-4 py-2.5 last:border-b-0"
+                  className="border-b border-slate-100 px-4 py-2.5 text-sm text-slate-800 last:border-b-0"
                 >
-                  <span className="min-w-0 text-sm text-slate-800">
-                    <span className="mr-2 tabular-nums text-slate-400">{i + 1}. </span>
-                    {donor.name}
-                  </span>
-                  <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">
-                    {formatCurrency(donor.amount)}
-                  </span>
+                  <span className="mr-2 tabular-nums text-slate-400">{i + 1}. </span>
+                  {donor.name}
                 </li>
               ))
             )}
