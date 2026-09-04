@@ -267,7 +267,8 @@ export type EventPeakRegistration = {
   household_label: string;
   participant_name: string;
   participant_role: PeakParticipantRole;
-  phone: string | null;
+  /** Omitted for anon (column grant). Present for admin/ops selects. */
+  phone?: string | null;
   twibbon_url: string;
   terms_accepted_at: string;
   status: PeakRegistrationStatus;

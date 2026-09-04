@@ -7,6 +7,7 @@ import { Bell, CheckCircle2, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { EventPeakRegistration } from "@/lib/types";
 import { PEAK_EVENT } from "@/lib/constants/agustusan";
+import { PEAK_REGISTRATION_PUBLIC_COLUMNS } from "@/lib/agustusan-peak";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
@@ -86,7 +87,7 @@ export default function PeakDaftarSuksesInner() {
     (async () => {
       const { data } = await supabase
         .from("event_peak_registrations")
-        .select("*")
+        .select(PEAK_REGISTRATION_PUBLIC_COLUMNS)
         .eq("registration_code", code)
         .maybeSingle();
       if (!cancelled) {

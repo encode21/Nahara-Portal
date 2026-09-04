@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CONTEST_CATEGORY_LABELS } from "@/lib/constants/agustusan";
 import { peakRegistrationsToGalleryItems } from "@/lib/agustusan/gallery";
 import { formatDuckRaceWinnerHouse } from "@/lib/agustusan/duck-race";
+import { PEAK_REGISTRATION_PUBLIC_COLUMNS } from "@/lib/agustusan-peak";
 import type {
   EventContest,
   EventContestResult,
@@ -215,7 +216,9 @@ export function AgustusanRecap({ year }: { year: number }) {
       const [winnersRes, racesRes, contestsRes, regsRes] = await Promise.all([
         supabase
           .from("event_door_prize_winners")
-          .select("*, prize:event_door_prizes(*), registration:event_peak_registrations(*)")
+          .select(
+            `*, prize:event_door_prizes(*), registration:event_peak_registrations(${PEAK_REGISTRATION_PUBLIC_COLUMNS})`
+          )
           .eq("edition_id", editionRow.id)
           .order("selected_at"),
         supabase
@@ -231,7 +234,7 @@ export function AgustusanRecap({ year }: { year: number }) {
           .order("sort_order"),
         supabase
           .from("event_peak_registrations")
-          .select("*")
+          .select(PEAK_REGISTRATION_PUBLIC_COLUMNS)
           .eq("edition_id", editionRow.id)
           .neq("status", "cancelled")
           .order("created_at", { ascending: false }),

@@ -15,6 +15,7 @@ import {
   type GalleryFilterCategory,
 } from "@/lib/constants/agustusan";
 import { peakRegistrationsToGalleryItems } from "@/lib/agustusan/gallery";
+import { PEAK_REGISTRATION_PUBLIC_COLUMNS } from "@/lib/agustusan-peak";
 import { normalizeGoogleDriveUrl } from "@/lib/validation/driveUrl";
 import { Skeleton } from "@/components/ui/Loading";
 import { StoredImage } from "@/components/ui/StoredImage";
@@ -114,7 +115,7 @@ export default function GaleriDokumentasiPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("event_peak_registrations")
-          .select("*")
+          .select(PEAK_REGISTRATION_PUBLIC_COLUMNS)
           .eq("edition_id", editionRow.id)
           .neq("status", "cancelled")
           .not("twibbon_url", "is", null)

@@ -99,6 +99,10 @@ export function buildOpsUrl(pathname: string, search = ""): string {
   return `${getOpsOrigin()}${path}${search}`;
 }
 
+function pathHasPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 /** Paths that stay on ops without session. */
 export function isOpsPublicPath(pathname: string): boolean {
   return pathname === "/login" || pathname.startsWith("/login/");
@@ -129,20 +133,59 @@ export function isLandingPath(pathname: string): boolean {
 }
 
 /**
- * Jejak situs PHP / SEO spam lama di domain (saiga, *.php, dll).
+ * Deep links on nahara.id that should still hop to portal/ops apps.
+ * Unknown paths must not 307 — that amplified scanners (e.g. /shopdetail/id).
+ */
+const APP_HOP_PREFIXES = [
+  "/dashboard",
+  "/kegiatan",
+  "/iuran",
+  "/keuangan",
+  "/info-warga",
+  "/info-security",
+  "/donasi",
+  "/cctv",
+  "/panduan",
+  "/activities",
+  "/kas",
+  "/contests",
+  "/offline",
+  "/register",
+  "/api",
+] as const;
+
+export function isAppHopPath(pathname: string): boolean {
+  return APP_HOP_PREFIXES.some((prefix) => pathHasPrefix(pathname, prefix));
+}
+
+/**
+ * Jejak situs PHP / SEO spam / scanner e-commerce lama di domain.
  * Harus 410 di landing — jangan di-redirect ke portal.
  */
 export function isLegacySpamPath(pathname: string): boolean {
   const p = pathname.toLowerCase();
   if (p.endsWith(".php") || p.includes(".php/")) return true;
   if (p === "/saiga" || p.startsWith("/saiga/")) return true;
-  // CMS leftovers yang sering jadi target spam
+  if (p === "/shopdetail" || p.startsWith("/shopdetail/")) return true;
   if (
-    p.startsWith("/wp-admin") ||
-    p.startsWith("/wp-content") ||
-    p.startsWith("/wp-includes") ||
+    p.startsWith("/wp-") ||
     p === "/xmlrpc.php" ||
-    p === "/wlwmanifest.xml"
+    p === "/wlwmanifest.xml" ||
+    p === "/xmlrpc" ||
+    p.startsWith("/xmlrpc/")
+  ) {
+    return true;
+  }
+  if (
+    p.startsWith("/phpmyadmin") ||
+    p.startsWith("/pma") ||
+    p.startsWith("/cgi-bin") ||
+    p.startsWith("/vendor/") ||
+    p === "/vendor" ||
+    p.startsWith("/wordpress") ||
+    p.startsWith("/administrator") ||
+    p.startsWith("/.env") ||
+    p.startsWith("/.git")
   ) {
     return true;
   }

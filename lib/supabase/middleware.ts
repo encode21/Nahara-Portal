@@ -13,6 +13,7 @@ import {
   buildOpsUrl,
   buildPortalUrl,
   getAppSurface,
+  isAppHopPath,
   isLandingPath,
   isLegacySpamPath,
   isOpsPublicPath,
@@ -72,11 +73,16 @@ export async function updateSession(request: NextRequest) {
       url.search = "";
       return NextResponse.redirect(url);
     }
-    if (!isLandingPath(pathname)) {
-      // Deep links → portal warga
+    if (isLandingPath(pathname)) {
+      return supabaseResponse;
+    }
+    if (isAppHopPath(pathname)) {
       return NextResponse.redirect(buildPortalUrl(pathname, search));
     }
-    return supabaseResponse;
+    return new NextResponse("Gone", {
+      status: 410,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   // --- Ops: ops.nahara.id ---
