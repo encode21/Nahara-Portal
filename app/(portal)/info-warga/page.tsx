@@ -13,7 +13,7 @@ import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 export default function InfoWargaPage() {
   const supabase = createClient();
-  const { isAdmin } = useAuth();
+  const { isWargaRegistry } = useAuth();
   const [wargaList, setWargaList] = useState<Warga[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -29,6 +29,8 @@ export default function InfoWargaPage() {
     telepon: "",
   });
   const [error, setError] = useState<string | null>(null);
+
+  const canEdit = isWargaRegistry;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -97,15 +99,15 @@ export default function InfoWargaPage() {
           <h1 className="font-display text-2xl font-bold text-slate-900">Info Warga</h1>
           <p className="mt-1 text-sm text-slate-400">Direktori warga per blok</p>
         </div>
-        <button type="button" onClick={() => { if (isAdmin) { setShowForm(true); setEditId(null); } }} className="btn-primary" disabled={!isAdmin}>
+        <button type="button" onClick={() => { if (canEdit) { setShowForm(true); setEditId(null); } }} className="btn-primary" disabled={!canEdit}>
           <Plus className="mr-1.5 h-4 w-4" /> Tambah Warga
         </button>
       </div>
 
-      {!isAdmin && (
+      {!canEdit && (
         <div className="glass-card flex items-center justify-between gap-4">
-          <p className="text-sm text-slate-400">Login admin untuk menambah atau mengedit data warga.</p>
-          <AdminLoginPrompt message="Login Admin" />
+          <p className="text-sm text-slate-400">Login pengurus (Ketua / IT / Sekretaris / Admin) untuk menambah atau mengedit data warga.</p>
+          <AdminLoginPrompt message="Login Pengurus" />
         </div>
       )}
 
@@ -124,7 +126,7 @@ export default function InfoWargaPage() {
         </select>
       </div>
 
-      {showForm && isAdmin && (
+      {showForm && canEdit && (
         <form onSubmit={handleSubmit} className="glass-card space-y-4">
           <h3 className="font-semibold text-slate-900">{editId ? "Edit" : "Tambah"} Warga</h3>
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -176,7 +178,7 @@ export default function InfoWargaPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((w) => (
             <div key={w.id} className="glass-card-hover group relative">
-              {isAdmin && (
+              {canEdit && (
                 <div className="absolute right-3 top-3 hidden gap-1 group-hover:flex">
                   <button type="button" onClick={() => startEdit(w)} className="rounded p-1 text-slate-400 hover:text-gold-dark"><Pencil className="h-4 w-4" /></button>
                   <button type="button" onClick={() => handleDelete(w.id)} className="rounded p-1 text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>

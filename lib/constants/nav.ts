@@ -9,6 +9,8 @@ import {
   CalendarDays,
   Bell,
   Shield,
+  FolderLock,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import type { AppSurface } from "@/lib/host";
@@ -27,13 +29,28 @@ export const portalNavItems: NavItem[] = [
   { href: "/iuran", label: "Iuran", icon: Wallet },
   { href: "/keuangan", label: "Keuangan", icon: CreditCard },
   { href: "/info-warga", label: "Info Warga", icon: Users, mobileLabel: "Warga" },
+  { href: "/jasa", label: "Jasa", icon: Wrench },
   { href: "/info-security", label: "Info Security", icon: Shield, mobileLabel: "Security" },
   { href: "/donasi", label: "Donasi", icon: HeartHandshake },
   { href: "/pengaduan", label: "Pengaduan", icon: Megaphone },
   { href: "/cctv", label: "CCTV", icon: Camera },
 ];
 
+const dataWargaNavItem: NavItem = {
+  href: "/data-warga",
+  label: "Data Warga",
+  icon: FolderLock,
+  mobileLabel: "Data",
+};
+
 const STAFF_NAV_HREFS = new Set(["/pengumuman", "/kegiatan", "/pengaduan"]);
+
+const REGISTRY_NAV_HREFS = new Set([
+  "/dashboard",
+  "/info-warga",
+  "/data-warga",
+  "/jasa",
+]);
 
 const FINANCE_HREFS = new Set(["/iuran", "/keuangan"]);
 
@@ -41,11 +58,19 @@ export function getNavItemsForAccess(opts: {
   surface: AppSurface;
   isAdmin: boolean;
   isStaff: boolean;
+  isRegistryOnly?: boolean;
 }): NavItem[] {
-  const { surface, isAdmin, isStaff } = opts;
+  const { surface, isAdmin, isStaff, isRegistryOnly = false } = opts;
 
   if (surface === "landing") {
     return [];
+  }
+
+  if (surface === "ops" && isRegistryOnly && !isAdmin) {
+    const base = portalNavItems.filter((item) =>
+      REGISTRY_NAV_HREFS.has(item.href)
+    );
+    return [...base, dataWargaNavItem];
   }
 
   if (surface === "ops" && isStaff && !isAdmin) {
@@ -53,7 +78,14 @@ export function getNavItemsForAccess(opts: {
   }
 
   if (surface === "ops" && isAdmin) {
-    return portalNavItems;
+    const items = [...portalNavItems];
+    const infoIdx = items.findIndex((i) => i.href === "/info-warga");
+    if (infoIdx >= 0) {
+      items.splice(infoIdx + 1, 0, dataWargaNavItem);
+    } else {
+      items.push(dataWargaNavItem);
+    }
+    return items;
   }
 
   if (surface === "portal") {

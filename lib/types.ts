@@ -42,6 +42,51 @@ export type Warga = {
   created_at: string;
 };
 
+export type WargaDokumenJenis = "kk" | "ktp";
+
+export type WargaDokumen = {
+  id: string;
+  warga_id: string;
+  jenis: WargaDokumenJenis;
+  nomor: string | null;
+  nama_tertera: string | null;
+  storage_path: string;
+  uploaded_by: string | null;
+  created_at: string;
+};
+
+export type WargaAnggotaHubungan = "kepala" | "istri" | "anak" | "lainnya";
+
+export type WargaAnggota = {
+  id: string;
+  warga_id: string;
+  nama: string;
+  hubungan: WargaAnggotaHubungan;
+  nik: string | null;
+  dokumen_id: string | null;
+  created_at: string;
+};
+
+export type VendorKategori =
+  | "tukang"
+  | "galon"
+  | "taman"
+  | "gorden"
+  | "furniture"
+  | "lainnya";
+
+export type Vendor = {
+  id: string;
+  nama: string;
+  kategori: VendorKategori;
+  telepon: string | null;
+  whatsapp: string | null;
+  catatan: string | null;
+  aktif: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type WargaWithIuran = {
   id: string;
   nama: string;

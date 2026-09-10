@@ -142,6 +142,8 @@ const APP_HOP_PREFIXES = [
   "/iuran",
   "/keuangan",
   "/info-warga",
+  "/data-warga",
+  "/jasa",
   "/info-security",
   "/donasi",
   "/cctv",

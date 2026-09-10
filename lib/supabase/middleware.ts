@@ -2,9 +2,10 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   isAdminOnlyPath,
-  isFinanceRestricted,
   isPortalAdmin,
   isPortalStaff,
+  isRegistryAllowedPath,
+  isRegistryOnly,
   isStaffAllowedPath,
   postLoginPath,
   safeInternalPath,
@@ -52,6 +53,7 @@ export async function updateSession(request: NextRequest) {
   const surface = getAppSurface(request.headers.get("host"));
   const admin = isPortalAdmin(user);
   const staff = isPortalStaff(user);
+  const registryOnly = isRegistryOnly(user);
 
   // --- Landing: nahara.id ---
   if (surface === "landing") {
@@ -105,7 +107,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (user && isFinanceRestricted(user) && !isStaffAllowedPath(pathname)) {
+    if (
+      user &&
+      registryOnly &&
+      !isRegistryAllowedPath(pathname) &&
+      !isAdminOnlyPath(pathname)
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/data-warga";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (user && staff && !isStaffAllowedPath(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/pengumuman";
       url.search = "";
@@ -117,6 +131,9 @@ export async function updateSession(request: NextRequest) {
       if (!user) {
         url.pathname = "/login";
         url.searchParams.set("redirect", safeInternalPath(pathname));
+      } else if (registryOnly) {
+        url.pathname = "/data-warga";
+        url.search = "";
       } else if (staff) {
         url.pathname = "/pengumuman";
         url.search = "";

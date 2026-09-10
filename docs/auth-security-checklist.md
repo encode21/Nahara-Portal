@@ -34,7 +34,24 @@ SET raw_app_meta_data =
 WHERE email = 'estate@example.com';
 ```
 
-Role: `admin` | `estate` | `rtrw` — lalu logout/login ulang di ops.
+Role: `admin` | `estate` | `rtrw` | `ketua` | `it` | `sekretaris` — lalu logout/login ulang di ops.
+
+| Role | Akses ringkas |
+|------|----------------|
+| `admin` | Penuh (keuangan + registry + operasional) |
+| `ketua` / `it` / `sekretaris` | `/data-warga`, `/info-warga`, `/jasa` — **tanpa** iuran/kas/keuangan |
+| `estate` / `rtrw` | Pengumuman, kegiatan, pengaduan |
+
+Contoh set role Ketua:
+
+```sql
+UPDATE auth.users
+SET raw_app_meta_data =
+  coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "ketua"}'::jsonb
+WHERE email = 'ketua@example.com';
+```
+
+Registry KK/KTP disimpan di tabel `warga_dokumen` + bucket privat `warga-dokumen` (bukan direktori publik).
 
 ## Auth wajib
 

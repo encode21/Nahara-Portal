@@ -34,8 +34,9 @@ npm install
 3. **Authentication (wajib untuk keamanan):**
    - Nonaktifkan public email signup (invite-only / Add user manual)
    - Buat user di **Authentication → Users → Add user**
-   - Set **App Metadata** sesuai peran: `{ "role": "admin" }` | `"estate"` | `"rtrw"`
+   - Set **App Metadata** sesuai peran: `{ "role": "admin" }` | `"estate"` | `"rtrw"` | `"ketua"` | `"it"` | `"sekretaris"`
    - User security (notifikasi saja): tanpa role admin
+   - `ketua` / `it` / `sekretaris`: Data Warga (KK/KTP) + Jasa, tanpa keuangan
    - Aktifkan batasan password + rate limit Auth
 4. Tiga host: di Vercel tambah `nahara.id`, `portal.nahara.id`, `ops.nahara.id`; lihat [`docs/auth-security-checklist.md`](docs/auth-security-checklist.md)
 

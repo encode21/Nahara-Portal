@@ -14,8 +14,9 @@ Warga memakai portal **tanpa akun**. Akun login hanya untuk pengurus (dan petuga
 2. Masukkan **email** dan **kata sandi** yang sudah diberikan admin sistem.
 3. Hak akses mengikuti **App Metadata** di Supabase:
    - `admin` — kelola penuh (termasuk kas/iuran)
+   - `ketua` / `it` / `sekretaris` — database warga (KK/KTP), direktori warga, dan vendor/jasa (tanpa keuangan)
    - `estate` atau `rtrw` — lihat pengaduan, pengumuman, kegiatan (tanpa keuangan)
-4. Warga memakai [portal.nahara.id](https://portal.nahara.id) **tanpa login**; beranda publik di [nahara.id](https://nahara.id).
+4. Warga memakai [portal.nahara.id](https://portal.nahara.id) **tanpa login**; beranda publik di [nahara.id](https://nahara.id). Identitas rumah bisa dipilih sekali (disimpan di perangkat) lewat prompt portal.
 
 ### Logout
 
@@ -73,17 +74,24 @@ Setelah login Anda bisa:
 
 ---
 
-## 5. Info warga
+## 5. Info warga & Data Warga (KK/KTP)
 
-**Menu:** Info Warga · **Alamat:** `/info-warga`
+**Menu:** Info Warga · **Alamat:** `/info-warga`  
+Direktori publik (nama, blok, status hunian, telepon). Dipakai di peta, iuran, dan daftar warga.
 
-Kelola data warga:
+**Menu:** Data Warga · **Alamat:** `/data-warga` (ops, role `ketua` / `it` / `sekretaris` / `admin`)  
+Registry sensitif:
 
-- Tambah warga baru (nama, blok, kavling, status hunian, telepon)
-- Edit data yang berubah
-- Hapus data jika perlu
+- Unggah / lihat / hapus **KK** dan **KTP** (storage privat)
+- Kelola **anggota keluarga** (basis pembentukan RT)
+- CRUD data rumah yang sama dengan Info Warga
 
-Data ini dipakai di peta, iuran, dan direktori warga.
+Dokumen identitas **tidak** tampil di portal publik.
+
+### Jasa & vendor
+
+**Menu:** Jasa · **Alamat:** `/jasa`  
+Daftar penyedia jasa lingkungan (tukang, galon, taman, gorden, furniture, dll.). Warga bisa lihat & hubungi; pengurus registry menambah/mengubah data.
 
 ---
 

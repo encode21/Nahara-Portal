@@ -11,11 +11,11 @@ import { useAppSurface } from "@/lib/hooks/useAppSurface";
 export function MobileNav() {
   const pathname = usePathname();
   const surface = useAppSurface();
-  const { isAdmin, isStaff } = useAuth();
+  const { isAdmin, isStaff, isRegistryOnly } = useAuth();
 
   const items = useMemo(
-    () => getNavItemsForAccess({ surface, isAdmin, isStaff }),
-    [surface, isAdmin, isStaff]
+    () => getNavItemsForAccess({ surface, isAdmin, isStaff, isRegistryOnly }),
+    [surface, isAdmin, isStaff, isRegistryOnly]
   );
 
   // Bottom bar: show a short subset (max ~5) for mobile thumb reach

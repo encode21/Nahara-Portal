@@ -23,6 +23,7 @@ import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 import { SecurityNotificationBell } from "./SecurityNotificationBell";
 import { isMalamPuncakStagePath } from "@/lib/agustusan/malam-puncak-path";
+import { WargaIdentityChip } from "@/components/warga/WargaIdentityChip";
 
 function UserMenu({
   userName,
@@ -162,14 +163,16 @@ export function HeaderNav() {
   const router = useRouter();
   const supabase = createClient();
   const surface = useAppSurface();
-  const { isAdmin, isStaff, isSecurity, user, loading } = useAuth();
+  const { isAdmin, isStaff, isRegistryOnly, isSecurity, user, loading } =
+    useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
   const navItems = useMemo(
-    () => getNavItemsForAccess({ surface, isAdmin, isStaff }),
-    [surface, isAdmin, isStaff],
+    () =>
+      getNavItemsForAccess({ surface, isAdmin, isStaff, isRegistryOnly }),
+    [surface, isAdmin, isStaff, isRegistryOnly],
   );
 
   const opsLoginHref = buildOpsUrl("/login");
@@ -238,6 +241,7 @@ export function HeaderNav() {
             mobileOpen && "pointer-events-none invisible md:pointer-events-auto md:visible",
           )}
         >
+          {surface === "portal" && <WargaIdentityChip />}
           {!loading && signedIn && (
             <SecurityNotificationBell
               light={landingOverlay}

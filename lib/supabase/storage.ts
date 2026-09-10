@@ -309,3 +309,80 @@ export async function removePortalImage(
   if (!path) return;
   await supabase.storage.from(UPLOAD_BUCKET).remove([path]);
 }
+
+/** Private bucket for KK/KTP — registry roles only. */
+export const WARGA_DOKUMEN_BUCKET = "warga-dokumen";
+export const MAX_DOKUMEN_BYTES = 10 * 1024 * 1024;
+export const ALLOWED_DOKUMEN_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
+
+export async function uploadWargaDokumen(
+  supabase: SupabaseClient,
+  file: File,
+  wargaId: string
+): Promise<{ path: string | null; error: string | null }> {
+  let mime = file.type;
+  if (mime.startsWith("image/")) {
+    const sniffed = await sniffImageMime(file);
+    if (!sniffed) {
+      return { path: null, error: "Format gambar tidak dikenali." };
+    }
+    mime = sniffed;
+  } else if (mime !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    return { path: null, error: "Format harus JPG, PNG, WebP, atau PDF." };
+  } else {
+    mime = "application/pdf";
+  }
+
+  if (
+    !ALLOWED_DOKUMEN_TYPES.includes(
+      mime as (typeof ALLOWED_DOKUMEN_TYPES)[number]
+    )
+  ) {
+    return { path: null, error: "Format harus JPG, PNG, WebP, atau PDF." };
+  }
+  if (file.size > MAX_DOKUMEN_BYTES) {
+    return { path: null, error: "Ukuran maksimal 10 MB." };
+  }
+
+  const ext =
+    mime === "application/pdf" ? "pdf" : extensionForMime(mime);
+  const path = `${wargaId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(WARGA_DOKUMEN_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: mime,
+    });
+
+  if (uploadError) {
+    return { path: null, error: uploadError.message };
+  }
+  return { path, error: null };
+}
+
+export async function createWargaDokumenSignedUrl(
+  supabase: SupabaseClient,
+  storagePath: string,
+  expiresIn = 120
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(WARGA_DOKUMEN_BUCKET)
+    .createSignedUrl(storagePath, expiresIn);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
+export async function removeWargaDokumenFile(
+  supabase: SupabaseClient,
+  storagePath: string | null | undefined
+): Promise<void> {
+  if (!storagePath || storagePath.includes("..")) return;
+  await supabase.storage.from(WARGA_DOKUMEN_BUCKET).remove([storagePath]);
+}

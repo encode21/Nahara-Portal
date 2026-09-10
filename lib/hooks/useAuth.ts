@@ -7,6 +7,8 @@ import {
   isFinanceRestricted,
   isPortalAdmin,
   isPortalStaff,
+  isRegistryOnly,
+  isWargaRegistry,
   type PortalRole,
 } from "@/lib/auth/roles";
 import type { User } from "@supabase/supabase-js";
@@ -61,6 +63,8 @@ export function useAuth() {
     role,
     isAdmin: isPortalAdmin(user),
     isStaff: isPortalStaff(user),
+    isWargaRegistry: isWargaRegistry(user),
+    isRegistryOnly: isRegistryOnly(user),
     isFinanceRestricted: isFinanceRestricted(user),
     isSecurity,
     loading,

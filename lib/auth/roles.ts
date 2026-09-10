@@ -1,9 +1,22 @@
 import type { User } from "@supabase/supabase-js";
 import type { AppSurface } from "@/lib/host";
 
-export type PortalRole = "admin" | "estate" | "rtrw";
+export type PortalRole =
+  | "admin"
+  | "estate"
+  | "rtrw"
+  | "ketua"
+  | "it"
+  | "sekretaris";
 
-/** Dedicated admin manage routes. */
+const REGISTRY_ROLES = new Set<PortalRole>([
+  "admin",
+  "ketua",
+  "it",
+  "sekretaris",
+]);
+
+/** Dedicated admin manage routes (finance / kegiatan). */
 export const ADMIN_ONLY_ROUTE_PREFIXES = [
   "/activities",
   "/kas",
@@ -21,11 +34,29 @@ export const STAFF_ALLOWED_PREFIXES = [
   "/offline",
 ] as const;
 
+/** Routes registry roles (ketua/it/sekretaris) may use on ops — no finance. */
+export const REGISTRY_ALLOWED_PREFIXES = [
+  "/info-warga",
+  "/data-warga",
+  "/jasa",
+  "/dashboard",
+  "/panduan",
+  "/login",
+  "/offline",
+] as const;
+
 export function getPortalRole(
   user: User | null | undefined
 ): PortalRole | null {
   const role = user?.app_metadata?.role;
-  if (role === "admin" || role === "estate" || role === "rtrw") {
+  if (
+    role === "admin" ||
+    role === "estate" ||
+    role === "rtrw" ||
+    role === "ketua" ||
+    role === "it" ||
+    role === "sekretaris"
+  ) {
     return role;
   }
   return null;
@@ -40,9 +71,23 @@ export function isPortalStaff(user: User | null | undefined): boolean {
   return role === "estate" || role === "rtrw";
 }
 
+/** Ketua / IT / Sekretaris / Admin — kelola warga registry + vendor. */
+export function isWargaRegistry(user: User | null | undefined): boolean {
+  const role = getPortalRole(user);
+  return role != null && REGISTRY_ROLES.has(role);
+}
+
+/** Registry-only roles (not full admin). */
+export function isRegistryOnly(user: User | null | undefined): boolean {
+  const role = getPortalRole(user);
+  return role === "ketua" || role === "it" || role === "sekretaris";
+}
+
 /** Logged-in staff who must not see keuangan menus/pages. */
 export function isFinanceRestricted(user: User | null | undefined): boolean {
-  return isPortalStaff(user) && !isPortalAdmin(user);
+  return (
+    (isPortalStaff(user) || isRegistryOnly(user)) && !isPortalAdmin(user)
+  );
 }
 
 export function safeInternalPath(
@@ -70,9 +115,17 @@ export function isStaffAllowedPath(pathname: string): boolean {
   );
 }
 
+export function isRegistryAllowedPath(pathname: string): boolean {
+  if (pathname === "/") return false;
+  return REGISTRY_ALLOWED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 /** Default landing after login. */
 export function postLoginPath(user: User | null | undefined): string {
   if (isPortalAdmin(user)) return "/dashboard";
+  if (isRegistryOnly(user)) return "/data-warga";
   if (isPortalStaff(user)) return "/pengumuman";
   // Auth without JWT role (e.g. security_users) — dashboard; login page may override to Info Security
   return "/dashboard";
@@ -80,7 +133,7 @@ export function postLoginPath(user: User | null | undefined): string {
 
 /**
  * Resolve redirect target after login on ops.
- * Staff cannot land on admin/finance paths.
+ * Staff / registry cannot land on admin/finance paths.
  */
 export function resolveOpsPostLoginRedirect(
   user: User | null | undefined,
@@ -89,6 +142,9 @@ export function resolveOpsPostLoginRedirect(
   const fallback = postLoginPath(user);
   const next = safeInternalPath(requested, fallback);
   if (isPortalAdmin(user)) return next;
+  if (isRegistryOnly(user)) {
+    return isRegistryAllowedPath(next) ? next : "/data-warga";
+  }
   if (isPortalStaff(user)) {
     return isStaffAllowedPath(next) ? next : "/pengumuman";
   }
