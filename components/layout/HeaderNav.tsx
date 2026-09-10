@@ -23,7 +23,7 @@ import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 import { SecurityNotificationBell } from "./SecurityNotificationBell";
 import { isMalamPuncakStagePath } from "@/lib/agustusan/malam-puncak-path";
-import { WargaIdentityChip } from "@/components/warga/WargaIdentityChip";
+import { WargaIdentityChip, WargaIdentityMobileStrip } from "@/components/warga/WargaIdentityChip";
 
 function UserMenu({
   userName,
@@ -224,10 +224,11 @@ export function HeaderNav() {
           : "sticky top-0 border-b border-gold/20 bg-white shadow-sm",
       )}
     >
-      {/* Bar 1: logo + user */}
+      {/* Bar 1: logo + actions (menu always visible on mobile) */}
       <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2 px-4 py-2 sm:gap-3 lg:px-6">
         <span
           className={cn(
+            "min-w-0 shrink",
             landingOverlay &&
               "[&_img:last-child]:brightness-0 [&_img:last-child]:invert",
           )}
@@ -237,12 +238,15 @@ export function HeaderNav() {
 
         <div
           className={cn(
-            "relative z-[60] flex items-center gap-1.5 sm:gap-2",
+            "relative z-[60] flex shrink-0 items-center gap-1 sm:gap-2",
             // Saat drawer terbuka, sembunyikan kontrol header agar tidak bentrok overlay
             mobileOpen && "pointer-events-none invisible md:pointer-events-auto md:visible",
           )}
         >
-          {hasMounted && surface === "portal" && <WargaIdentityChip />}
+          {/* Chip hanya di bar header dari sm+; di mobile pakai strip di bawah */}
+          {hasMounted && surface === "portal" && (
+            <WargaIdentityChip className="hidden max-w-[11rem] sm:flex md:max-w-[16rem]" />
+          )}
           {!loading && signedIn && (
             <SecurityNotificationBell
               light={landingOverlay}
@@ -289,8 +293,7 @@ export function HeaderNav() {
             ) : surface === "portal" ? (
               <a href={opsLoginHref} className="btn-primary py-2 text-xs">
                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Masuk</span>
-                <span className="sm:hidden">Masuk</span>
+                Masuk
               </a>
             ) : (
               <Link href="/login" className="btn-primary py-2 text-xs">
@@ -308,7 +311,7 @@ export function HeaderNav() {
                 setMobileOpen(true);
               }}
               className={cn(
-                "rounded-lg p-2 md:hidden",
+                "shrink-0 rounded-lg p-2 md:hidden",
                 landingOverlay
                   ? "text-white/90 hover:bg-white/10"
                   : "text-slate-600 hover:bg-gold/5",
@@ -320,6 +323,13 @@ export function HeaderNav() {
           )}
         </div>
       </div>
+
+      {/* Mobile: identitas warga di strip sendiri agar tidak menimpa hamburger */}
+      {hasMounted && surface === "portal" && (
+        <WargaIdentityMobileStrip
+          className={mobileOpen ? "pointer-events-none invisible" : undefined}
+        />
+      )}
 
       {navItems.length > 0 && (
         <nav className="hidden border-t border-gold/10 md:block">
