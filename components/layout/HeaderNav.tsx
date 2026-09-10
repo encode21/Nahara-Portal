@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getNavItemsForAccess } from "@/lib/constants/nav";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useAppSurface } from "@/lib/hooks/useAppSurface";
+import { useAppSurface, useHasMounted } from "@/lib/hooks/useAppSurface";
 import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 import { SecurityNotificationBell } from "./SecurityNotificationBell";
@@ -163,6 +163,7 @@ export function HeaderNav() {
   const router = useRouter();
   const supabase = createClient();
   const surface = useAppSurface();
+  const hasMounted = useHasMounted();
   const { isAdmin, isStaff, isRegistryOnly, isSecurity, user, loading } =
     useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -241,7 +242,7 @@ export function HeaderNav() {
             mobileOpen && "pointer-events-none invisible md:pointer-events-auto md:visible",
           )}
         >
-          {surface === "portal" && <WargaIdentityChip />}
+          {hasMounted && surface === "portal" && <WargaIdentityChip />}
           {!loading && signedIn && (
             <SecurityNotificationBell
               light={landingOverlay}

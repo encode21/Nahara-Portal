@@ -84,12 +84,18 @@ export function WargaIdentityProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const EMPTY_WARGA_IDENTITY: WargaIdentityContextValue = {
+  identity: null,
+  ready: true,
+  showPrompt: false,
+  confirm: () => {},
+  dismiss: () => {},
+  change: () => {},
+};
+
 export function useWargaIdentity(): WargaIdentityContextValue {
   const ctx = useContext(WargaIdentityContext);
-  if (!ctx) {
-    throw new Error(
-      "useWargaIdentity must be used within WargaIdentityProvider"
-    );
-  }
-  return ctx;
+  // HeaderNav is shared across landing/ops/portal; surface defaults to
+  // "portal" before mount, so chip may render outside the provider.
+  return ctx ?? EMPTY_WARGA_IDENTITY;
 }
