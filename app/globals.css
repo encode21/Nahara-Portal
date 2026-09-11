@@ -194,4 +194,208 @@
   animation: doorprize-reveal-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ——— Nahara premium loader ——— */
+@keyframes nahara-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nahara-ring-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes nahara-badge-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(201, 168, 76, 0));
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 10px rgba(201, 168, 76, 0.35));
+  }
+}
+
+@keyframes nahara-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes nahara-dots {
+  0%,
+  20% {
+    opacity: 0.2;
+    letter-spacing: 0;
+  }
+  50% {
+    opacity: 1;
+    letter-spacing: 0.12em;
+  }
+  100% {
+    opacity: 0.2;
+    letter-spacing: 0;
+  }
+}
+
+@keyframes nahara-bar-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.nahara-loader-ring {
+  border-radius: 9999px;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.nahara-loader-ring-a {
+  border-width: 1.5px;
+  border-color: transparent #c9a84c transparent rgba(201, 168, 76, 0.2);
+  animation: nahara-ring-spin 1.4s cubic-bezier(0.55, 0.15, 0.35, 0.9) infinite;
+}
+
+.nahara-loader-ring-b {
+  border-width: 1.5px;
+  border-color: rgba(154, 123, 46, 0.15) transparent #9a7b2e transparent;
+  animation: nahara-ring-spin-rev 2.1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.nahara-loader-glow {
+  background: radial-gradient(
+    circle,
+    rgba(201, 168, 76, 0.35) 0%,
+    rgba(201, 168, 76, 0.08) 45%,
+    transparent 70%
+  );
+  animation: nahara-glow-pulse 2s ease-in-out infinite;
+}
+
+.nahara-loader-badge {
+  animation: nahara-badge-breathe 2.4s ease-in-out infinite;
+}
+
+.nahara-loader-dots {
+  display: inline-block;
+  animation: nahara-dots 1.4s ease-in-out infinite;
+}
+
+.nahara-loader-bar {
+  background-size: 200% 100%;
+  animation: nahara-bar-shimmer 1.2s linear infinite;
+}
+
+.nahara-loader-panel {
+  animation: landing-rise 0.45s ease-out both;
+}
+
+/* —— Nahara premium loader —— */
+@keyframes nahara-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nahara-loader-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes nahara-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes nahara-loader-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes nahara-loader-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes nahara-loader-dots {
+  0%,
+  20% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.nahara-loader-ring {
+  border: 1.5px solid transparent;
+  border-top-color: #c9a84c;
+  border-right-color: rgba(201, 168, 76, 0.25);
+  animation: nahara-loader-spin 1.1s cubic-bezier(0.55, 0.15, 0.35, 0.95) infinite;
+}
+
+.nahara-loader-ring-slow {
+  border: 1px solid transparent;
+  border-bottom-color: #9a7b2e;
+  border-left-color: rgba(154, 123, 46, 0.2);
+  animation: nahara-loader-spin-rev 2.4s linear infinite;
+}
+
+.nahara-loader-glow {
+  background: radial-gradient(
+    circle,
+    rgba(201, 168, 76, 0.35) 0%,
+    rgba(201, 168, 76, 0.08) 55%,
+    transparent 70%
+  );
+  animation: nahara-loader-pulse 2s ease-in-out infinite;
+}
+
+.nahara-loader-bar {
+  background-size: 200% 100%;
+  animation: nahara-loader-shimmer 1.4s linear infinite;
+}
+
+.nahara-loader-panel {
+  animation: nahara-loader-panel-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.nahara-loader-dots {
+  display: inline-block;
+  animation: nahara-loader-dots 1.2s ease-in-out infinite;
+}
+
 

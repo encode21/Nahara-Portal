@@ -1,52 +1,36 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
-  Bell,
-  CalendarDays,
-  Megaphone,
-  Shield,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
-
-type QuickAction = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  tone?: "gold" | "danger";
-};
-
-/**
- * Pintasan ke modul yang SUDAH ADA — tidak membuat modul baru.
- */
-const actions: QuickAction[] = [
-  { href: "/pengumuman", label: "Pengumuman", icon: Bell },
-  { href: "/kegiatan", label: "Kegiatan", icon: CalendarDays },
-  { href: "/iuran", label: "Iuran", icon: Wallet },
-  { href: "/pengaduan", label: "Pengaduan", icon: Megaphone },
-  { href: "/info-security", label: "Security", icon: Shield, tone: "danger" },
-];
+  QUICK_ACTIONS,
+  QUICK_ACTION_TONE_CLASS,
+} from "@/lib/constants/quick-actions";
 
 export function QuickActions() {
   return (
     <section>
       <h2 className="section-title">Aksi cepat</h2>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
-        {actions.map(({ href, label, icon: Icon, tone }) => (
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {QUICK_ACTIONS.map(({ href, label, hint, icon: Icon, tone }) => (
           <Link
             key={href}
             href={href}
-            className="surface-tile flex flex-col items-center gap-2 px-2 py-3 text-center"
+            className={cn(
+              "surface-tile flex items-center gap-3 px-3 py-3",
+              tone === "danger" && "border-red-100 hover:border-red-200",
+            )}
           >
             <span
-              className={
-                tone === "danger"
-                  ? "flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600"
-                  : "icon-badge"
-              }
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1",
+                QUICK_ACTION_TONE_CLASS[tone],
+              )}
             >
               <Icon className="h-5 w-5" />
             </span>
-            <span className="text-xs font-medium text-ink-soft">{label}</span>
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold text-ink">{label}</span>
+              <span className="block text-[11px] text-ink-faint">{hint}</span>
+            </span>
           </Link>
         ))}
       </div>

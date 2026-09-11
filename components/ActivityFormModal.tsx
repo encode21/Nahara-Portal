@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Activity } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { dispatchNotificationPush } from "@/lib/notifications/api";
 
 type Props = {
   activity: Activity | null;
@@ -49,14 +50,28 @@ export function ActivityFormModal({ activity, onClose }: Props) {
     };
 
     const result = isEdit
-      ? await supabase.from("activities").update(payload).eq("id", activity!.id)
-      : await supabase.from("activities").insert(payload);
+      ? await supabase
+          .from("activities")
+          .update(payload)
+          .eq("id", activity!.id)
+          .select("id")
+          .maybeSingle()
+      : await supabase.from("activities").insert(payload).select("id").single();
 
     setLoading(false);
 
     if (result.error) {
       setError("Gagal menyimpan kegiatan.");
       return;
+    }
+
+    const id = (result.data as { id?: string } | null)?.id ?? activity?.id;
+    if (id) {
+      dispatchNotificationPush({
+        sourceType: "activities",
+        sourceId: id,
+        type: isEdit ? "event_updated" : "event_created",
+      });
     }
 
     onClose();

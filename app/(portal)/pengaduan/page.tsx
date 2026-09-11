@@ -26,6 +26,7 @@ import {
 import { PengaduanStats } from "@/components/pengaduan/PengaduanStats";
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
 import { sharePengaduan } from "@/lib/pengaduan/share";
+import { dispatchNotificationPush } from "@/lib/notifications/api";
 import { sanitizeSearchTerm } from "@/lib/validation/publicForms";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,17 @@ function PengaduanPageContent() {
     setBusyId(id);
     await supabase.from("pengaduan").update({ status }).eq("id", id);
     setBusyId(null);
+    const type =
+      status === "Diproses"
+        ? "report_in_progress"
+        : status === "Selesai" || status === "Ditolak"
+          ? "report_resolved"
+          : "report_received";
+    dispatchNotificationPush({
+      sourceType: "pengaduan",
+      sourceId: id,
+      type,
+    });
     await Promise.all([fetchAll(), fetchFiltered()]);
   }
 

@@ -167,6 +167,37 @@ export type SecurityStaff = {
   created_at: string;
 };
 
+export type EmergencyKind =
+  | "kebakaran"
+  | "medis"
+  | "keamanan"
+  | "bencana"
+  | "lainnya";
+
+export type EmergencyStatus =
+  | "Dilaporkan"
+  | "Diterima"
+  | "Menuju Lokasi"
+  | "Bantuan Dihubungi"
+  | "Terkendali"
+  | "Selesai";
+
+export type EmergencyIncident = {
+  id: string;
+  kode: string | null;
+  kind: EmergencyKind;
+  status: EmergencyStatus;
+  warga_id: string | null;
+  reporter_nama: string;
+  reporter_blok: string;
+  note: string | null;
+  foto_url: string | null;
+  lat: number | null;
+  lng: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type SecurityUser = {
   id: string;
   staff_id: string | null;

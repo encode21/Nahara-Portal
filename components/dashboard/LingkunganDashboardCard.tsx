@@ -23,6 +23,8 @@ import type { LingkunganSnapshot } from "@/lib/lingkungan/types";
 
 type Props = {
   data: LingkunganSnapshot;
+  /** When true, omit outer card chrome (used inside SituationCenter expand). */
+  embedded?: boolean;
 };
 
 function aqiToneClass(tone: ReturnType<typeof usAqiBand>["tone"]): string {
@@ -143,7 +145,7 @@ function WindyMapModal({ open, onClose }: { open: boolean; onClose: () => void }
   );
 }
 
-export function LingkunganDashboardCard({ data }: Props) {
+export function LingkunganDashboardCard({ data, embedded = false }: Props) {
   const [mapOpen, setMapOpen] = useState(false);
   const aqi = data.airQuality ? usAqiBand(data.airQuality.usAqi) : null;
   const weatherLabel = data.weather ? weatherLabelId(data.weather.weatherCode) : null;
@@ -153,25 +155,39 @@ export function LingkunganDashboardCard({ data }: Props) {
 
   return (
     <>
-      <div className="glass-card overflow-hidden">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-              Lingkungan & kewaspadaan
-            </p>
-            <h3 className="mt-1 font-display text-lg font-semibold text-slate-900">
+      <div className={embedded ? "overflow-hidden" : "glass-card overflow-hidden"}>
+        {!embedded && (
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                Lingkungan & kewaspadaan
+              </p>
+              <h3 className="mt-1 font-display text-lg font-semibold text-slate-900">
+                {data.locationLabel}
+              </h3>
+              {observed && (
+                <p className="mt-0.5 text-xs text-slate-400">Pembaruan ~{observed} WIB</p>
+              )}
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15">
+              <CloudSun className="h-5 w-5 text-gold-dark" />
+            </div>
+          </div>
+        )}
+
+        {embedded && (
+          <div className="mb-3 flex items-baseline justify-between gap-2">
+            <h3 className="font-display text-base font-semibold text-slate-900">
               {data.locationLabel}
             </h3>
             {observed && (
-              <p className="mt-0.5 text-xs text-slate-400">Pembaruan ~{observed} WIB</p>
+              <p className="text-[10px] text-slate-400">~{observed} WIB</p>
             )}
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15">
-            <CloudSun className="h-5 w-5 text-gold-dark" />
-          </div>
-        </div>
+        )}
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Order: Cuaca → Kualitas udara → Peta Windy */}
+        <div className={embedded ? "grid gap-3" : "mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
           <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
             <p className="text-xs font-medium text-slate-500">Cuaca</p>
             {data.weather ? (

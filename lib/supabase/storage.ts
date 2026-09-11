@@ -11,13 +11,19 @@ export const ALLOWED_IMAGE_TYPES = [
 ] as const;
 export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"] as const;
 
-export type UploadFolder = "kegiatan" | "pengumuman" | "pengaduan" | "agustusan";
+export type UploadFolder =
+  | "kegiatan"
+  | "pengumuman"
+  | "pengaduan"
+  | "agustusan"
+  | "darurat";
 
 const FOLDER_SET = new Set<string>([
   "kegiatan",
   "pengumuman",
   "pengaduan",
   "agustusan",
+  "darurat",
 ]);
 
 const MIME_TO_EXT: Record<string, string> = {

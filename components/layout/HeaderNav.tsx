@@ -16,6 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { getNavItemsForAccess } from "@/lib/constants/nav";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface, useHasMounted } from "@/lib/hooks/useAppSurface";
@@ -23,7 +24,8 @@ import { buildLandingUrl, buildOpsUrl, buildPortalUrl } from "@/lib/host";
 import { NaharaLogo } from "./NaharaLogo";
 import { SecurityNotificationBell } from "./SecurityNotificationBell";
 import { isMalamPuncakStagePath } from "@/lib/agustusan/malam-puncak-path";
-import { WargaIdentityChip, WargaIdentityMobileStrip } from "@/components/warga/WargaIdentityChip";
+import { WargaIdentityChip } from "@/components/warga/WargaIdentityChip";
+import { PortalDesktopNav } from "@/components/layout/PortalDesktopNav";
 
 function UserMenu({
   userName,
@@ -42,9 +44,11 @@ function UserMenu({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const onOpenChangeRef = useRef(onOpenChange);
   onOpenChangeRef.current = onOpenChange;
+  const hasMounted = useHasMounted();
 
   useEffect(() => {
     if (!open) return;
@@ -52,9 +56,10 @@ function UserMenu({
     let removeListeners: (() => void) | undefined;
     const setup = window.setTimeout(() => {
       function handlePointer(e: Event) {
-        if (ref.current && !ref.current.contains(e.target as Node)) {
-          onOpenChangeRef.current(false);
-        }
+        const target = e.target as Node;
+        if (triggerRef.current?.contains(target)) return;
+        if (mobileMenuRef.current?.contains(target)) return;
+        onOpenChangeRef.current(false);
       }
       document.addEventListener("pointerdown", handlePointer);
       document.addEventListener("touchstart", handlePointer, { passive: true });
@@ -70,8 +75,53 @@ function UserMenu({
     };
   }, [open]);
 
+  const menuContent = (
+    <>
+      <div className="border-b border-sand-200 px-4 py-3">
+        <p className="truncate text-sm font-medium text-ink">{userName}</p>
+        {userEmail && (
+          <p className="truncate text-xs text-ink-soft">{userEmail}</p>
+        )}
+      </div>
+      {isAdmin && (
+        <Link
+          href="/activities"
+          role="menuitem"
+          onClick={() => onOpenChange(false)}
+          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
+        >
+          <Settings className="h-4 w-4 text-ink-faint" />
+          Kelola Kegiatan
+        </Link>
+      )}
+      {(isSecurity || isAdmin) && (
+        <Link
+          href="/info-security?tab=notifikasi"
+          role="menuitem"
+          onClick={() => onOpenChange(false)}
+          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
+        >
+          <Shield className="h-4 w-4 text-ink-faint" />
+          Notifikasi Security
+        </Link>
+      )}
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => {
+          onOpenChange(false);
+          onLogout();
+        }}
+        className="flex w-full touch-manipulation items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
+      >
+        <LogOut className="h-4 w-4 text-ink-faint" />
+        Keluar
+      </button>
+    </>
+  );
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={triggerRef} className="relative">
       <button
         type="button"
         onClick={() => onOpenChange(!open)}
@@ -94,66 +144,33 @@ function UserMenu({
       </button>
 
       {open && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-[80] cursor-default bg-black/20 sm:hidden"
-            aria-label="Tutup menu pengguna"
-            onClick={() => onOpenChange(false)}
-          />
-          <div
-            role="menu"
-            className={cn(
-              "z-[90] overflow-hidden rounded-xl border border-sand-200 bg-white py-1 shadow-lg",
-              "fixed left-3 right-3 top-[3.75rem]",
-              "sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1.5 sm:w-56",
-            )}
-          >
-            <div className="border-b border-sand-200 px-4 py-3">
-              <p className="truncate text-sm font-medium text-ink">
-                {userName}
-              </p>
-              {userEmail && (
-                <p className="truncate text-xs text-ink-soft">{userEmail}</p>
-              )}
-            </div>
-            {isAdmin && (
-              <Link
-                href="/activities"
-                role="menuitem"
-                onClick={() => onOpenChange(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
-              >
-                <Settings className="h-4 w-4 text-ink-faint" />
-                Kelola Kegiatan
-              </Link>
-            )}
-            {(isSecurity || isAdmin) && (
-              <Link
-                href="/info-security?tab=notifikasi"
-                role="menuitem"
-                onClick={() => onOpenChange(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
-              >
-                <Shield className="h-4 w-4 text-ink-faint" />
-                Notifikasi Security
-              </Link>
-            )}
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-[90] mt-1.5 hidden w-56 overflow-hidden rounded-xl border border-sand-200 bg-white py-1 shadow-lg sm:block"
+        >
+          {menuContent}
+        </div>
+      )}
+
+      {hasMounted &&
+        open &&
+        createPortal(
+          <div ref={mobileMenuRef} className="sm:hidden">
             <button
               type="button"
-              role="menuitem"
-              onClick={() => {
-                onOpenChange(false);
-                onLogout();
-              }}
-              className="flex w-full touch-manipulation items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
+              className="fixed inset-0 z-[80] cursor-default bg-black/20"
+              aria-label="Tutup menu pengguna"
+              onClick={() => onOpenChange(false)}
+            />
+            <div
+              role="menu"
+              className="fixed left-3 right-3 top-[3.75rem] z-[90] overflow-hidden rounded-xl border border-sand-200 bg-white py-1 shadow-lg"
             >
-              <LogOut className="h-4 w-4 text-ink-faint" />
-              Keluar
-            </button>
-          </div>
-        </>
-      )}
+              {menuContent}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -169,6 +186,40 @@ export function HeaderNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Portal: show warga name on header right after scroll (greeting owns it at top).
+  useEffect(() => {
+    if (surface !== "portal") {
+      setScrolled(false);
+      return;
+    }
+    function onScroll() {
+      setScrolled(window.scrollY > 72);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [surface]);
+
+  // Drawer must portal to body: header uses backdrop-filter, which makes
+  // position:fixed descendants clip to the header box (empty menu on mobile).
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
 
   const navItems = useMemo(
     () =>
@@ -215,6 +266,11 @@ export function HeaderNav() {
 
   if (isMalamPuncakStagePath(pathname)) return null;
 
+  const onDashboard =
+    pathname === "/dashboard" || pathname === "/";
+  const showPortalIdentity =
+    hasMounted && surface === "portal" && (scrolled || !onDashboard);
+
   return (
     <header
       className={cn(
@@ -243,9 +299,15 @@ export function HeaderNav() {
             mobileOpen && "pointer-events-none invisible md:pointer-events-auto md:visible",
           )}
         >
-          {/* Chip hanya di bar header dari sm+; di mobile pakai strip di bawah */}
-          {hasMounted && surface === "portal" && (
-            <WargaIdentityChip className="hidden max-w-[11rem] sm:flex md:max-w-[16rem]" />
+          {/* Portal: di dashboard hanya setelah scroll; halaman lain selalu di kanan */}
+          {showPortalIdentity && (
+            <WargaIdentityChip
+              compact
+              className={cn(
+                "transition-opacity duration-200",
+                mobileOpen && "pointer-events-none opacity-0",
+              )}
+            />
           )}
           {!loading && signedIn && (
             <SecurityNotificationBell
@@ -290,19 +352,16 @@ export function HeaderNav() {
                 <LogIn className="h-3.5 w-3.5" />
                 Masuk
               </a>
-            ) : surface === "portal" ? (
-              <a href={opsLoginHref} className="btn-primary py-2 text-xs">
-                <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                Masuk
-              </a>
-            ) : (
+            ) : surface === "ops" ? (
               <Link href="/login" className="btn-primary py-2 text-xs">
                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
                 Masuk
               </Link>
-            ))}
+            ) : null)}
 
-          {navItems.length > 0 && (
+          {/* Portal mobile: bottom nav + /layanan — no hamburger.
+              Ops (and signed-in portal rare cases) keep drawer. */}
+          {navItems.length > 0 && surface !== "portal" && (
             <button
               type="button"
               onClick={() => {
@@ -324,14 +383,11 @@ export function HeaderNav() {
         </div>
       </div>
 
-      {/* Mobile: identitas warga di strip sendiri agar tidak menimpa hamburger */}
-      {hasMounted && surface === "portal" && (
-        <WargaIdentityMobileStrip
-          className={mobileOpen ? "pointer-events-none invisible" : undefined}
-        />
-      )}
+      {/* Portal desktop: compact primary tabs + Layanan dropdown */}
+      {surface === "portal" && <PortalDesktopNav />}
 
-      {navItems.length > 0 && (
+      {/* Ops desktop: full module strip (role-filtered) */}
+      {surface === "ops" && navItems.length > 0 && (
         <nav className="hidden border-t border-sand-200 md:block">
           <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
             <div className="flex w-max max-w-none gap-0.5 py-1.5">
@@ -353,115 +409,123 @@ export function HeaderNav() {
         </nav>
       )}
 
-      {mobileOpen && (
-        <div className="md:hidden">
-          <button
-            type="button"
-            className="fixed inset-0 z-[100] cursor-default bg-slate-950/45 backdrop-blur-[2px]"
-            aria-label="Tutup menu"
-            onClick={() => setMobileOpen(false)}
-          />
+      {hasMounted &&
+        mobileOpen &&
+        surface !== "portal" &&
+        createPortal(
+          <div className="md:hidden">
+            <button
+              type="button"
+              className="fixed inset-0 z-[100] cursor-default bg-slate-950/45 backdrop-blur-[2px]"
+              aria-label="Tutup menu"
+              onClick={() => setMobileOpen(false)}
+            />
 
-          <aside
-            className="fixed inset-y-0 left-0 z-[110] flex w-[min(20rem,88vw)] flex-col bg-white shadow-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu navigasi"
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-sand-200 px-4 py-3">
-              <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-sand-100 text-ink-soft hover:bg-sand-200"
-                aria-label="Tutup menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-4">
-              <div className="space-y-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition",
-                        isActive(item.href)
-                          ? "bg-gold/15 text-gold-dark"
-                          : "text-ink-soft hover:bg-sand-100",
-                      )}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
+            <aside
+              className="fixed inset-y-0 left-0 z-[110] flex w-[min(20rem,88vw)] flex-col bg-white shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu navigasi"
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-sand-200 px-4 py-3">
+                <NaharaLogo
+                  href={surface === "landing" ? "/" : "/dashboard"}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-sand-100 text-ink-soft hover:bg-sand-200"
+                  aria-label="Tutup menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              {surface === "ops" && (
-                <div className="mt-4 border-t border-sand-200 pt-4">
-                  <a
-                    href={portalHomeHref}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                    Portal Warga
-                  </a>
+              <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-4">
+                <div className="space-y-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition",
+                          isActive(item.href)
+                            ? "bg-gold/15 text-gold-dark"
+                            : "text-ink-soft hover:bg-sand-100",
+                        )}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
 
-              {signedIn && (
-                <div className="mt-4 border-t border-sand-200 pt-4">
-                  <div className="mb-2 px-3">
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {userName}
-                    </p>
-                    {userEmail && (
-                      <p className="truncate text-xs text-ink-soft">{userEmail}</p>
-                    )}
+                {surface === "ops" && (
+                  <div className="mt-4 border-t border-sand-200 pt-4">
+                    <a
+                      href={portalHomeHref}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                      Portal Warga
+                    </a>
                   </div>
-                  {isAdmin && (
-                    <Link
-                      href="/activities"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
+                )}
+
+                {signedIn && (
+                  <div className="mt-4 border-t border-sand-200 pt-4">
+                    <div className="mb-2 px-3">
+                      <p className="truncate text-sm font-semibold text-ink">
+                        {userName}
+                      </p>
+                      {userEmail && (
+                        <p className="truncate text-xs text-ink-soft">
+                          {userEmail}
+                        </p>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <Link
+                        href="/activities"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
+                      >
+                        <Settings className="h-5 w-5" />
+                        Kelola Kegiatan
+                      </Link>
+                    )}
+                    {(isSecurity || isAdmin) && (
+                      <Link
+                        href="/info-security?tab=notifikasi"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
+                      >
+                        <Shield className="h-5 w-5" />
+                        Notifikasi Security
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        handleLogout();
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
                     >
-                      <Settings className="h-5 w-5" />
-                      Kelola Kegiatan
-                    </Link>
-                  )}
-                  {(isSecurity || isAdmin) && (
-                    <Link
-                      href="/info-security?tab=notifikasi"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
-                    >
-                      <Shield className="h-5 w-5" />
-                      Notifikasi Security
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Keluar
-                  </button>
-                </div>
-              )}
-            </nav>
-          </aside>
-        </div>
-      )}
+                      <LogOut className="h-5 w-5" />
+                      Keluar
+                    </button>
+                  </div>
+                )}
+              </nav>
+            </aside>
+          </div>,
+          document.body,
+        )}
     </header>
   );
 }
@@ -470,7 +534,6 @@ export function Footer() {
   const pathname = usePathname();
   const surface = useAppSurface();
   const portalHome = buildPortalUrl("/dashboard");
-  const opsLogin = buildOpsUrl("/login");
   const landingHome = buildLandingUrl("/");
 
   if (isMalamPuncakStagePath(pathname)) return null;
@@ -520,17 +583,17 @@ export function Footer() {
         </Link>
         {surface === "portal" ? (
           <a
-            href={opsLogin}
+            href={landingHome}
             className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
           >
-            Masuk
+            Situs publik
           </a>
         ) : (
           <a
             href={portalHome}
             className="text-gold-dark underline decoration-gold/30 underline-offset-2 hover:decoration-gold"
           >
-            Info warga
+            Portal warga
           </a>
         )}
       </p>

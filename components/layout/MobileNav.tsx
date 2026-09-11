@@ -2,53 +2,57 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { PORTAL_PRIMARY_TABS } from "@/lib/constants/portal-tabs";
 import { cn } from "@/lib/utils";
-import { getNavItemsForAccess } from "@/lib/constants/nav";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
+import { usePortalNotifications } from "@/lib/hooks/usePortalNotifications";
+import { isMalamPuncakStagePath } from "@/lib/agustusan/malam-puncak-path";
 
+/**
+ * Bottom tab bar for the resident portal on mobile (app-like navigation).
+ */
 export function MobileNav() {
   const pathname = usePathname();
   const surface = useAppSurface();
-  const { isAdmin, isStaff, isRegistryOnly } = useAuth();
+  const { unreadCount } = usePortalNotifications();
 
-  const items = useMemo(
-    () => getNavItemsForAccess({ surface, isAdmin, isStaff, isRegistryOnly }),
-    [surface, isAdmin, isStaff, isRegistryOnly]
-  );
-
-  // Bottom bar: show a short subset (max ~5) for mobile thumb reach
-  const bottomItems = items.slice(0, 5);
-
-  if (bottomItems.length === 0) return null;
+  if (surface !== "portal") return null;
+  if (isMalamPuncakStagePath(pathname)) return null;
+  if (pathname.startsWith("/darurat")) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-sand-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      <div className="flex justify-around overflow-x-auto py-1.5">
-        {bottomItems.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          const Icon = item.icon;
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-sand-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_rgba(28,25,23,0.06)] backdrop-blur md:hidden"
+      aria-label="Navigasi utama"
+    >
+      <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pt-1">
+        {PORTAL_PRIMARY_TABS.map((tab) => {
+          const active = tab.match(pathname);
+          const Icon = tab.icon;
+          const showBadge = tab.href === "/notifikasi" && unreadCount > 0;
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={tab.href}
+              href={tab.href}
               className={cn(
-                "flex min-w-[3rem] flex-col items-center gap-1 px-1.5 py-1.5 text-[9px] font-medium transition-colors",
-                active ? "text-gold-dark" : "text-ink-faint"
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
+                active ? "text-gold-dark" : "text-ink-faint hover:text-ink-soft",
               )}
             >
               <span
                 className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
-                  active ? "bg-gold-light" : "bg-transparent"
+                  "relative flex h-8 w-8 items-center justify-center rounded-xl transition-colors",
+                  active ? "bg-gold/15 text-gold-dark" : "bg-transparent",
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+                {showBadge && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold leading-none text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </span>
-              {item.mobileLabel ?? item.label}
+              <span className="truncate">{tab.label}</span>
             </Link>
           );
         })}

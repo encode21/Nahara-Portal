@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useWargaIdentity } from "@/lib/hooks/useWargaIdentity";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
 import { UserRound } from "lucide-react";
@@ -7,13 +8,40 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
+  /** Compact header pill: first name · blok */
+  compact?: boolean;
 };
 
-export function WargaIdentityChip({ className }: Props) {
+function firstName(nama: string): string {
+  return nama.trim().split(/\s+/)[0] || nama;
+}
+
+export function WargaIdentityChip({ className, compact = false }: Props) {
   const surface = useAppSurface();
   const { identity, ready, change } = useWargaIdentity();
 
   if (surface !== "portal" || !ready || !identity) return null;
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={change}
+        className={cn(
+          "flex max-w-[10.5rem] min-w-0 items-center gap-1.5 rounded-full border border-sand-200 bg-sand-50 px-2.5 py-1.5 text-left transition hover:border-gold/40 hover:bg-gold/5",
+          className,
+        )}
+        title={`${identity.nama} · ${identity.blok} — ketuk untuk ganti`}
+        aria-label={`Identitas ${identity.nama}, ${identity.blok}. Ketuk untuk ganti.`}
+      >
+        <UserRound className="h-3.5 w-3.5 shrink-0 text-gold-dark" />
+        <span className="min-w-0 truncate text-xs font-medium text-ink">
+          {firstName(identity.nama)}
+          <span className="text-ink-faint"> · {identity.blok}</span>
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div
@@ -34,29 +62,6 @@ export function WargaIdentityChip({ className }: Props) {
       >
         Ganti
       </button>
-    </div>
-  );
-}
-
-/** Full-width strip under header on small screens — keeps hamburger free. */
-export function WargaIdentityMobileStrip({
-  className,
-}: {
-  className?: string;
-}) {
-  const surface = useAppSurface();
-  const { identity, ready } = useWargaIdentity();
-
-  if (surface !== "portal" || !ready || !identity) return null;
-
-  return (
-    <div
-      className={cn(
-        "border-t border-gold/10 px-4 py-1.5 sm:hidden",
-        className,
-      )}
-    >
-      <WargaIdentityChip />
     </div>
   );
 }
