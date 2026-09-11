@@ -14,19 +14,19 @@ export function SaldoCard({ saldo, pemasukanBulan, pengeluaranBulan }: SaldoCard
   return (
     <div className="glass-card relative overflow-hidden">
       <div className="absolute right-4 top-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/20 text-xs font-bold text-gold-dark">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gold-light text-xs font-bold text-gold-dark">
           Rp
         </div>
       </div>
-      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Saldo Kas</p>
-      <p className="mt-2 font-display text-3xl font-bold text-slate-900">{formatCurrency(saldo)}</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">Saldo Kas</p>
+      <p className="mt-2 font-display text-3xl font-bold text-ink">{formatCurrency(saldo)}</p>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-          <p className="text-xs text-slate-500">Pemasukan Bulan Ini</p>
+        <div className="rounded-xl border border-sand-200 bg-sand-100 p-3">
+          <p className="text-xs text-ink-soft">Pemasukan Bulan Ini</p>
           <p className="mt-1 text-sm font-semibold text-gold-dark">{formatCurrency(pemasukanBulan)}</p>
         </div>
-        <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-          <p className="text-xs text-slate-500">Pengeluaran Bulan Ini</p>
+        <div className="rounded-xl border border-sand-200 bg-sand-100 p-3">
+          <p className="text-xs text-ink-soft">Pengeluaran Bulan Ini</p>
           <p className="mt-1 text-sm font-semibold text-red-600">{formatCurrency(pengeluaranBulan)}</p>
         </div>
       </div>

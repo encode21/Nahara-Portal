@@ -12,6 +12,7 @@ import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { PengumumanCardItem } from "@/components/pengumuman/PengumumanCardItem";
 import { PengumumanDetailModal } from "@/components/pengumuman/PengumumanDetailModal";
 import { PengumumanFormModal } from "@/components/pengumuman/PengumumanFormModal";
+import { dispatchNotificationPush } from "@/lib/notifications/api";
 
 export default function PengumumanPage() {
   const supabase = createClient();
@@ -77,12 +78,23 @@ export default function PengumumanPage() {
           .from("pengumuman")
           .update({ judul: payload.judul, isi: payload.isi, image_url: payload.image_url })
           .eq("id", editId)
-      : await supabase.from("pengumuman").insert(payload);
+          .select("id")
+          .maybeSingle()
+      : await supabase.from("pengumuman").insert(payload).select("id").single();
 
     const err = getSupabaseErrorMessage(result.error);
     if (err) {
       setError(err);
       return;
+    }
+
+    const id = (result.data as { id?: string } | null)?.id ?? editId;
+    if (id) {
+      dispatchNotificationPush({
+        sourceType: "pengumuman",
+        sourceId: id,
+        type: editId ? "announcement_updated" : "announcement_created",
+      });
     }
 
     setShowForm(false);

@@ -16,6 +16,7 @@ import {
 } from "@/lib/constants/brand";
 import { getAppSurface, getLandingOrigin, getPortalOrigin } from "@/lib/host";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
+import { AppLoaderShell } from "@/components/ui/AppLoaderShell";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -122,8 +123,10 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${jakarta.variable} ${syne.variable} max-w-[100%] overflow-x-clip font-sans`}>
-        {children}
-        <PwaInstallPrompt />
+        <AppLoaderShell>
+          {children}
+          <PwaInstallPrompt />
+        </AppLoaderShell>
         <Analytics />
         <SpeedInsights />
       </body>

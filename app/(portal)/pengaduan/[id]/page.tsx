@@ -21,6 +21,7 @@ import {
 import { PengaduanStatusActions } from "@/components/pengaduan/PengaduanStatusActions";
 import { sharePengaduan } from "@/lib/pengaduan/share";
 import { PUBLIC_LIMITS } from "@/lib/validation/publicForms";
+import { dispatchNotificationPush } from "@/lib/notifications/api";
 
 const AVATAR_TONES = [
   "bg-[#1f4b3a] text-[#d4e8df]",
@@ -125,6 +126,17 @@ export default function PengaduanDetailPage() {
     setBusy(true);
     await supabase.from("pengaduan").update({ status }).eq("id", pengaduan.id);
     setBusy(false);
+    const type =
+      status === "Diproses"
+        ? "report_in_progress"
+        : status === "Selesai" || status === "Ditolak"
+          ? "report_resolved"
+          : "report_received";
+    dispatchNotificationPush({
+      sourceType: "pengaduan",
+      sourceId: pengaduan.id,
+      type,
+    });
     fetchData();
   }
 
@@ -158,9 +170,11 @@ export default function PengaduanDetailPage() {
       is_pengurus: !!isOps,
     };
 
-    const { error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from("pengaduan_komentar")
-      .insert(payload);
+      .insert(payload)
+      .select("id")
+      .single();
 
     setSubmitting(false);
 
@@ -169,6 +183,14 @@ export default function PengaduanDetailPage() {
         getSupabaseErrorMessage(insertError) ?? "Gagal mengirim balasan.",
       );
       return;
+    }
+
+    if (isOps && inserted?.id) {
+      dispatchNotificationPush({
+        sourceType: "pengaduan_komentar",
+        sourceId: inserted.id as string,
+        type: "report_replied",
+      });
     }
 
     setForm((f) => ({ ...f, pesan: "" }));

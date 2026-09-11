@@ -20,6 +20,24 @@ const config: Config = {
           light: "#f7f0dc",
           dim: "#c9a84c26",
         },
+        /* Refreshed neutral scale — warm ivory surfaces + deep navy ink */
+        sand: {
+          50: "#fcfbf7",
+          100: "#f6f3ea",
+          200: "#ece6d7",
+        },
+        ink: {
+          DEFAULT: "#1e2436",
+          soft: "#5b6478",
+          faint: "#8b93a5",
+        },
+      },
+      borderRadius: {
+        "4xl": "1.75rem",
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(30,36,54,0.05), 0 8px 24px rgba(30,36,54,0.06)",
+        lift: "0 2px 4px rgba(30,36,54,0.06), 0 18px 40px rgba(30,36,54,0.10)",
       },
       fontFamily: {
         sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
