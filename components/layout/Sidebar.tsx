@@ -25,11 +25,11 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-300 lg:flex",
+        "hidden shrink-0 flex-col border-r border-sand-200 bg-white transition-all duration-300 lg:flex",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
-      <div className={cn("flex items-center border-b border-slate-200 px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
+      <div className={cn("flex items-center border-b border-sand-200 px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
         <Link href="/dashboard" className="flex items-center overflow-hidden">
           {collapsed ? (
             <Image src="/assets/naharalogonew.png" alt="Nahara" width={36} height={36} className="h-8 w-8 object-contain object-left" priority />
@@ -49,7 +49,7 @@ export function Sidebar() {
         )}
       </div>
       {collapsed && (
-        <div className="flex justify-center border-b border-slate-200 py-2">
+        <div className="flex justify-center border-b border-sand-200 py-2">
           <button
             type="button"
             onClick={() => setCollapsed(false)}
@@ -72,10 +72,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 active
                   ? "nav-active"
-                  : "border-l-2 border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                  : "text-ink-soft hover:bg-sand-100 hover:text-ink",
                 collapsed && "justify-center px-2"
               )}
               title={collapsed ? item.label : undefined}
@@ -87,12 +87,12 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="space-y-1 border-t border-slate-200 p-3">
+      <div className="space-y-1 border-t border-sand-200 p-3">
         {isAdmin && (
           <Link
             href="/activities"
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:bg-sand-100 hover:text-ink",
               collapsed && "justify-center px-2"
             )}
             title={collapsed ? "Kelola Kegiatan" : undefined}
@@ -106,7 +106,7 @@ export function Sidebar() {
             type="button"
             onClick={handleLogout}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900",
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:bg-sand-100 hover:text-ink",
               collapsed && "justify-center px-2"
             )}
             title={collapsed ? "Keluar" : undefined}

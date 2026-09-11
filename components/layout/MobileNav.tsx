@@ -24,7 +24,7 @@ export function MobileNav() {
   if (bottomItems.length === 0) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-sand-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
       <div className="flex justify-around overflow-x-auto py-1.5">
         {bottomItems.map((item) => {
           const active =
@@ -36,11 +36,18 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex min-w-[3rem] flex-col items-center gap-0.5 px-1.5 py-1.5 text-[9px] font-medium transition-colors",
-                active ? "text-gold-dark" : "text-slate-500"
+                "flex min-w-[3rem] flex-col items-center gap-1 px-1.5 py-1.5 text-[9px] font-medium transition-colors",
+                active ? "text-gold-dark" : "text-ink-faint"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <span
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+                  active ? "bg-gold-light" : "bg-transparent"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
               {item.mobileLabel ?? item.label}
             </Link>
           );

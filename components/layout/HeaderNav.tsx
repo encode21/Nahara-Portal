@@ -75,19 +75,19 @@ function UserMenu({
       <button
         type="button"
         onClick={() => onOpenChange(!open)}
-        className="flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1.5 transition-colors hover:bg-gold/5"
+        className="flex touch-manipulation items-center gap-1.5 rounded-full border border-sand-200 px-2 py-1.5 transition-colors hover:bg-sand-100"
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-light">
           <User className="h-4 w-4 text-gold-dark" />
         </div>
-        <span className="hidden max-w-[100px] truncate text-sm font-medium text-slate-800 sm:inline">
+        <span className="hidden max-w-[100px] truncate text-sm font-medium text-ink sm:inline">
           {userName}
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-slate-400 transition-transform",
+            "h-4 w-4 text-ink-faint transition-transform",
             open && "rotate-180",
           )}
         />
@@ -104,17 +104,17 @@ function UserMenu({
           <div
             role="menu"
             className={cn(
-              "z-[90] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg",
+              "z-[90] overflow-hidden rounded-xl border border-sand-200 bg-white py-1 shadow-lg",
               "fixed left-3 right-3 top-[3.75rem]",
               "sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1.5 sm:w-56",
             )}
           >
-            <div className="border-b border-slate-100 px-4 py-3">
-              <p className="truncate text-sm font-medium text-slate-900">
+            <div className="border-b border-sand-200 px-4 py-3">
+              <p className="truncate text-sm font-medium text-ink">
                 {userName}
               </p>
               {userEmail && (
-                <p className="truncate text-xs text-slate-500">{userEmail}</p>
+                <p className="truncate text-xs text-ink-soft">{userEmail}</p>
               )}
             </div>
             {isAdmin && (
@@ -122,9 +122,9 @@ function UserMenu({
                 href="/activities"
                 role="menuitem"
                 onClick={() => onOpenChange(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
               >
-                <Settings className="h-4 w-4 text-slate-400" />
+                <Settings className="h-4 w-4 text-ink-faint" />
                 Kelola Kegiatan
               </Link>
             )}
@@ -133,9 +133,9 @@ function UserMenu({
                 href="/info-security?tab=notifikasi"
                 role="menuitem"
                 onClick={() => onOpenChange(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
               >
-                <Shield className="h-4 w-4 text-slate-400" />
+                <Shield className="h-4 w-4 text-ink-faint" />
                 Notifikasi Security
               </Link>
             )}
@@ -146,9 +146,9 @@ function UserMenu({
                 onOpenChange(false);
                 onLogout();
               }}
-              className="flex w-full touch-manipulation items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gold/5"
+              className="flex w-full touch-manipulation items-center gap-2.5 px-4 py-2.5 text-sm text-ink-soft hover:bg-sand-100"
             >
-              <LogOut className="h-4 w-4 text-slate-400" />
+              <LogOut className="h-4 w-4 text-ink-faint" />
               Keluar
             </button>
           </div>
@@ -207,10 +207,10 @@ export function HeaderNav() {
 
   const navLinkClass = (active: boolean) =>
     cn(
-      "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors lg:px-3",
+      "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-colors lg:px-3.5",
       active
         ? "nav-active"
-        : "text-slate-600 hover:bg-gold/5 hover:text-gold-dark",
+        : "text-ink-soft hover:bg-sand-100 hover:text-gold-dark",
     );
 
   if (isMalamPuncakStagePath(pathname)) return null;
@@ -221,7 +221,7 @@ export function HeaderNav() {
         "z-50 w-full max-w-[100%]",
         landingOverlay
           ? "absolute inset-x-0 top-0 border-b border-white/10 bg-slate-950/25 backdrop-blur-sm"
-          : "sticky top-0 border-b border-gold/20 bg-white shadow-sm",
+          : "sticky top-0 border-b border-sand-200 bg-white/90 shadow-soft backdrop-blur",
       )}
     >
       {/* Bar 1: logo + actions (menu always visible on mobile) */}
@@ -284,7 +284,7 @@ export function HeaderNav() {
                   "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition",
                   landingOverlay
                     ? "text-white/90 hover:bg-white/10 hover:text-white"
-                    : "text-slate-600 hover:bg-gold/5 hover:text-gold-dark",
+                    : "text-ink-soft hover:bg-sand-100 hover:text-gold-dark",
                 )}
               >
                 <LogIn className="h-3.5 w-3.5" />
@@ -314,7 +314,7 @@ export function HeaderNav() {
                 "shrink-0 rounded-lg p-2 md:hidden",
                 landingOverlay
                   ? "text-white/90 hover:bg-white/10"
-                  : "text-slate-600 hover:bg-gold/5",
+                  : "text-ink-soft hover:bg-sand-100",
               )}
               aria-label="Buka menu"
             >
@@ -332,7 +332,7 @@ export function HeaderNav() {
       )}
 
       {navItems.length > 0 && (
-        <nav className="hidden border-t border-gold/10 md:block">
+        <nav className="hidden border-t border-sand-200 md:block">
           <div className="mx-auto max-w-7xl overflow-x-auto overscroll-x-contain px-4 lg:px-6">
             <div className="flex w-max max-w-none gap-0.5 py-1.5">
               {navItems.map((item) => {
@@ -368,12 +368,12 @@ export function HeaderNav() {
             aria-modal="true"
             aria-label="Menu navigasi"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-sand-200 px-4 py-3">
               <NaharaLogo href={surface === "landing" ? "/" : "/dashboard"} />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                className="inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-sand-100 text-ink-soft hover:bg-sand-200"
                 aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
@@ -393,7 +393,7 @@ export function HeaderNav() {
                         "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition",
                         isActive(item.href)
                           ? "bg-gold/15 text-gold-dark"
-                          : "text-slate-700 hover:bg-slate-50",
+                          : "text-ink-soft hover:bg-sand-100",
                       )}
                     >
                       <Icon className="h-5 w-5 shrink-0" />
@@ -404,10 +404,10 @@ export function HeaderNav() {
               </div>
 
               {surface === "ops" && (
-                <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="mt-4 border-t border-sand-200 pt-4">
                   <a
                     href={portalHomeHref}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
                   >
                     <ExternalLink className="h-5 w-5" />
                     Portal Warga
@@ -416,20 +416,20 @@ export function HeaderNav() {
               )}
 
               {signedIn && (
-                <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="mt-4 border-t border-sand-200 pt-4">
                   <div className="mb-2 px-3">
-                    <p className="truncate text-sm font-semibold text-slate-900">
+                    <p className="truncate text-sm font-semibold text-ink">
                       {userName}
                     </p>
                     {userEmail && (
-                      <p className="truncate text-xs text-slate-500">{userEmail}</p>
+                      <p className="truncate text-xs text-ink-soft">{userEmail}</p>
                     )}
                   </div>
                   {isAdmin && (
                     <Link
                       href="/activities"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
                     >
                       <Settings className="h-5 w-5" />
                       Kelola Kegiatan
@@ -439,7 +439,7 @@ export function HeaderNav() {
                     <Link
                       href="/info-security?tab=notifikasi"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-ink-soft hover:bg-sand-100"
                     >
                       <Shield className="h-5 w-5" />
                       Notifikasi Security
@@ -501,7 +501,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-slate-500">
+    <footer className="border-t border-gold/15 bg-white py-4 text-center text-xs text-ink-soft">
       <p>
         © {new Date().getFullYear()} Nahara Portal Warga. All rights reserved.
       </p>

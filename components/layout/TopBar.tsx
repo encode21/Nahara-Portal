@@ -36,24 +36,24 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-8">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-sand-200 bg-white/90 px-4 backdrop-blur lg:px-8">
       <div className="lg:hidden">
-        <span className="font-display text-lg font-bold text-slate-900">Nahara</span>
+        <span className="font-display text-lg font-bold tracking-[0.18em] text-ink">Nahara</span>
       </div>
 
       <div className="hidden lg:block">
-        <p className="text-sm text-slate-500">Cluster Nahara, Cimanggis Golf Estate</p>
+        <p className="text-sm text-ink-soft">Cluster Nahara, Cimanggis Golf Estate</p>
       </div>
 
       <div className="flex items-center gap-3">
         {userName ? (
-          <div className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15">
+          <div className="flex items-center gap-2.5 rounded-full border border-sand-200 bg-sand-100 px-3 py-1.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-light">
               <User className="h-4 w-4 text-gold-dark" />
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-medium text-slate-800">{userName}</p>
-              {userEmail && <p className="text-xs text-slate-500">{userEmail}</p>}
+              <p className="text-sm font-medium text-ink">{userName}</p>
+              {userEmail && <p className="text-xs text-ink-soft">{userEmail}</p>}
             </div>
           </div>
         ) : (
@@ -69,7 +69,7 @@ export function TopBar() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+    <footer className="border-t border-sand-200 bg-white py-5 text-center text-xs text-ink-faint">
       © 2025 Nahara Paguyuban. All rights reserved.
     </footer>
   );

@@ -7,6 +7,7 @@ import { PengaduanTerkini } from "@/components/dashboard/PengaduanTerkini";
 import { PengumumanCard } from "@/components/dashboard/PengumumanCard";
 import { LingkunganDashboardCard } from "@/components/dashboard/LingkunganDashboardCard";
 import { PetaLingkunganCard } from "@/components/map/PetaLingkunganCard";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 import { Users, Megaphone } from "lucide-react";
 
 type WargaWithIuranRows = Warga & { iuran: Pick<Iuran, "status" | "bulan">[] };
@@ -73,42 +74,55 @@ export default async function DashboardPage() {
   const pengaduanBaru = pengaduanBaruRes.count ?? 0;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">Ringkasan paguyuban Cluster Nahara</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-soft sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-dark">
+          Paguyuban Warga Nahara
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl">Dashboard</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          Ringkasan harian Cluster Nahara, Cimanggis Golf Estate.
+        </p>
       </div>
 
-      <LingkunganDashboardCard data={lingkungan} />
+      <section>
+        <h2 className="section-title">Situasi lingkungan</h2>
+        <LingkunganDashboardCard data={lingkungan} />
+      </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <SaldoCard saldo={saldo} pemasukanBulan={pemasukanBulan} pengeluaranBulan={pengeluaranBulan} />
-        <div className="glass-card">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15">
-              <Users className="h-5 w-5 text-gold-dark" />
-            </div>
+      <QuickActions />
+
+      <section>
+        <h2 className="section-title">Ringkasan</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SaldoCard saldo={saldo} pemasukanBulan={pemasukanBulan} pengeluaranBulan={pengeluaranBulan} />
+          <div className="glass-card flex items-start gap-3">
+            <span className="icon-badge">
+              <Users className="h-5 w-5" />
+            </span>
             <div>
-              <p className="text-xs text-slate-500">Total Warga Terdaftar</p>
-              <p className="font-display text-2xl font-bold text-slate-900">{wargaList.length}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">
+                Total Warga Terdaftar
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-ink">{wargaList.length}</p>
             </div>
           </div>
-        </div>
-        <div className="glass-card">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15">
-              <Megaphone className="h-5 w-5 text-gold-dark" />
-            </div>
+          <div className="glass-card flex items-start gap-3">
+            <span className="icon-badge">
+              <Megaphone className="h-5 w-5" />
+            </span>
             <div>
-              <p className="text-xs text-slate-500">Menunggu Validasi</p>
-              <p className="font-display text-2xl font-bold text-slate-900">
+              <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">
+                Menunggu Validasi
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-ink">
                 {pengaduanBaru}
-                <span className="ml-2 text-sm font-normal text-slate-500">baru</span>
+                <span className="ml-2 text-sm font-normal text-ink-soft">baru</span>
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <PengaduanTerkini pengaduan={pengaduanList} />
@@ -116,7 +130,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="glass-card">
-        <h3 className="mb-4 font-display text-lg font-semibold text-slate-900">Peta Lingkungan</h3>
+        <h3 className="mb-4 font-display text-lg font-semibold text-ink">Peta Lingkungan</h3>
         <PetaLingkunganCard wargaData={wargaData} />
       </div>
     </div>
