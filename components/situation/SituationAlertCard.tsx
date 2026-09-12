@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { formatClockWib, formatRelativeId } from "@/lib/situation/format";
 import type { SituationStatus } from "@/lib/situation/types";
 import { SituationStatusIcon } from "@/components/situation/SituationStatusIcon";
+import { GempaShareButton } from "@/components/notifications/GempaShareButton";
+import { BMKG_GEMPA_SOURCE_PAGE } from "@/lib/lingkungan/gempa-shared";
 
 function wrapClass(status: SituationStatus["status"]): string {
   switch (status) {
@@ -85,9 +87,9 @@ export function SituationAlertCard({ status }: { status: SituationStatus }) {
             )}
           </div>
 
-          {status.actionHref && (
-            <div className="mt-2.5">
-              {status.actionHref.startsWith("http") ? (
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            {status.actionHref && (
+              status.actionHref.startsWith("http") ? (
                 <a
                   href={status.actionHref}
                   target="_blank"
@@ -104,9 +106,19 @@ export function SituationAlertCard({ status }: { status: SituationStatus }) {
                 >
                   {status.actionLabel ?? "Detail"}
                 </Link>
+              )
+            )}
+            {status.id === "earthquake" &&
+              status.status !== "normal" &&
+              status.status !== "unknown" && (
+                <GempaShareButton
+                  title={status.title}
+                  summary={status.summary}
+                  detail={status.detail}
+                  sourceUrl={status.actionHref ?? BMKG_GEMPA_SOURCE_PAGE}
+                />
               )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </article>

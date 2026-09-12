@@ -3,6 +3,7 @@ import {
   LINGKUNGAN_REVALIDATE_SEC,
 } from "@/lib/constants/lingkungan";
 import { GUNUNG_STATUS } from "@/lib/lingkungan/labels";
+import { fetchGempaAlerts } from "@/lib/lingkungan/gempa";
 import type {
   AirQualitySnapshot,
   LingkunganAlert,
@@ -17,17 +18,6 @@ const FETCH_INIT: RequestInit = {
     "User-Agent": "NaharaPortal/1.0 (+https://nahara.id)",
   },
 };
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 async function fetchWeather(): Promise<WeatherSnapshot> {
   const { latitude, longitude } = LINGKUNGAN_LOCATION;
@@ -96,77 +86,6 @@ async function fetchAirQuality(): Promise<AirQualitySnapshot> {
   };
 }
 
-type BmkgGempa = {
-  Tanggal?: string;
-  Jam?: string;
-  DateTime?: string;
-  Coordinates?: string;
-  Magnitude?: string;
-  Kedalaman?: string;
-  Wilayah?: string;
-  Potensi?: string;
-  Dirasakan?: string;
-};
-
-function parseCoords(raw?: string): { lat: number; lon: number } | null {
-  if (!raw) return null;
-  const [a, b] = raw.split(",").map((s) => Number(s.trim()));
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-  return { lat: a, lon: b };
-}
-
-async function fetchGempaAlerts(): Promise<LingkunganAlert[]> {
-  const res = await fetch(
-    "https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json",
-    FETCH_INIT,
-  );
-  if (!res.ok) throw new Error(`BMKG HTTP ${res.status}`);
-  const data = (await res.json()) as { Infogempa?: { gempa?: BmkgGempa | BmkgGempa[] } };
-  const list = data.Infogempa?.gempa;
-  const gems = Array.isArray(list) ? list : list ? [list] : [];
-
-  const { latitude, longitude } = LINGKUNGAN_LOCATION;
-  const now = Date.now();
-  const maxAgeMs = 72 * 60 * 60 * 1000;
-
-  const alerts: LingkunganAlert[] = [];
-  for (const g of gems) {
-    const mag = Number(g.Magnitude);
-    const coords = parseCoords(g.Coordinates);
-    const occurredAt = g.DateTime;
-    const ageOk = occurredAt ? now - new Date(occurredAt).getTime() <= maxAgeMs : true;
-    if (!ageOk) continue;
-
-    const distKm = coords
-      ? haversineKm(latitude, longitude, coords.lat, coords.lon)
-      : Number.POSITIVE_INFINITY;
-    const nearby = distKm <= 450;
-    const strong = Number.isFinite(mag) && mag >= 5;
-    if (!nearby && !strong) continue;
-
-    const distLabel = Number.isFinite(distKm) ? ` · ~${Math.round(distKm)} km dari cluster` : "";
-    alerts.push({
-      id: `gempa-${occurredAt ?? g.Tanggal}-${g.Magnitude}-${g.Wilayah}`,
-      kind: "gempa",
-      title: `Gempa M${g.Magnitude ?? "?"} — ${g.Wilayah ?? "Lokasi tidak diketahui"}`,
-      detail: [
-        g.Dirasakan ? `Dirasakan: ${g.Dirasakan}` : null,
-        g.Kedalaman ? `Kedalaman ${g.Kedalaman}` : null,
-        g.Potensi && !g.Dirasakan ? g.Potensi : null,
-      ]
-        .filter(Boolean)
-        .join(" · ") + distLabel,
-      levelLabel: `M${g.Magnitude ?? "?"}`,
-      severity: strong || (Number.isFinite(mag) && mag >= 4.5 && nearby) ? "warning" : "watch",
-      occurredAt: occurredAt ?? undefined,
-      sourceUrl: "https://www.bmkg.go.id/gempabumi/gempabumi-dirasakan.bmkg",
-      sourceName: "BMKG",
-    });
-  }
-
-  return alerts.slice(0, 4);
-}
-
 type MagmaGunung = {
   ga_code: string;
   ga_nama_gapi: string;
@@ -231,7 +150,7 @@ export async function getLingkunganSnapshot(): Promise<LingkunganSnapshot> {
   const [weatherRes, aqiRes, gempaRes, gunungRes] = await Promise.allSettled([
     fetchWeather(),
     fetchAirQuality(),
-    fetchGempaAlerts(),
+    fetchGempaAlerts({ revalidateSec: LINGKUNGAN_REVALIDATE_SEC }),
     fetchGunungAlerts(),
   ]);
 
