@@ -50,7 +50,9 @@ CREATE TABLE IF NOT EXISTS warga (
   nomor_kavling int,
   status_hunian text CHECK (status_hunian IN ('Tetap', 'Kontrak', 'Kosong')),
   telepon text,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  last_seen_at timestamptz,
+  last_path text
 );
 
 CREATE TABLE IF NOT EXISTS iuran (

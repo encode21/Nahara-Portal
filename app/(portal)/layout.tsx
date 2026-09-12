@@ -5,6 +5,7 @@ import { QuickActionsFab } from "@/components/dashboard/QuickActionsFab";
 import { WargaIdentityProvider } from "@/lib/hooks/useWargaIdentity";
 import { PortalNotificationsProvider } from "@/lib/hooks/usePortalNotifications";
 import { WargaIdentifyPrompt } from "@/components/warga/WargaIdentifyPrompt";
+import { WargaPresenceHeartbeat } from "@/components/warga/WargaPresenceHeartbeat";
 
 export default function PortalLayout({
   children,
@@ -25,6 +26,7 @@ export default function PortalLayout({
           <QuickActionsFab />
           <MobileNav />
           <WargaIdentifyPrompt />
+          <WargaPresenceHeartbeat />
         </div>
       </PortalNotificationsProvider>
     </WargaIdentityProvider>

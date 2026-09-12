@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type {
   Warga,
@@ -31,6 +31,8 @@ import {
 import { StatusBadge, getHunianVariant } from "@/components/ui/StatusBadge";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
 import { buildOpsUrl } from "@/lib/host";
+import { timeAgo } from "@/lib/utils";
+import { isWargaOnline } from "@/lib/warga-presence";
 
 const HUBUNGAN_LABEL: Record<WargaAnggotaHubungan, string> = {
   kepala: "Kepala keluarga",
@@ -73,8 +75,22 @@ export default function DataWargaPage() {
     hubungan: "kepala" as WargaAnggotaHubungan,
     nik: "",
   });
+  const formRef = useRef<HTMLFormElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
 
   const canManage = isWargaRegistry;
+
+  const scrollToForm = useCallback(() => {
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  const scrollToDetail = useCallback(() => {
+    requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -177,6 +193,12 @@ export default function DataWargaPage() {
       telepon: w.telepon ?? "",
     });
     setShowForm(true);
+    scrollToForm();
+  }
+
+  function selectWarga(id: string) {
+    setSelectedId(id);
+    scrollToDetail();
   }
 
   async function handleUploadDokumen(e: React.ChangeEvent<HTMLInputElement>) {
@@ -303,6 +325,7 @@ export default function DataWargaPage() {
             setShowForm(true);
             setEditId(null);
             setForm(emptyForm);
+            scrollToForm();
           }}
           className="btn-primary"
         >
@@ -341,7 +364,11 @@ export default function DataWargaPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="glass-card space-y-4">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="glass-card space-y-4"
+        >
           <h3 className="font-semibold text-slate-900">
             {editId ? "Edit" : "Tambah"} Warga
           </h3>
@@ -447,7 +474,7 @@ export default function DataWargaPage() {
               <button
                 key={w.id}
                 type="button"
-                onClick={() => setSelectedId(w.id)}
+                onClick={() => selectWarga(w.id)}
                 className={`glass-card-hover w-full text-left ${
                   selectedId === w.id ? "ring-2 ring-gold/40" : ""
                 }`}
@@ -456,11 +483,21 @@ export default function DataWargaPage() {
                   <div>
                     <p className="font-semibold text-slate-900">{w.nama}</p>
                     <p className="mt-1 text-sm text-gold-dark">{w.blok}</p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <StatusBadge
                         status={w.status_hunian}
                         variant={getHunianVariant(w.status_hunian)}
                       />
+                      {isWargaOnline(w.last_seen_at) ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Online
+                        </span>
+                      ) : w.last_seen_at ? (
+                        <span className="text-xs text-slate-400">
+                          Terakhir {timeAgo(w.last_seen_at)}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -505,7 +542,7 @@ export default function DataWargaPage() {
           )}
         </div>
 
-        <div className="glass-card space-y-5">
+        <div ref={detailRef} className="glass-card space-y-5">
           {!selected ? (
             <p className="text-sm text-slate-500">
               Pilih warga di kiri untuk kelola dokumen KK/KTP dan anggota

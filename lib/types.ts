@@ -40,6 +40,8 @@ export type Warga = {
   status_hunian: "Tetap" | "Kontrak" | "Kosong";
   telepon: string | null;
   created_at: string;
+  last_seen_at?: string | null;
+  last_path?: string | null;
 };
 
 export type WargaDokumenJenis = "kk" | "ktp";

@@ -11,6 +11,7 @@ import {
   Shield,
   FolderLock,
   Wrench,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import type { AppSurface } from "@/lib/host";
@@ -43,12 +44,20 @@ const dataWargaNavItem: NavItem = {
   mobileLabel: "Data",
 };
 
+const aktivitasWargaNavItem: NavItem = {
+  href: "/aktivitas-warga",
+  label: "Aktivitas",
+  icon: Activity,
+  mobileLabel: "Aktif",
+};
+
 const STAFF_NAV_HREFS = new Set(["/pengumuman", "/kegiatan", "/pengaduan"]);
 
 const REGISTRY_NAV_HREFS = new Set([
   "/dashboard",
   "/info-warga",
   "/data-warga",
+  "/aktivitas-warga",
   "/jasa",
 ]);
 
@@ -70,7 +79,7 @@ export function getNavItemsForAccess(opts: {
     const base = portalNavItems.filter((item) =>
       REGISTRY_NAV_HREFS.has(item.href)
     );
-    return [...base, dataWargaNavItem];
+    return [...base, dataWargaNavItem, aktivitasWargaNavItem];
   }
 
   if (surface === "ops" && isStaff && !isAdmin) {
@@ -80,10 +89,11 @@ export function getNavItemsForAccess(opts: {
   if (surface === "ops" && isAdmin) {
     const items = [...portalNavItems];
     const infoIdx = items.findIndex((i) => i.href === "/info-warga");
+    const extras = [dataWargaNavItem, aktivitasWargaNavItem];
     if (infoIdx >= 0) {
-      items.splice(infoIdx + 1, 0, dataWargaNavItem);
+      items.splice(infoIdx + 1, 0, ...extras);
     } else {
-      items.push(dataWargaNavItem);
+      items.push(...extras);
     }
     return items;
   }

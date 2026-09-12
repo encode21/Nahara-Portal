@@ -38,6 +38,7 @@ export const STAFF_ALLOWED_PREFIXES = [
 export const REGISTRY_ALLOWED_PREFIXES = [
   "/info-warga",
   "/data-warga",
+  "/aktivitas-warga",
   "/jasa",
   "/dashboard",
   "/panduan",
