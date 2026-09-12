@@ -14,6 +14,8 @@ import type { PortalNotification } from "@/lib/notifications/types";
 import { cn, timeAgo } from "@/lib/utils";
 import { markNotificationRead } from "@/lib/notifications/api";
 import { usePortalNotifications } from "@/lib/hooks/usePortalNotifications";
+import { GempaShareButton } from "@/components/notifications/GempaShareButton";
+import { BMKG_GEMPA_SOURCE_PAGE } from "@/lib/lingkungan/gempa-shared";
 
 const CATEGORY_META: Record<
   string,
@@ -58,6 +60,13 @@ export function NotificationItem({ item, wargaId, onRead }: Props) {
   const meta = CATEGORY_META[item.category] ?? CATEGORY_META.system;
   const Icon = meta.icon;
   const unread = !item.is_read;
+  const isGempa =
+    item.category === "emergency" &&
+    (item.type === "earthquake_detected" || item.source_type === "bmkg_gempa");
+  const sourceUrl =
+    (typeof item.metadata?.source_url === "string"
+      ? item.metadata.source_url
+      : null) ?? BMKG_GEMPA_SOURCE_PAGE;
 
   async function open() {
     if (unread) {
@@ -73,49 +82,64 @@ export function NotificationItem({ item, wargaId, onRead }: Props) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void open()}
+    <div
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border px-3.5 py-3 text-left transition",
+        "rounded-2xl border px-3.5 py-3 transition",
         unread
-          ? "border-sand-200 bg-gold/[0.07] hover:bg-gold/10"
-          : "border-transparent bg-transparent hover:bg-sand-50"
+          ? "border-sand-200 bg-gold/[0.07]"
+          : "border-transparent bg-transparent"
       )}
     >
-      <span
-        className={cn(
-          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-          meta.iconTone
-        )}
+      <button
+        type="button"
+        onClick={() => void open()}
+        className="flex w-full items-start gap-3 text-left hover:opacity-95"
       >
-        <Icon className="h-5 w-5" strokeWidth={1.75} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-start justify-between gap-2">
-          <span
-            className={cn(
-              "text-sm text-ink",
-              unread ? "font-semibold" : "font-medium"
-            )}
-          >
-            {item.title}
-          </span>
-          {unread && (
-            <span
-              className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold"
-              aria-label="Belum dibaca"
-            />
+        <span
+          className={cn(
+            "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+            meta.iconTone
           )}
+        >
+          <Icon className="h-5 w-5" strokeWidth={1.75} />
         </span>
-        <span className="mt-0.5 line-clamp-2 text-sm text-ink-soft">
-          {item.message}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-start justify-between gap-2">
+            <span
+              className={cn(
+                "text-sm text-ink",
+                unread ? "font-semibold" : "font-medium"
+              )}
+            >
+              {item.title}
+            </span>
+            {unread && (
+              <span
+                className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold"
+                aria-label="Belum dibaca"
+              />
+            )}
+          </span>
+          <span className="mt-0.5 line-clamp-2 text-sm text-ink-soft">
+            {item.message}
+          </span>
+          <span className="mt-1 block text-xs text-ink-faint">
+            {timeAgo(item.created_at)}
+          </span>
         </span>
-        <span className="mt-1 block text-xs text-ink-faint">
-          {timeAgo(item.created_at)}
-        </span>
-      </span>
-    </button>
+      </button>
+      {isGempa && (
+        <div className="mt-2 flex justify-end pl-[3.25rem]">
+          <GempaShareButton
+            compact
+            title={item.title}
+            summary={item.message}
+            detail={null}
+            sourceUrl={sourceUrl}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -129,8 +153,8 @@ export function NotificationEmptyState() {
         Belum ada notifikasi
       </h2>
       <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
-        Informasi terbaru dari Pengumuman, Kegiatan, dan perkembangan Pengaduan
-        akan muncul di sini.
+        Informasi terbaru dari Pengumuman, Kegiatan, perkembangan Pengaduan, dan
+        alert Darurat (gempa BMKG) akan muncul di sini.
       </p>
       <Link href="/pengumuman" className="btn-secondary mt-6">
         Lihat Pengumuman

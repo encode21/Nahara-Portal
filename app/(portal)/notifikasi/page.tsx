@@ -28,6 +28,7 @@ const FILTERS: { id: NotificationFilter; label: string }[] = [
   { id: "announcement", label: "Pengumuman" },
   { id: "event", label: "Kegiatan" },
   { id: "report", label: "Pengaduan" },
+  { id: "emergency", label: "Darurat" },
 ];
 
 function dayKey(iso: string): string {
