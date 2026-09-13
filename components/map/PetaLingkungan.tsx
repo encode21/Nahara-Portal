@@ -118,7 +118,9 @@ const ROWS: RowDef[] = [
     bl: [520, 92],
   },
 
-  // Barat 8 / Timur 8 inner rows
+  // Pola tiap blok antar jalan:
+  //   [Row N bawah] + [Row M atas] back-to-back, lalu jalan Row M.
+  // Barat 8 / Timur 8 bawah, lalu Row 7 atas
   {
     blok: "NAHARA BARAT 8",
     units: ["23", "21", "19", "17", "15", "11", "9", "7", "5", "1"],
@@ -128,7 +130,7 @@ const ROWS: RowDef[] = [
     bl: [72, 212],
   },
   {
-    blok: "NAHARA BARAT 8",
+    blok: "NAHARA BARAT 7",
     units: ["20", "18", "16", "12", "10", "8", "6", "2"],
     tl: [72, 212],
     tr: [498, 212],
@@ -162,7 +164,7 @@ const ROWS: RowDef[] = [
     bl: [525, 212],
   },
   {
-    blok: "NAHARA TIMUR 8",
+    blok: "NAHARA TIMUR 7",
     units: [
       "32",
       "30",
@@ -184,7 +186,7 @@ const ROWS: RowDef[] = [
     bl: [525, 289],
   },
 
-  // Barat 7 / Timur 7
+  // Barat 7 / Timur 7 bawah, lalu Row 6 atas
   {
     blok: "NAHARA BARAT 7",
     units: ["17", "15", "11", "9", "7", "5", "3", "1"],
@@ -194,7 +196,7 @@ const ROWS: RowDef[] = [
     bl: [80, 408],
   },
   {
-    blok: "NAHARA BARAT 7",
+    blok: "NAHARA BARAT 6",
     units: ["20", "18", "16", "12", "10", "8", "6", "2"],
     tl: [80, 408],
     tr: [500, 408],
@@ -210,7 +212,7 @@ const ROWS: RowDef[] = [
     bl: [525, 408],
   },
   {
-    blok: "NAHARA TIMUR 7",
+    blok: "NAHARA TIMUR 6",
     units: ["26", "22", "20", "18", "16", "12", "10", "8", "2"],
     tl: [525, 408],
     tr: [985, 408],
@@ -218,7 +220,7 @@ const ROWS: RowDef[] = [
     bl: [525, 487],
   },
 
-  // Barat 6 / Timur 6
+  // Barat 6 / Timur 6 bawah, lalu Row 3 atas
   {
     blok: "NAHARA BARAT 6",
     units: ["17", "15", "11", "9", "7", "5", "3", "1"],
@@ -228,7 +230,7 @@ const ROWS: RowDef[] = [
     bl: [82, 604],
   },
   {
-    blok: "NAHARA BARAT 6",
+    blok: "NAHARA BARAT 3",
     units: ["28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
     tl: [82, 604],
     tr: [500, 604],
@@ -244,7 +246,7 @@ const ROWS: RowDef[] = [
     bl: [525, 604],
   },
   {
-    blok: "NAHARA TIMUR 6",
+    blok: "NAHARA TIMUR 3",
     units: [
       "50",
       "38",
@@ -259,6 +261,7 @@ const ROWS: RowDef[] = [
       "12",
       "10",
       "8",
+      "6",
       "2",
     ],
     tl: [525, 604],
@@ -267,18 +270,18 @@ const ROWS: RowDef[] = [
     bl: [525, 683],
   },
 
-  // Barat 3 / Timur 3
+  // Barat 3 / Timur 3 bawah, lalu Row 2 atas
   {
     blok: "NAHARA BARAT 3",
-    units: ["21", "19", "17", "15", "11", "9", "5", "3", "1"],
+    units: ["21", "19", "17", "15", "11", "9", "7", "5", "3", "1"],
     tl: [105, 715],
     tr: [500, 715],
     br: [500, 793],
     bl: [115, 793],
   },
   {
-    blok: "NAHARA BARAT 3",
-    units: ["32", "38", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
+    blok: "NAHARA BARAT 2",
+    units: ["32", "30", "28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
     tl: [115, 793],
     tr: [500, 793],
     br: [500, 870],
@@ -293,7 +296,7 @@ const ROWS: RowDef[] = [
     bl: [525, 793],
   },
   {
-    blok: "NAHARA TIMUR 3",
+    blok: "NAHARA TIMUR 2",
     units: [
       "36",
       "32",
@@ -314,7 +317,7 @@ const ROWS: RowDef[] = [
     bl: [525, 870],
   },
   {
-    blok: "NAHARA TIMUR 3",
+    blok: "NAHARA TIMUR 2",
     units: ["2"],
     tl: [875, 793],
     tr: [930, 793],
@@ -322,7 +325,7 @@ const ROWS: RowDef[] = [
     bl: [875, 870],
   },
 
-  // Barat 2 / Timur 2
+  // Barat 2 / Timur 2 bawah, lalu Row 1 atas
   {
     blok: "NAHARA BARAT 2",
     units: ["23", "21", "19", "15", "11", "9", "7", "5", "3"],
@@ -332,7 +335,7 @@ const ROWS: RowDef[] = [
     bl: [177, 984],
   },
   {
-    blok: "NAHARA BARAT 2",
+    blok: "NAHARA BARAT 1",
     units: ["28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
     tl: [177, 984],
     tr: [505, 984],
@@ -348,15 +351,15 @@ const ROWS: RowDef[] = [
     bl: [525, 984],
   },
   {
-    blok: "NAHARA TIMUR 2",
-    units: ["22", "20", "18", "16", "12", "10", "8", "6"],
+    blok: "NAHARA TIMUR 1",
+    units: ["22", "20", "18", "16", "12", "10", "8", "6", "2"],
     tl: [525, 984],
     tr: [825, 984],
     br: [800, 1062],
     bl: [525, 1062],
   },
 
-  // Barat 1 / Timur 1 — y disetel agar menempel di bawah Barat/Timur 2 (sebelumnya kebawah ~30px)
+  // Barat 1 / Timur 1 bawah
   {
     blok: "NAHARA BARAT 1",
     units: ["23", "21", "19", "17", "15", "11", "9", "5", "1"],

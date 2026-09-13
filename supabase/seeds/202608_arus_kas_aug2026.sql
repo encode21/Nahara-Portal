@@ -1,30 +1,27 @@
--- Seed arus kas Juli 2026 + sync iuran (Jun/Jul kas + List 2027/2028)
--- Sumber: https://docs.google.com/spreadsheets/d/1EAgIugGGhLVOI2z5nixux9gL-YNeKaNk
--- Idempotent kas: hapus batch [SEED JUL26]; iuran di-upsert (tidak hapus history lain)
--- Prasyarat: seed Juni sudah jalan (saldo awal Juli = 12.773.817)
--- Target saldo akhir: Rp 14.328.817 (incl. biaya admin rekening 13.000)
+-- Seed arus kas Agustus 2026 + sync iuran dari List 2026/2027/2028
+-- Sumber: https://docs.google.com/spreadsheets/d/1ok91xT6Of19tUNgodXNjYdEFNSc-SNxJ
+-- Idempotent kas: hapus batch [SEED AUG26]; iuran di-upsert (tidak hapus history lain)
+-- Prasyarat: seed Jun+Jul sudah jalan; Jul saldo akhir = 14.328.817
+-- Catatan: Subsidi HUT RI 7.000.000 SUDAH ada sebagai Kas→Donasi (7 Aug) — tidak di-seed ulang
+-- Target saldo akhir: Rp 10.514.761
 
 BEGIN;
 
-DELETE FROM kas_entries WHERE description LIKE '[SEED JUL26]%';
+DELETE FROM kas_entries WHERE description LIKE '[SEED AUG26]%';
 
 INSERT INTO kas_entries (type, amount, description, category, date) VALUES
-  ('pengeluaran', 5500, '[SEED JUL26] Biaya Admin Debit', 'Operasional', '2026-07-02'),
-  ('pemasukan', 50000, '[SEED JUL26] Rosiyela Theresilia (NHT2/12) Jul 2026', 'Iuran', '2026-07-03'),
-  ('pemasukan', 230000, '[SEED JUL26] Nani Zara (NHT8/ 35) Jun 2026 to Oct 2026', 'Iuran', '2026-07-04'),
-  ('pemasukan', 100000, '[SEED JUL26] Reni Saraswati (NHT7/ 16) Jul 2026 to Aug 2026', 'Iuran', '2026-07-04'),
-  ('pemasukan', 350000, '[SEED JUL26] Kustiyanti (NHT2/ 19) Jun 2026 to Dec 2026', 'Iuran', '2026-07-04'),
-  ('pemasukan', 150000, '[SEED JUL26] Adityas Parastika (NHT8/ 27) Jun 2026 to Aug 2026', 'Iuran', '2026-07-10'),
-  ('pemasukan', 100000, '[SEED JUL26] Wahyu Arif/ Eny (NHT8/ 21) Jun 2026 to Jul 2026', 'Iuran', '2026-07-11'),
-  ('pemasukan', 100000, '[SEED JUL26] Uti Dewi/ Pak Sugondo (NHT6/17) Jul 2026 to Aug 2026', 'Iuran', '2026-07-11'),
-  ('pemasukan', 100000, '[SEED JUL26] Mira/ Rio (NHT1/18) Jul 2026 to Aug 2026', 'Iuran', '2026-07-11'),
-  ('pemasukan', 100000, '[SEED JUL26] Iyas (NHT3/19) Jun 2026 to Jul 2026', 'Iuran', '2026-07-11'),
-  ('pengeluaran', 1050000, '[SEED JUL26] Dana Melahirkan/ Kado bayi (Rosi, Iyas, Yani)', 'Lainnya', '2026-07-20'),
-  ('pengeluaran', 6500, '[SEED JUL26] Biaya Trensfer Bank Lain', 'Operasional', '2026-07-20'),
-  ('pemasukan', 750000, '[SEED JUL26] Arie Pujihastuti (NHT6/ 7) Jun 2026 to Aug 2027', 'Iuran', '2026-07-22'),
-  ('pemasukan', 250000, '[SEED JUL26] Alfian/ della (NHT2/ 20) Aug 2026 to Dec 2026', 'Iuran', '2026-07-28'),
-  ('pemasukan', 350000, '[SEED JUL26] Siti Fadlia (NHT2/5) Jun 2026 to Dec 2026', 'Iuran', '2026-07-29'),
-  ('pengeluaran', 13000, '[SEED JUL26] Biaya Administrasi Rekening', 'Operasional', '2026-07-31');
+  ('pengeluaran', 5500, '[SEED AUG26] Biaya administrasi kartu debit', 'Operasional', '2026-08-02'),
+  ('pengeluaran', 498833, '[SEED AUG26] Pembelian domain Server Nahara', 'Operasional', '2026-08-07'),
+  ('pemasukan', 100000, '[SEED AUG26] Meryka Dwi P (NHT-2/7) Aug 2026 to Sep 2026', 'Iuran', '2026-08-09'),
+  ('pemasukan', 200000, '[SEED AUG26] Tiarma Arine / Hafiz Arya (NHT-7/1) Jun 2026 to Sep 2026', 'Iuran', '2026-08-10'),
+  ('pemasukan', 150000, '[SEED AUG26] Deta / Andreas (NHT-7/28) Jun 2026 to Aug 2026', 'Iuran', '2026-08-18'),
+  ('pemasukan', 100000, '[SEED AUG26] Asmawati (NHT-2/15) Aug 2026 to Sep 2026', 'Iuran', '2026-08-20'),
+  ('pemasukan', 50000, '[SEED AUG26] Rosiyela Theresilia (NHT-2/12) Aug 2026', 'Iuran', '2026-08-20'),
+  ('pemasukan', 100000, '[SEED AUG26] Rizky Ayu (NHT-2/6) Aug 2026 to Sept 2026', 'Iuran', '2026-08-23'),
+  ('pengeluaran', 352917, '[SEED AUG26] Parcel buah untuk ananda Pangga anak Mba Rizky Ayu', 'Lainnya', '2026-08-25'),
+  ('pemasukan', 3958694, '[SEED AUG26] Saldo sisa Acara HUT RI NAHARA 2026', 'Lainnya', '2026-08-31'),
+  ('pengeluaran', 602500, '[SEED AUG26] Karangan bunga duka cita untuk pak feri dan mba yani', 'Lainnya', '2026-08-31'),
+  ('pengeluaran', 13000, '[SEED AUG26] Biaya administrasi rekening', 'Operasional', '2026-08-31');
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Anisa Sulistia', 'NHB-8/30', 'NHB-8', 30, 'Tetap'
@@ -36,10 +33,10 @@ UPDATE warga SET
 WHERE blok = 'NHB-8/30';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Herdianita/ Andi', 'NHT-1/10', 'NHT-1', 10, 'Tetap'
+SELECT 'Herdianita / Andi', 'NHT-1/10', 'NHT-1', 10, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-1/10');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Herdianita/ Andi' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Herdianita / Andi' ELSE nama END,
   blok_row = 'NHT-1', nomor_kavling = 10,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-1/10';
@@ -54,19 +51,19 @@ UPDATE warga SET
 WHERE blok = 'NHT-1/11';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Difia Setyo', 'NHT-1/16', 'NHT-1', 16, 'Tetap'
+SELECT 'Difia Setyo / Fia', 'NHT-1/16', 'NHT-1', 16, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-1/16');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Difia Setyo' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Difia Setyo / Fia' ELSE nama END,
   blok_row = 'NHT-1', nomor_kavling = 16,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-1/16';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Mira/ Rio', 'NHT-1/18', 'NHT-1', 18, 'Tetap'
+SELECT 'Mira / Rio', 'NHT-1/18', 'NHT-1', 18, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-1/18');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Mira/ Rio' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Mira / Rio' ELSE nama END,
   blok_row = 'NHT-1', nomor_kavling = 18,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-1/18';
@@ -81,22 +78,31 @@ UPDATE warga SET
 WHERE blok = 'NHT-1/20';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Widuri /  Andri', 'NHT-2/11', 'NHT-2', 11, 'Tetap'
+SELECT 'Widuri / Andri', 'NHT-2/11', 'NHT-2', 11, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/11');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Widuri /  Andri' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Widuri / Andri' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 11,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/11';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Rosiyela There', 'NHT-2/12', 'NHT-2', 12, 'Tetap'
+SELECT 'Rosiyela Theresilia', 'NHT-2/12', 'NHT-2', 12, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/12');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rosiyela There' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rosiyela Theresilia' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 12,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/12';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Asmawati', 'NHT-2/15', 'NHT-2', 15, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/15');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Asmawati' ELSE nama END,
+  blok_row = 'NHT-2', nomor_kavling = 15,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-2/15';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Kustiyanti', 'NHT-2/19', 'NHT-2', 19, 'Tetap'
@@ -108,10 +114,10 @@ UPDATE warga SET
 WHERE blok = 'NHT-2/19';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Alfian/ della', 'NHT-2/20', 'NHT-2', 20, 'Tetap'
+SELECT 'Alfian / Della', 'NHT-2/20', 'NHT-2', 20, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/20');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Alfian/ della' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Alfian / Della' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 20,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/20';
@@ -135,31 +141,49 @@ UPDATE warga SET
 WHERE blok = 'NHT-2/5';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Rizky Ayu', 'NHT-2/6', 'NHT-2', 6, 'Tetap'
+SELECT 'Rizki Ayu / Kiki', 'NHT-2/6', 'NHT-2', 6, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/6');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizky Ayu' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizki Ayu / Kiki' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 6,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/6';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Merika Dwi P', 'NHT-2/7', 'NHT-2', 7, 'Tetap'
+SELECT 'Meryka Dwi P', 'NHT-2/7', 'NHT-2', 7, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/7');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Merika Dwi P' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Meryka Dwi P' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 7,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/7';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Rizma U', 'NHT-2/9', 'NHT-2', 9, 'Tetap'
+SELECT 'Nurleli Novida / Muklis', 'NHT-2/8', 'NHT-2', 8, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/8');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Nurleli Novida / Muklis' ELSE nama END,
+  blok_row = 'NHT-2', nomor_kavling = 8,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-2/8';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Rizma / Fadillah', 'NHT-2/9', 'NHT-2', 9, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-2/9');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizma U' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizma / Fadillah' ELSE nama END,
   blok_row = 'NHT-2', nomor_kavling = 9,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-2/9';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Nina', 'NHT-3/10', 'NHT-3', 10, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-3/10');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Nina' ELSE nama END,
+  blok_row = 'NHT-3', nomor_kavling = 10,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-3/10';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Kartika Ramadhanty', 'NHT-3/16', 'NHT-3', 16, 'Tetap'
@@ -180,37 +204,37 @@ UPDATE warga SET
 WHERE blok = 'NHT-3/19';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Puji A/ Dian F', 'NHT-3/20', 'NHT-3', 20, 'Tetap'
+SELECT 'Puji / Dian', 'NHT-3/20', 'NHT-3', 20, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-3/20');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Puji A/ Dian F' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Puji / Dian' ELSE nama END,
   blok_row = 'NHT-3', nomor_kavling = 20,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-3/20';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Chairunnisa R/ Icha', 'NHT-3/28', 'NHT-3', 28, 'Tetap'
+SELECT 'Chairunnisa R / Icha', 'NHT-3/28', 'NHT-3', 28, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-3/28');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Chairunnisa R/ Icha' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Chairunnisa R / Icha' ELSE nama END,
   blok_row = 'NHT-3', nomor_kavling = 28,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-3/28';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Anna/ Haris', 'NHT-3/32', 'NHT-3', 32, 'Tetap'
+SELECT 'Anna / Haris', 'NHT-3/32', 'NHT-3', 32, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-3/32');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Anna/ Haris' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Anna / Haris' ELSE nama END,
   blok_row = 'NHT-3', nomor_kavling = 32,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-3/32';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Philander /  Mami Meda', 'NHT-3/5', 'NHT-3', 5, 'Tetap'
+SELECT 'Philander / Mami Meda', 'NHT-3/5', 'NHT-3', 5, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-3/5');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Philander /  Mami Meda' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Philander / Mami Meda' ELSE nama END,
   blok_row = 'NHT-3', nomor_kavling = 5,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-3/5';
@@ -243,13 +267,22 @@ UPDATE warga SET
 WHERE blok = 'NHT-3/7';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Dian/ Bambang', 'NHT-6/10', 'NHT-6', 10, 'Tetap'
+SELECT 'Dian P', 'NHT-6/10', 'NHT-6', 10, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-6/10');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Dian/ Bambang' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Dian P' ELSE nama END,
   blok_row = 'NHT-6', nomor_kavling = 10,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-6/10';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Ririn', 'NHT-6/12', 'NHT-6', 12, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-6/12');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Ririn' ELSE nama END,
+  blok_row = 'NHT-6', nomor_kavling = 12,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-6/12';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Uty Dewi', 'NHT-6/17', 'NHT-6', 17, 'Tetap'
@@ -261,10 +294,19 @@ UPDATE warga SET
 WHERE blok = 'NHT-6/17';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Dok Yessi/ Pak Dani', 'NHT-6/5', 'NHT-6', 5, 'Tetap'
+SELECT 'Keni. R', 'NHT-6/18', 'NHT-6', 18, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-6/18');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Keni. R' ELSE nama END,
+  blok_row = 'NHT-6', nomor_kavling = 18,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-6/18';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Yessi / Dani', 'NHT-6/5', 'NHT-6', 5, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-6/5');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Dok Yessi/ Pak Dani' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Yessi / Dani' ELSE nama END,
   blok_row = 'NHT-6', nomor_kavling = 5,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-6/5';
@@ -288,10 +330,19 @@ UPDATE warga SET
 WHERE blok = 'NHT-6/8';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Reni Saraswati', 'NHT-7/16', 'NHT-7', 16, 'Tetap'
+SELECT 'Tiarma Arine / Hafiz Arya', 'NHT-7/1', 'NHT-7', 1, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-7/1');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Tiarma Arine / Hafiz Arya' ELSE nama END,
+  blok_row = 'NHT-7', nomor_kavling = 1,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-7/1';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Renny Saraswati', 'NHT-7/16', 'NHT-7', 16, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-7/16');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Reni Saraswati' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Renny Saraswati' ELSE nama END,
   blok_row = 'NHT-7', nomor_kavling = 16,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-7/16';
@@ -304,6 +355,15 @@ UPDATE warga SET
   blok_row = 'NHT-7', nomor_kavling = 22,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-7/22';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Deta / Andreas', 'NHT-7/28', 'NHT-7', 28, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-7/28');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Deta / Andreas' ELSE nama END,
+  blok_row = 'NHT-7', nomor_kavling = 28,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-7/28';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Ritawati', 'NHT-7/6', 'NHT-7', 6, 'Tetap'
@@ -333,37 +393,37 @@ UPDATE warga SET
 WHERE blok = 'NHT-8/12';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Idha Abralia /  Ayu', 'NHT-8/15', 'NHT-8', 15, 'Tetap'
+SELECT 'Idha Abralia / Ayu', 'NHT-8/15', 'NHT-8', 15, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/15');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Idha Abralia /  Ayu' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Idha Abralia / Ayu' ELSE nama END,
   blok_row = 'NHT-8', nomor_kavling = 15,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/15';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Rizki /  Catur', 'NHT-8/16', 'NHT-8', 16, 'Tetap'
+SELECT 'Rizki / Catur', 'NHT-8/16', 'NHT-8', 16, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/16');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizki /  Catur' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Rizki / Catur' ELSE nama END,
   blok_row = 'NHT-8', nomor_kavling = 16,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/16';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Wahyu Arif/ Eny', 'NHT-8/21', 'NHT-8', 21, 'Tetap'
+SELECT 'Eny / Wahyu Arif', 'NHT-8/21', 'NHT-8', 21, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/21');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Wahyu Arif/ Eny' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Eny / Wahyu Arif' ELSE nama END,
   blok_row = 'NHT-8', nomor_kavling = 21,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/21';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Adityas Parastika', 'NHT-8/27', 'NHT-8', 27, 'Tetap'
+SELECT 'Tika / Yusuf', 'NHT-8/27', 'NHT-8', 27, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/27');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Adityas Parastika' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Tika / Yusuf' ELSE nama END,
   blok_row = 'NHT-8', nomor_kavling = 27,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/27';
@@ -387,10 +447,10 @@ UPDATE warga SET
 WHERE blok = 'NHT-8/33';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
-SELECT 'Nani Zara', 'NHT-8/35', 'NHT-8', 35, 'Tetap'
+SELECT 'Zara Nani', 'NHT-8/35', 'NHT-8', 35, 'Tetap'
 WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/35');
 UPDATE warga SET
-  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Nani Zara' ELSE nama END,
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Zara Nani' ELSE nama END,
   blok_row = 'NHT-8', nomor_kavling = 35,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/35';
@@ -403,6 +463,24 @@ UPDATE warga SET
   blok_row = 'NHT-8', nomor_kavling = 36,
   status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
 WHERE blok = 'NHT-8/36';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Farah', 'NHT-8/5', 'NHT-8', 5, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/5');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Farah' ELSE nama END,
+  blok_row = 'NHT-8', nomor_kavling = 5,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-8/5';
+
+INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
+SELECT 'Ericka Sanjaya / Robert', 'NHT-8/50', 'NHT-8', 50, 'Tetap'
+WHERE NOT EXISTS (SELECT 1 FROM warga WHERE blok = 'NHT-8/50');
+UPDATE warga SET
+  nama = CASE WHEN nama IS NULL OR btrim(nama) = '' OR nama = blok THEN 'Ericka Sanjaya / Robert' ELSE nama END,
+  blok_row = 'NHT-8', nomor_kavling = 50,
+  status_hunian = CASE WHEN status_hunian = 'Kosong' THEN 'Tetap' ELSE status_hunian END
+WHERE blok = 'NHT-8/50';
 
 INSERT INTO warga (nama, blok, blok_row, nomor_kavling, status_hunian)
 SELECT 'Lia Octavia / Sony', 'NHT-8/52', 'NHT-8', 52, 'Tetap'
@@ -456,6 +534,11 @@ FROM (VALUES
   ('NHT-2/11', '2027-03-01', '2026-06-01T00:00:00+07:00'),
   ('NHT-2/12', '2026-06-01', '2026-06-04T00:00:00+07:00'),
   ('NHT-2/12', '2026-07-01', '2026-07-03T00:00:00+07:00'),
+  ('NHT-2/12', '2026-08-01', '2026-08-20T00:00:00+07:00'),
+  ('NHT-2/15', '2026-06-01', '2026-05-04T00:00:00+07:00'),
+  ('NHT-2/15', '2026-07-01', '2026-05-04T00:00:00+07:00'),
+  ('NHT-2/15', '2026-08-01', '2026-08-20T00:00:00+07:00'),
+  ('NHT-2/15', '2026-09-01', '2026-08-20T00:00:00+07:00'),
   ('NHT-2/19', '2026-06-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-2/19', '2026-07-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-2/19', '2026-08-01', '2026-07-04T00:00:00+07:00'),
@@ -463,6 +546,8 @@ FROM (VALUES
   ('NHT-2/19', '2026-10-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-2/19', '2026-11-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-2/19', '2026-12-01', '2026-07-04T00:00:00+07:00'),
+  ('NHT-2/20', '2026-06-01', '2026-01-06T00:00:00+07:00'),
+  ('NHT-2/20', '2026-07-01', '2026-01-06T00:00:00+07:00'),
   ('NHT-2/20', '2026-08-01', '2026-07-28T00:00:00+07:00'),
   ('NHT-2/20', '2026-09-01', '2026-07-28T00:00:00+07:00'),
   ('NHT-2/20', '2026-10-01', '2026-07-28T00:00:00+07:00'),
@@ -481,10 +566,22 @@ FROM (VALUES
   ('NHT-2/5', '2026-12-01', '2026-07-29T00:00:00+07:00'),
   ('NHT-2/6', '2026-06-01', '2026-06-19T00:00:00+07:00'),
   ('NHT-2/6', '2026-07-01', '2026-06-19T00:00:00+07:00'),
+  ('NHT-2/6', '2026-08-01', '2026-08-23T00:00:00+07:00'),
+  ('NHT-2/6', '2026-09-01', '2026-08-23T00:00:00+07:00'),
   ('NHT-2/7', '2026-06-01', '2026-06-09T00:00:00+07:00'),
   ('NHT-2/7', '2026-07-01', '2026-06-09T00:00:00+07:00'),
+  ('NHT-2/7', '2026-08-01', '2026-08-09T00:00:00+07:00'),
+  ('NHT-2/7', '2026-09-01', '2026-08-09T00:00:00+07:00'),
+  ('NHT-2/8', '2026-06-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-2/8', '2026-07-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-2/8', '2026-08-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-2/8', '2026-09-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-2/9', '2026-06-01', '2026-06-26T00:00:00+07:00'),
   ('NHT-2/9', '2026-07-01', '2026-06-26T00:00:00+07:00'),
+  ('NHT-3/10', '2026-06-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-3/10', '2026-07-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-3/10', '2026-08-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-3/10', '2026-09-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-3/16', '2026-06-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-3/16', '2026-07-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-3/16', '2026-08-01', '2026-06-11T00:00:00+07:00'),
@@ -542,15 +639,23 @@ FROM (VALUES
   ('NHT-3/7', '2026-09-01', '2026-06-16T00:00:00+07:00'),
   ('NHT-3/7', '2026-10-01', '2026-06-16T00:00:00+07:00'),
   ('NHT-3/7', '2026-11-01', '2026-06-16T00:00:00+07:00'),
+  ('NHT-3/7', '2026-12-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-3/7', '2027-01-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-6/10', '2026-06-01', '2026-01-23T00:00:00+07:00'),
+  ('NHT-6/10', '2026-07-01', '2026-01-23T00:00:00+07:00'),
   ('NHT-6/10', '2026-08-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-6/10', '2026-09-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-6/10', '2026-10-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-6/10', '2026-11-01', '2026-06-11T00:00:00+07:00'),
   ('NHT-6/10', '2026-12-01', '2026-06-11T00:00:00+07:00'),
+  ('NHT-6/12', '2026-06-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-6/12', '2026-07-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-6/12', '2026-08-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-6/17', '2026-06-01', '2026-06-26T00:00:00+07:00'),
   ('NHT-6/17', '2026-07-01', '2026-07-11T00:00:00+07:00'),
   ('NHT-6/17', '2026-08-01', '2026-07-11T00:00:00+07:00'),
+  ('NHT-6/18', '2026-06-01', '2025-07-29T00:00:00+07:00'),
+  ('NHT-6/18', '2026-07-01', '2025-07-29T00:00:00+07:00'),
   ('NHT-6/5', '2026-06-01', '2026-06-01T00:00:00+07:00'),
   ('NHT-6/5', '2026-07-01', '2026-06-01T00:00:00+07:00'),
   ('NHT-6/5', '2026-08-01', '2026-06-01T00:00:00+07:00'),
@@ -601,17 +706,59 @@ FROM (VALUES
   ('NHT-6/8', '2028-07-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-6/8', '2028-08-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-6/8', '2028-09-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-7/1', '2026-06-01', '2026-08-10T00:00:00+07:00'),
+  ('NHT-7/1', '2026-07-01', '2026-08-10T00:00:00+07:00'),
+  ('NHT-7/1', '2026-08-01', '2026-08-10T00:00:00+07:00'),
+  ('NHT-7/1', '2026-09-01', '2026-08-10T00:00:00+07:00'),
+  ('NHT-7/16', '2026-06-01', '2026-06-01T00:00:00+07:00'),
   ('NHT-7/16', '2026-07-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-7/16', '2026-08-01', '2026-07-04T00:00:00+07:00'),
+  ('NHT-7/22', '2026-06-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-07-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-08-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-09-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-10-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-11-01', '2026-01-12T00:00:00+07:00'),
+  ('NHT-7/22', '2026-12-01', '2026-01-12T00:00:00+07:00'),
   ('NHT-7/22', '2027-01-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-7/22', '2027-02-01', '2026-06-29T00:00:00+07:00'),
-  ('NHT-7/6', '2026-06-01', '2026-06-01T00:00:00+07:00'),
+  ('NHT-7/28', '2026-06-01', '2026-08-18T00:00:00+07:00'),
+  ('NHT-7/28', '2026-07-01', '2026-08-18T00:00:00+07:00'),
+  ('NHT-7/28', '2026-08-01', '2026-08-18T00:00:00+07:00'),
+  ('NHT-7/6', '2026-06-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-07-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-08-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-09-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-10-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-11-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/6', '2026-12-01', '2026-03-06T00:00:00+07:00'),
   ('NHT-7/6', '2027-01-01', '2026-03-06T00:00:00+07:00'),
   ('NHT-7/6', '2027-02-01', '2026-03-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-06-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-07-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-08-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-09-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-10-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-11-01', '2025-12-06T00:00:00+07:00'),
+  ('NHT-7/9', '2026-12-01', '2025-12-06T00:00:00+07:00'),
   ('NHT-7/9', '2027-01-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-7/9', '2027-02-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-8/12', '2026-06-01', '2026-06-01T00:00:00+07:00'),
   ('NHT-8/12', '2026-07-01', '2026-06-01T00:00:00+07:00'),
+  ('NHT-8/15', '2026-06-01', '2025-11-30T00:00:00+07:00'),
+  ('NHT-8/15', '2026-07-01', '2025-11-30T00:00:00+07:00'),
+  ('NHT-8/15', '2026-08-01', '2025-11-30T00:00:00+07:00'),
+  ('NHT-8/15', '2026-09-01', '2025-11-30T00:00:00+07:00'),
+  ('NHT-8/15', '2026-10-01', '2025-11-30T00:00:00+07:00'),
+  ('NHT-8/15', '2026-11-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/15', '2026-12-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/16', '2026-06-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-07-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-08-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-09-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-10-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-11-01', '2026-01-21T00:00:00+07:00'),
+  ('NHT-8/16', '2026-12-01', '2026-01-21T00:00:00+07:00'),
   ('NHT-8/16', '2027-01-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-8/16', '2027-02-01', '2026-06-29T00:00:00+07:00'),
   ('NHT-8/16', '2027-03-01', '2026-06-29T00:00:00+07:00'),
@@ -646,6 +793,17 @@ FROM (VALUES
   ('NHT-8/35', '2026-10-01', '2026-07-04T00:00:00+07:00'),
   ('NHT-8/36', '2026-06-01', '2026-06-16T00:00:00+07:00'),
   ('NHT-8/36', '2026-07-01', '2026-06-16T00:00:00+07:00'),
+  ('NHT-8/5', '2026-06-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/5', '2026-07-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/5', '2026-08-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/5', '2026-09-01', '2026-06-29T00:00:00+07:00'),
+  ('NHT-8/50', '2026-06-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-07-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-08-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-09-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-10-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-11-01', '2026-02-10T00:00:00+07:00'),
+  ('NHT-8/50', '2026-12-01', '2026-02-10T00:00:00+07:00'),
   ('NHT-8/52', '2026-06-01', '2026-06-09T00:00:00+07:00'),
   ('NHT-8/52', '2026-07-01', '2026-06-09T00:00:00+07:00'),
   ('NHT-8/52', '2026-08-01', '2026-06-09T00:00:00+07:00')
@@ -658,6 +816,7 @@ ON CONFLICT (warga_id, bulan) DO UPDATE SET
 
 COMMIT;
 
--- Cek kas Juli: masuk 2.630.000 | keluar 1.075.000
--- SELECT type, SUM(amount) FROM kas_entries WHERE description LIKE '[SEED JUL26]%' GROUP BY 1;
--- SELECT SUM(CASE WHEN type='pemasukan' THEN amount ELSE -amount END) FROM kas_entries; -- expect 14328817 after Jul (before Aug)
+-- Cek kas Aug seed: masuk 4.658.694 | keluar 1.472.750 | net 3.185.944
+-- Subsidi 7.000.000 already in DB as Kas→Donasi (not in this batch)
+-- SELECT SUM(CASE WHEN type='pemasukan' THEN amount ELSE -amount END) FROM kas_entries; -- expect 10514761
+-- warga upserts: 52; iuran rows: 313
