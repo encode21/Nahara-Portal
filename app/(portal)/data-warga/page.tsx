@@ -29,6 +29,7 @@ import {
   uploadWargaDokumen,
 } from "@/lib/supabase/storage";
 import { StatusBadge, getHunianVariant } from "@/components/ui/StatusBadge";
+import { WargaBlokSummary } from "@/components/warga/WargaBlokSummary";
 import { useAppSurface } from "@/lib/hooks/useAppSurface";
 import { buildOpsUrl } from "@/lib/host";
 import { timeAgo } from "@/lib/utils";
@@ -337,6 +338,14 @@ export default function DataWargaPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
+      )}
+
+      {!loading && (
+        <WargaBlokSummary
+          wargaList={wargaList}
+          activeBlok={blokFilter}
+          onSelectBlok={setBlokFilter}
+        />
       )}
 
       <div className="flex flex-wrap gap-3">

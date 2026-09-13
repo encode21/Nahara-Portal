@@ -10,6 +10,7 @@ import {
 import { getCurrentMonthStart, normalizeMonthDate } from "@/lib/utils";
 import { getLingkunganSnapshot } from "@/lib/lingkungan/fetch";
 import { aggregateSituation } from "@/lib/situation/aggregate";
+import { getManualSituationAlerts } from "@/lib/situation/manual";
 import { SaldoCard } from "@/components/dashboard/SaldoCard";
 import { PengaduanTerkini } from "@/components/dashboard/PengaduanTerkini";
 import { SituationCenter } from "@/components/dashboard/SituationCenter";
@@ -50,6 +51,7 @@ export default async function DashboardPage() {
     pengaduanBaruRes,
     lingkungan,
     emergencyRes,
+    manualAlerts,
   ] = await Promise.all([
     supabase.from("kas_entries").select("*"),
     supabase
@@ -72,6 +74,7 @@ export default async function DashboardPage() {
       .neq("status", "Selesai")
       .order("created_at", { ascending: false })
       .limit(5),
+    getManualSituationAlerts(),
   ]);
 
   const kasEntries = (kasRes.data ?? []) as KasEntry[];
@@ -101,6 +104,7 @@ export default async function DashboardPage() {
   const situation = aggregateSituation({
     lingkungan,
     emergencies,
+    manualAlerts,
   });
 
   return (

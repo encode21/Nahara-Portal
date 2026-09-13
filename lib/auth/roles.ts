@@ -29,6 +29,7 @@ export const STAFF_ALLOWED_PREFIXES = [
   "/pengumuman",
   "/pengaduan",
   "/kegiatan",
+  "/situasi",
   "/panduan",
   "/login",
   "/offline",

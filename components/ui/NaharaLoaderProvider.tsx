@@ -150,17 +150,27 @@ export function NaharaLoaderProvider({ children }: { children: ReactNode }) {
       beginNav();
     }
 
+    // Back/forward: do NOT beginNav. On mobile, popstate often races the
+    // routeKey effect (URL already synced) or restores via bfcache with
+    // frozen timers — loader starts and never clears until hard refresh.
     function onPopState() {
-      beginNav();
+      finishNav();
+    }
+
+    // bfcache restore: JS timers from the frozen page may never fire.
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) finishNav();
     }
 
     document.addEventListener("click", onClick, true);
     window.addEventListener("popstate", onPopState);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       document.removeEventListener("click", onClick, true);
       window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("pageshow", onPageShow);
     };
-  }, [beginNav]);
+  }, [beginNav, finishNav]);
 
   const start = useCallback((label = "Memproses") => {
     setBusyLabel(label);

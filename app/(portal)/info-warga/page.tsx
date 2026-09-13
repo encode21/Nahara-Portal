@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AdminLoginPrompt } from "@/components/AdminOnly";
+import { WargaBlokSummary } from "@/components/warga/WargaBlokSummary";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 export default function InfoWargaPage() {
@@ -113,6 +114,14 @@ export default function InfoWargaPage() {
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
+
+      {!loading && (
+        <WargaBlokSummary
+          wargaList={wargaList}
+          activeBlok={blokFilter}
+          onSelectBlok={setBlokFilter}
+        />
       )}
 
       <div className="flex flex-wrap gap-3">

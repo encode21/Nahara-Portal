@@ -12,6 +12,7 @@ import {
   FolderLock,
   Wrench,
   Activity,
+  Radio,
   type LucideIcon,
 } from "lucide-react";
 import type { AppSurface } from "@/lib/host";
@@ -51,7 +52,18 @@ const aktivitasWargaNavItem: NavItem = {
   mobileLabel: "Aktif",
 };
 
-const STAFF_NAV_HREFS = new Set(["/pengumuman", "/kegiatan", "/pengaduan"]);
+const situasiNavItem: NavItem = {
+  href: "/situasi",
+  label: "Situasi",
+  icon: Radio,
+  mobileLabel: "Situasi",
+};
+
+const STAFF_NAV_HREFS = new Set([
+  "/pengumuman",
+  "/kegiatan",
+  "/pengaduan",
+]);
 
 const REGISTRY_NAV_HREFS = new Set([
   "/dashboard",
@@ -77,13 +89,16 @@ export function getNavItemsForAccess(opts: {
 
   if (surface === "ops" && isRegistryOnly && !isAdmin) {
     const base = portalNavItems.filter((item) =>
-      REGISTRY_NAV_HREFS.has(item.href)
+      REGISTRY_NAV_HREFS.has(item.href),
     );
     return [...base, dataWargaNavItem, aktivitasWargaNavItem];
   }
 
   if (surface === "ops" && isStaff && !isAdmin) {
-    return portalNavItems.filter((item) => STAFF_NAV_HREFS.has(item.href));
+    return [
+      ...portalNavItems.filter((item) => STAFF_NAV_HREFS.has(item.href)),
+      situasiNavItem,
+    ];
   }
 
   if (surface === "ops" && isAdmin) {
@@ -94,6 +109,12 @@ export function getNavItemsForAccess(opts: {
       items.splice(infoIdx + 1, 0, ...extras);
     } else {
       items.push(...extras);
+    }
+    const pengaduanIdx = items.findIndex((i) => i.href === "/pengaduan");
+    if (pengaduanIdx >= 0) {
+      items.splice(pengaduanIdx + 1, 0, situasiNavItem);
+    } else {
+      items.push(situasiNavItem);
     }
     return items;
   }

@@ -175,7 +175,8 @@ export function SituationDetailSheet({
                       {s.source && (
                         <p className="mt-0.5 text-[10px] text-ink-faint">
                           {s.source}
-                          {s.dataOrigin === "future" || s.dataOrigin === "manual"
+                          {s.dataOrigin === "future" ||
+                          (s.dataOrigin === "manual" && s.status === "normal")
                             ? " · menunggu Ops"
                             : ""}
                         </p>

@@ -3,7 +3,6 @@ import type { LingkunganSnapshot } from "@/lib/lingkungan/types";
 import { EMERGENCY_KIND_LABEL } from "@/lib/constants/emergency";
 import type { EmergencyIncident } from "@/lib/types";
 import { formatRelativeId, isStale } from "@/lib/situation/format";
-import { getManualSituationAlerts } from "@/lib/situation/manual";
 import { SITUATION_THRESHOLDS } from "@/lib/situation/thresholds";
 import type {
   ManualSituationAlert,
@@ -48,6 +47,7 @@ function manualToStatus(alert: ManualSituationAlert): SituationStatus | null {
     affectedArea: alert.affectedArea,
     updatedAt: alert.startedAt,
     dataOrigin: "manual" as const,
+    source: "Ops (manual)",
     actionLabel: alert.actionLabel,
     actionHref: alert.actionHref,
   };
@@ -792,7 +792,7 @@ export type AggregateSituationInput = {
 export function aggregateSituation(
   input: AggregateSituationInput,
 ): SituationBundle {
-  const manual = input.manualAlerts ?? getManualSituationAlerts();
+  const manual = input.manualAlerts ?? [];
   const manualStatuses = manual
     .map(manualToStatus)
     .filter((s): s is SituationStatus => s != null);

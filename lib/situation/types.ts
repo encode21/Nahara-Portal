@@ -4,7 +4,7 @@
  * dataOrigin labels:
  * - live: external API (Open-Meteo, BMKG, MAGMA)
  * - internal: existing app data (e.g. emergency_incidents)
- * - manual: ops/admin-managed (prepared; no table yet unless noted)
+ * - manual: ops/admin-managed via `situation_alerts`
  * - future: UI/type placeholder until a source exists
  */
 
@@ -99,7 +99,7 @@ export type SituationHeadline = {
 };
 
 /**
- * Manual / ops-managed alert shape (future table).
+ * Manual / ops-managed alert shape (`situation_alerts` table).
  * Do not invent sensor readings — only use when Ops provides rows.
  */
 export type ManualSituationAlert = {
@@ -115,7 +115,7 @@ export type ManualSituationAlert = {
     | "security"
     | "fire"
     | "smoke";
-  severity: Exclude<SituationStatusLevel, "unknown">;
+  severity: Exclude<SituationStatusLevel, "unknown" | "normal">;
   title: string;
   description: string;
   affectedArea?: string;
@@ -125,6 +125,22 @@ export type ManualSituationAlert = {
   createdBy?: string;
   actionLabel?: string;
   actionHref?: string;
+};
+
+/** DB row shape for `situation_alerts` (snake_case). */
+export type SituationAlertRow = {
+  id: string;
+  type: ManualSituationAlert["type"];
+  severity: ManualSituationAlert["severity"];
+  title: string;
+  description: string;
+  affected_area: string | null;
+  status: ManualSituationAlert["status"];
+  started_at: string;
+  resolved_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type SituationBundle = {
