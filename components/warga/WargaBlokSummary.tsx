@@ -56,13 +56,13 @@ export function WargaBlokSummary({
       </div>
 
       <SideStrip
-        label="NHT"
+        label="NHT · Nahara Timur"
         rows={nht}
         activeBlok={activeBlok}
         onSelectBlok={onSelectBlok}
       />
       <SideStrip
-        label="NHB"
+        label="NHB · Nahara Barat"
         rows={nhb}
         activeBlok={activeBlok}
         onSelectBlok={onSelectBlok}
@@ -87,7 +87,7 @@ function SideStrip({
       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
         {label}
       </p>
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {rows.map((r) => {
           const active = activeBlok === r.blokRow;
           const clickable = !!onSelectBlok;
