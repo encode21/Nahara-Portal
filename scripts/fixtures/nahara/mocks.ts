@@ -8,4 +8,8 @@ const history = {
 };
 const client = { from: () => history };
 export const createClient = () => client;
-export const useAuth = () => ({ isAdmin: false });
+// Fixture-only audience switch; never used by production auth.
+export const useAuth = () => {
+  const role = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("fixtureRole");
+  return { loading: false, user: role ? { id: "fixture-user" } : null, isAdmin: role === "admin", isStaff: role === "ops", isWargaRegistry: false };
+};

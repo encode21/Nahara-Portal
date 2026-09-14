@@ -1,5 +1,67 @@
 import { test, expect } from "@playwright/test";
 
+test.describe("mobile rendering and bounded resident UI", () => {
+  test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+  test("automatic mobile quality reduces pixel/instance budget and keeps public bubbles anonymous", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("http://127.0.0.1:3100");
+    await page.locator('polygon[aria-label^="NHB-6/12,"]').tap();
+    await page.getByRole("button", { name: "Tutup detail", exact: true }).tap();
+    await page.getByRole("button", { name: "3D Provisional", exact: true }).tap();
+    const scene = page.locator("[data-scene-mode]");
+    await expect(scene).toHaveAttribute("data-camera-transition", "ready", { timeout: 60000 });
+    await expect(scene).toHaveAttribute("data-quality", "mobile");
+    const popup = page.getByRole("region", { name: "Rumah terpilih" });
+    await expect(popup).toHaveAttribute("data-resident-audience", "public");
+    await expect(popup).not.toContainText("Warga Uji");
+    const bubbles = page.locator("[data-resident-bubble]");
+    await expect(bubbles).toHaveCount(1);
+    await expect(bubbles.first()).toContainText("NHB-6/12");
+    await expect(bubbles.first()).not.toContainText("Warga Uji");
+    const dpr = () => page.locator("canvas").evaluate((c) => (c as HTMLCanvasElement).width / c.getBoundingClientRect().width);
+    expect(await dpr()).toBeCloseTo(1, 1);
+    const triangles = () => page.locator("[data-render-triangles]").evaluate((e) => Number(e.getAttribute("data-render-triangles")));
+    const mobileTriangles = await triangles();
+    expect(mobileTriangles).toBeGreaterThan(0);
+    await page.getByLabel("Kualitas 3D").selectOption("standard");
+    await expect.poll(dpr).toBeCloseTo(1.5, 1);
+    await expect.poll(triangles).toBeGreaterThan(mobileTriangles);
+    await page.getByLabel("Kualitas 3D").selectOption("mobile");
+    await expect.poll(triangles).toBeLessThanOrEqual(mobileTriangles);
+    await popup.getByRole("button", { name: "Fokus Rumah", exact: true }).tap();
+    await expect(scene).toHaveAttribute("data-camera-transition", "ready");
+    await page.screenshot({ path: "/private/tmp/nahara-mobile-bubbles.png", fullPage: true });
+    await popup.getByRole("button", { name: "Lihat Detail", exact: true }).tap();
+    await expect(page.getByRole("dialog").getByText("Warga Uji", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Tutup detail", exact: true }).tap();
+    await popup.getByRole("button", { name: "Jelajahi Sekitar", exact: true }).tap();
+    await expect(scene).toHaveAttribute("data-camera-transition", "ready");
+    await page.locator("canvas").tap();
+    await expect(page.getByRole("dialog").getByText("Warga Uji", { exact: true })).toBeVisible();
+    await expect(scene).toHaveAttribute("data-scene-mode", "STREET_EXPLORE");
+    expect(errors).toEqual([]);
+  });
+
+  test("resident and admin presentations reveal only the permitted fields", async ({ page }) => {
+    for (const role of ["resident", "ops", "admin"]) {
+      await page.goto(`http://127.0.0.1:3100?fixtureRole=${role}`);
+      await page.locator('polygon[aria-label^="NHB-6/12,"]').tap();
+      await page.getByRole("button", { name: "Tutup detail", exact: true }).tap();
+      await page.getByRole("button", { name: "3D Provisional", exact: true }).tap();
+      await expect(page.locator("[data-scene-mode]")).toHaveAttribute("data-camera-transition", "ready", { timeout: 60000 });
+      const popup = page.getByRole("region", { name: "Rumah terpilih" });
+      await expect(popup).toHaveAttribute("data-resident-audience", role);
+      await expect(popup).toContainText("Warga Uji");
+      await expect(page.locator("[data-resident-bubble]").first()).toContainText("Warga Uji");
+      if (role === "admin") await expect(popup).toContainText("Status: Lunas");
+      else await expect(popup).not.toContainText("Status: Lunas");
+      if (role === "resident") await expect(popup).not.toContainText("Hunian: Tetap");
+      else await expect(popup).toContainText("Hunian: Tetap");
+    }
+  });
+});
+
 test("street entry without selection restores the user's aerial camera", async ({ page }) => {
   await page.goto("http://127.0.0.1:3100");
   await page.getByRole("button", { name: "3D Provisional", exact: true }).click();
@@ -150,6 +212,8 @@ test("focus, safe street entry, keyboard movement, modal pause and mobile joysti
   // A resident modal pauses walking, even if movement keys are pressed.
   await page.getByRole("button", { name: "Lihat data alamat NHB-6/12", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  // Debug position is sampled at 5 Hz; flush the final pre-modal movement sample.
+  await page.waitForTimeout(400);
   const paused = await readPosition();
   await page.keyboard.down("w");
   await page.waitForTimeout(400);

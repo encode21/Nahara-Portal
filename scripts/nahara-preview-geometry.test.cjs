@@ -21,13 +21,33 @@ test("accepted placement, yaw and row mapping sources remain locked", () => {
     "provisional-3d.ts": "be67776cc215be6db8b907870d4e7ac061a296df660fb3fd8396582877a72267",
     "houseTypes.ts": "4db24948546866054e54b08412323aec3b4af6a6cc6b56dc80364e95a6cfb666",
     "walk-network.ts": "76f770dace5d4ca938f8c23596be54995e93d2dfca5a4a05a8d6285e6a1136bf",
-    "../../components/3d/HouseModels.tsx": "82b1a5afd8e83191e6ff639dc3c4f69912c513b8386a462a74737285c1cfc83d",
     "../../components/3d/LotPlates.tsx": "c1a878f991b96211a4c9256abad3243f86a6d425a57c915be20c9c55878d657c",
-    "../../components/3d/Neighborhood.tsx": "a9b95ca12a1be4d804c9321a48bbc0a1766356235e73b1f2287a6fc9757ffd44",
+    "../../components/3d/CameraRig.tsx": "08f0bfcde2876b83cef88d0ff03806f29b41ecd427117a1a5c2c8a9961edb937",
+    "../../components/3d/WalkJoystick.tsx": "249fb3c6773594c04154df5559d9109f9607bcdb1822052138d5b4cbfc83f691",
   };
   for (const [file, hash] of Object.entries(hashes)) {
     assert.equal(createHash("sha256").update(fs.readFileSync(path.join(__dirname, "../lib/nahara", file))).digest("hex"), hash);
   }
+});
+
+test("LOD changes visibility only; house construction/placement and road/anchor generation stay locked", () => {
+  for (const [file, start, end, hash] of [
+    ["HouseModels.tsx", "function makeHouse", "  const target =", "5314691acd762276fb97d07dcfa1d1ea6f29e41b153f89bbe20b233b02ffd819"],
+    ["Neighborhood.tsx", "export function Neighborhood", "  return <group>", "8879294091ec78e857b2313cb4366ac00338125d18caa310370732ac30ad3419"],
+  ]) {
+    const source = fs.readFileSync(path.join(__dirname, "../components/3d", file), "utf8");
+    assert.equal(createHash("sha256").update(source.slice(source.indexOf(start), source.indexOf(end))).digest("hex"), hash);
+  }
+});
+
+test("in-world resident presentation is allowlisted by audience; ops cannot see payments", () => {
+  const { residentPresentation } = require("../lib/nahara/resident-presentation.ts");
+  const resident = { nama: "Warga Uji", status_hunian: "Tetap", iuran_lunas: false, phone: "private", email: "private" };
+  assert.deepEqual(residentPresentation("NHB-6/12", "public", resident), { address: "NHB-6/12" });
+  assert.deepEqual(residentPresentation("NHB-6/12", "resident", resident), { address: "NHB-6/12", name: "Warga Uji" });
+  assert.deepEqual(residentPresentation("NHB-6/12", "ops", resident), { address: "NHB-6/12", name: "Warga Uji", occupancy: "Tetap" });
+  assert.equal(residentPresentation("NHB-6/12", "admin", resident).status, "Belum Bayar");
+  assert.equal(residentPresentation("NHB-6/12", "admin").status, "Data hunian belum tersedia");
 });
 
 test("unselected street entry uses the unchanged road mask and faces a traversable direction", () => {

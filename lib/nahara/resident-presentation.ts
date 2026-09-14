@@ -9,6 +9,7 @@ export type ResidentPresentation = { address: string; name?: string; occupancy?:
 export function residentPresentation(address: string, audience: ResidentAudience, resident?: WargaWithIuran): ResidentPresentation {
   if (audience === "public") return { address };
   const result: ResidentPresentation = { address, name: resident?.nama || undefined };
+  if (!result.name) result.status = "Belum terverifikasi";
   if (audience === "ops" || audience === "admin") result.occupancy = resident?.status_hunian;
   // Existing ops roles are finance restricted: only admin gets payment status.
   if (audience === "admin") result.status = statusLabel(resident);

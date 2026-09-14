@@ -14,7 +14,7 @@ import { statusLabel } from "@/lib/nahara/preview-status";
 import { siteplanLabelToDbBlok } from "@/lib/constants/cluster-layout";
 import { provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
 import type { WargaWithIuran } from "@/lib/types";
-import { RenderBudget, QUALITY, type SceneQuality } from "@/components/3d/RenderBudget";
+import { RenderBudget, QUALITY, type SceneQuality, type RenderMetrics } from "@/components/3d/RenderBudget";
 import { ResidentBubbles } from "@/components/3d/ResidentBubbles";
 import { ResidentPopup } from "./ResidentPopup";
 import { residentPresentation, type ResidentAudience } from "@/lib/nahara/resident-presentation";
@@ -52,6 +52,7 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
   const audience: ResidentAudience = auth.loading || !auth.user ? "public" : auth.isAdmin ? "admin" : auth.isStaff || auth.isWargaRegistry ? "ops" : "resident";
   const [qualityChoice, setQualityChoice] = useState<"auto" | SceneQuality>("auto");
   const [mobile, setMobile] = useState(true);
+  const [renderMetrics, setRenderMetrics] = useState<RenderMetrics | null>(null);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 767px), (pointer: coarse)");
     const update = () => setMobile(query.matches);
@@ -125,16 +126,15 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
       </div>
     </div>
     <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-      {mode !== "STREET_EXPLORE" && <>
-      <button type="button" disabled={!selected || transitioning} className="min-h-10 rounded border px-3 disabled:opacity-40"
-        onClick={() => changeView("HOUSE_FOCUS")}>Fokus Rumah</button>
-      <button type="button" disabled={(!!selected && !spawn) || transitioning} className="min-h-10 rounded bg-slate-800 px-3 text-white disabled:opacity-40"
-        onClick={() => changeView("STREET_EXPLORE")}>{selected ? "Jelajahi Sekitar" : "Jelajahi Jalan"}</button>
+      {mode !== "STREET_EXPLORE" && !selected && <>
+      <button type="button" disabled={transitioning} className="min-h-10 rounded bg-slate-800 px-3 text-white disabled:opacity-40"
+        onClick={() => changeView("STREET_EXPLORE")}>Jelajahi Jalan</button>
       </>}
       <span>{transitioning ? "Kamera berpindah…" : mode === "STREET_EXPLORE" ? "Street Explore" : mode === "HOUSE_FOCUS" ? "House Focus" : "Masterplan"}</span>
       {selected && !spawn && <span>Jalur depan rumah belum terhubung. Pilih rumah lain untuk mulai berjalan.</span>}
     </div>
-    {selected && <ResidentPopup placement={selected} resident={present(selected)} audience={audience} onDetail={() => onSelect(selected.lot)} />}
+    {selected && <ResidentPopup placement={selected} resident={present(selected)} audience={audience} onDetail={() => onSelect(selected.lot)}
+      navigation={mode !== "STREET_EXPLORE" ? { disabled: transitioning, canExplore: !!spawn, onFocus: () => changeView("HOUSE_FOCUS"), onExplore: () => changeView("STREET_EXPLORE") } : undefined} />}
     <div ref={streetViewport} onPointerDownCapture={(event) => { pointerType.current = event.pointerType; }} className="relative h-[min(65vh,34rem)] min-h-80 overflow-hidden rounded-lg border bg-slate-100" data-validation-state="provisional">
       <SceneBoundary onBack={onBack}>
         <Canvas frameloop="demand" dpr={[1, QUALITY[quality].dpr]} shadows={false} camera={{ position: [80, 100, 100], fov: 45, near: 0.1, far: 500 }}
@@ -149,9 +149,9 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
           <Neighborhood network={network} placements={placements} />
           {selected && <SelectionBoundary placement={selected} />}
           <ResidentBubbles bubbles={bubbles} />
-          <RenderBudget quality={quality} walking={mode === "STREET_EXPLORE"} />
           <CameraRig mode={mode} request={request} selected={selected} placements={placements} network={network}
             joystick={joystick} onPosition={setWalkPosition} onTransition={setTransitioning} onLock={setLocked} onTarget={setTargetKey} />
+          <RenderBudget quality={quality} walking={mode === "STREET_EXPLORE"} onMetrics={setRenderMetrics} />
         </Canvas>
       </SceneBoundary>
       <div className="pointer-events-none absolute left-3 top-3 rounded bg-white/95 px-2 py-1 text-xs font-semibold text-amber-900">Belum terverifikasi</div>
@@ -174,6 +174,7 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
       </>}
     </div>
       {debug && <div className="mt-3 rounded bg-slate-950/90 p-3 text-xs text-white" aria-live={mode === "STREET_EXPLORE" ? "off" : "polite"}>
+        {renderMetrics && <p data-render-triangles={renderMetrics.triangles} data-render-instances={renderMetrics.visible}>Kualitas: {quality} · DPR maks. {QUALITY[quality].dpr} · Rumah/vegetasi: {renderMetrics.visible}/{renderMetrics.total} bagian instansi · {renderMetrics.triangles.toLocaleString()} segitiga (bukan pengukuran FPS)</p>}
         {walkPosition && <p data-walk-x={walkPosition[0]} data-walk-y={walkPosition[1]} data-walk-z={walkPosition[2]}>Kamera: {walkPosition.map((v) => v.toFixed(3)).join(", ")}</p>}
         <p className="font-semibold">{address || "Pilih / arahkan ke kavling"}{active?.lot.isRC ? " · Rumah Contoh" : ""}</p>
         {active && <>

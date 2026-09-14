@@ -12,7 +12,11 @@ remain byte-for-byte unchanged. Regression tests pin their SHA-256 hashes:
 - `lib/nahara/provisional-3d.ts`
 - `lib/nahara/houseTypes.ts`
 - `lib/nahara/walk-network.ts`
-- `components/3d/HouseModels.tsx`, `LotPlates.tsx`, `Neighborhood.tsx`
+- `components/3d/LotPlates.tsx`, `CameraRig.tsx`, `WalkJoystick.tsx`
+
+The house construction/transforms and road/anchor generator sections are also
+hash-pinned. Mobile rendering adds visibility tags and packed-instance picking
+to their render wrappers only; it does not edit model vertices or placement.
 
 Every model root uses the existing world centroid and yaw. A uniform scale from
 the existing fit (`box.depth / 17`) is applied to the visual template. New details
@@ -89,6 +93,51 @@ cover the street or joystick. Camera transition state disables street/focus
 commands while a flight is in progress.
 
 ## Rendering and checks
+
+### Mobile quality and selective bubbles
+
+`RenderBudget.tsx` applies visibility-only LOD to the same three house templates.
+Automatic quality uses a narrow-screen/coarse-pointer media query; the dropdown
+can override it with **Hemat / mobile** or **Standar**. Mobile caps DPR at 1
+(standard: 1.5). No real-time shadow maps are enabled; the road texture remains
+128×128. No extra house models, materials or textures are introduced.
+
+Each instanced batch packs only frustum-visible instances, retaining an explicit
+source-index map so picking always resolves the original preview key. Mobile
+omits distant trim/garden detail beyond approximately 22 display units and palm
+detail beyond 30. Nearby houses retain the unchanged complete template. Standard
+masterplan retains all original detail; walking uses distance detail limits.
+Mobile street visibility ends at 58 display units with matching fog (standard:
+150); aerial view retains the whole cluster. These are rendering distances, not
+surveyed metres. The walk controller, corridor mask and collisions are unchanged.
+
+The debug panel reports submitted house/vegetation instance parts and triangles;
+these exclude road/plate draw calls and are **not measured FPS**. The browser
+test confirms lower pixel and triangle budgets on an emulated high-DPR mobile
+viewport. Actual thermal behavior and sustained FPS need real-device testing.
+
+`ResidentBubbles.tsx` mounts at most two screen-facing labels: selection plus
+desktop hover or the street controller's nearby forward target. There are no
+permanent labels on all lots. Labels do not intercept walking/orbit gestures.
+The selected popup includes detail/focus/explore actions; mouse-lock and E
+inspection keep their behavior. A touch tap can inspect a house while walking,
+without a camera flight; dragging remains look input. The existing immediate
+warga modal remains available. Labels and panels use a short entrance animation
+and honor reduced-motion preferences; the existing selected boundary is retained.
+
+`resident-presentation.ts` is an allowlisted DTO for new bubbles/popups:
+
+- Public/loading: address only (plus non-personal type/validation in the panel).
+- Authenticated ordinary session: address and available resident name.
+- Existing ops/registry roles: additionally occupancy, but **not payments**.
+- Admin: occupancy and existing payment/status label.
+
+Missing records never imply a confirmed vacant house. No family name is invented;
+the existing `nama` is used verbatim. This is a presentation boundary, **not a
+replacement for server authorization or Supabase RLS**. The existing 2D map,
+status plates, legacy debug data and warga modal access are not re-authorized by
+this change. Server-side audience-specific data delivery would be required
+before exposing this existing authenticated map as a public application.
 
 Models merge parts by material and instance those batches across each type.
 All status plates share one vertex-colored mesh with per-triangle lot picking.
