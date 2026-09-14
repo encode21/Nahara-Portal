@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { SITEPLAN_LOT_POLYGONS, type LotPoly, type Point } from "@/lib/nahara/provisional-lots";
+import { getHouseStyle, statusLabel, approximateType } from "@/lib/nahara/preview-status";
+
+import { BROCHURE_REFERENCE, BROCHURE_TYPE_LEGEND, provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
 import {
   dbBlokToSiteplanLabel,
   normalizeBlokKey,
@@ -16,664 +21,207 @@ import {
 } from "@/components/ui/tooltip";
 import { MapZoomViewport } from "@/components/map/MapZoomViewport";
 
+const NaharaMap3D = dynamic(() => import("./NaharaMap3D"), {
+  ssr: false,
+  loading: () => <p className="p-6 text-sm text-slate-500">Memuat 3D · Belum terverifikasi…</p>,
+});
+
 export interface PetaLingkunganProps {
   wargaData: WargaWithIuran[];
   onHouseClick: (blok: string, warga?: WargaWithIuran) => void;
 }
 
-type Point = [number, number];
-type LotPoly = {
-  lotId: string;
-  blokKey: string;
-  unit: string;
-  points: Point[];
-  isRC?: boolean;
-};
-type RowDef = {
-  blok: string;
-  units: string[];
-  tl: Point;
-  tr: Point;
-  br: Point;
-  bl: Point;
-};
-
 const STATUS_LEGEND = [
-  { label: "Lunas", fill: "#0a2a1f", stroke: "#00d4aa" },
-  { label: "Belum Bayar", fill: "#2a0a0a", stroke: "#ef4444" },
-  { label: "Kontrak", fill: "#2a1a06", stroke: "#f97316" },
-  { label: "Kosong", fill: "#1e2235", stroke: "#3a3f55" },
-];
-
-// Koordinat ROWS ditulis di ruang siteplan sumber (1236×1188), lalu diskalakan ke JPG aktual.
-const COORD_SOURCE = { width: 1236, height: 1188 };
-
-function toImageCoords([x, y]: Point): Point {
-  return [
-    (x * SITEPLAN_IMAGE.width) / COORD_SOURCE.width,
-    (y * SITEPLAN_IMAGE.height) / COORD_SOURCE.height,
-  ];
-}
-
-function scaleRow(row: RowDef): RowDef {
-  return {
-    ...row,
-    tl: toImageCoords(row.tl),
-    tr: toImageCoords(row.tr),
-    br: toImageCoords(row.br),
-    bl: toImageCoords(row.bl),
-  };
-}
-
-/** Perkecil sedikit agar overlay tidak menutupi garis kavling di JPG */
-const ROW_EDGE_INSET = 1.5;
-
-function insetRow(row: RowDef, pad: number): RowDef {
-  return {
-    ...row,
-    tl: [row.tl[0] + pad, row.tl[1] + pad],
-    tr: [row.tr[0] - pad, row.tr[1] + pad],
-    br: [row.br[0] - pad, row.br[1] - pad],
-    bl: [row.bl[0] + pad, row.bl[1] - pad],
-  };
-}
-
-// Coordinate system mengikuti file siteplan asli: viewBox 0 0 1236 1188.
-// Setiap unit dibuat sebagai POLYGON, bukan bounding box rect.
-// Untuk baris miring/melengkung, titik kiri-kanan row dibuat trapezoid supaya overlay ikut bentuk kavling.
-const ROWS: RowDef[] = [
-  // Top boulevard rows
-  {
-    blok: "NAHARA BARAT 8",
-    units: ["30", "28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
-    tl: [58, 18],
-    tr: [502, 18],
-    br: [502, 91],
-    bl: [58, 91],
-  },
-  {
-    blok: "NAHARA TIMUR 8",
-    units: [
-      "56",
-      "52",
-      "50",
-      "38",
-      "36",
-      "32",
-      "30",
-      "28",
-      "26",
-      "20",
-      "18",
-      "16",
-      "16",
-      "10",
-      "8",
-      "6",
-      "2",
-    ],
-    tl: [520, 18],
-    tr: [1170, 18],
-    br: [1170, 92],
-    bl: [520, 92],
-  },
-
-  // Pola tiap blok antar jalan:
-  //   [Row N bawah] + [Row M atas] back-to-back, lalu jalan Row M.
-  // Barat 8 / Timur 8 bawah, lalu Row 7 atas
-  {
-    blok: "NAHARA BARAT 8",
-    units: ["23", "21", "19", "17", "15", "11", "9", "7", "5", "1"],
-    tl: [72, 127],
-    tr: [498, 127],
-    br: [498, 212],
-    bl: [72, 212],
-  },
-  {
-    blok: "NAHARA BARAT 7",
-    units: ["20", "18", "16", "12", "10", "8", "6", "2"],
-    tl: [72, 212],
-    tr: [498, 212],
-    br: [498, 289],
-    bl: [72, 289],
-  },
-  {
-    blok: "NAHARA TIMUR 8",
-    units: [
-      "35",
-      "33",
-      "31",
-      "29",
-      "27",
-      "25",
-      "23",
-      "21",
-      "19",
-      "17",
-      "15",
-      "11",
-      "9",
-      "7",
-      "5",
-      "3",
-      "1",
-    ],
-    tl: [525, 127],
-    tr: [1145, 127],
-    br: [1145, 212],
-    bl: [525, 212],
-  },
-  {
-    blok: "NAHARA TIMUR 7",
-    units: [
-      "32",
-      "30",
-      "28",
-      "26",
-      "22",
-      "20",
-      "18",
-      "16",
-      "12",
-      "10",
-      "8",
-      "6",
-      "2",
-    ],
-    tl: [525, 212],
-    tr: [1145, 212],
-    br: [1145, 289],
-    bl: [525, 289],
-  },
-
-  // Barat 7 / Timur 7 bawah, lalu Row 6 atas
-  {
-    blok: "NAHARA BARAT 7",
-    units: ["17", "15", "11", "9", "7", "5", "3", "1"],
-    tl: [80, 322],
-    tr: [500, 322],
-    br: [500, 408],
-    bl: [80, 408],
-  },
-  {
-    blok: "NAHARA BARAT 6",
-    units: ["20", "18", "16", "12", "10", "8", "6", "2"],
-    tl: [80, 408],
-    tr: [500, 408],
-    br: [500, 486],
-    bl: [80, 486],
-  },
-  {
-    blok: "NAHARA TIMUR 7",
-    units: ["21", "19", "17", "15", "11", "9", "7", "5", "1"],
-    tl: [525, 322],
-    tr: [985, 322],
-    br: [985, 408],
-    bl: [525, 408],
-  },
-  {
-    blok: "NAHARA TIMUR 6",
-    units: ["26", "22", "20", "18", "16", "12", "10", "8", "2"],
-    tl: [525, 408],
-    tr: [985, 408],
-    br: [985, 487],
-    bl: [525, 487],
-  },
-
-  // Barat 6 / Timur 6 bawah, lalu Row 3 atas
-  {
-    blok: "NAHARA BARAT 6",
-    units: ["17", "15", "11", "9", "7", "5", "3", "1"],
-    tl: [81, 520],
-    tr: [500, 520],
-    br: [500, 604],
-    bl: [82, 604],
-  },
-  {
-    blok: "NAHARA BARAT 3",
-    units: ["28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
-    tl: [82, 604],
-    tr: [500, 604],
-    br: [500, 682],
-    bl: [86, 682],
-  },
-  {
-    blok: "NAHARA TIMUR 6",
-    units: ["25", "23", "21", "19", "17", "15", "11", "9", "5"],
-    tl: [525, 520],
-    tr: [950, 520],
-    br: [950, 604],
-    bl: [525, 604],
-  },
-  {
-    blok: "NAHARA TIMUR 3",
-    units: [
-      "50",
-      "38",
-      "36",
-      "32",
-      "30",
-      "28",
-      "26",
-      "20",
-      "18",
-      "16",
-      "12",
-      "10",
-      "8",
-      "6",
-      "2",
-    ],
-    tl: [525, 604],
-    tr: [1090, 604],
-    br: [1090, 683],
-    bl: [525, 683],
-  },
-
-  // Barat 3 / Timur 3 bawah, lalu Row 2 atas
-  {
-    blok: "NAHARA BARAT 3",
-    units: ["21", "19", "17", "15", "11", "9", "7", "5", "3", "1"],
-    tl: [105, 715],
-    tr: [500, 715],
-    br: [500, 793],
-    bl: [115, 793],
-  },
-  {
-    blok: "NAHARA BARAT 2",
-    units: ["32", "30", "28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
-    tl: [115, 793],
-    tr: [500, 793],
-    br: [500, 870],
-    bl: [140, 870],
-  },
-  {
-    blok: "NAHARA TIMUR 3",
-    units: ["23", "21", "19", "17", "15", "11", "9", "7", "5"],
-    tl: [525, 715],
-    tr: [930, 715],
-    br: [930, 793],
-    bl: [525, 793],
-  },
-  {
-    blok: "NAHARA TIMUR 2",
-    units: [
-      "36",
-      "32",
-      "30",
-      "28",
-      "26",
-      "22",
-      "20",
-      "18",
-      "16",
-      "12",
-      "10",
-      "8",
-    ],
-    tl: [525, 793],
-    tr: [875, 793],
-    br: [875, 870],
-    bl: [525, 870],
-  },
-  {
-    blok: "NAHARA TIMUR 2",
-    units: ["2"],
-    tl: [875, 793],
-    tr: [930, 793],
-    br: [925, 870],
-    bl: [875, 870],
-  },
-
-  // Barat 2 / Timur 2 bawah, lalu Row 1 atas
-  {
-    blok: "NAHARA BARAT 2",
-    units: ["23", "21", "19", "15", "11", "9", "7", "5", "3"],
-    tl: [158, 904],
-    tr: [505, 904],
-    br: [505, 984],
-    bl: [177, 984],
-  },
-  {
-    blok: "NAHARA BARAT 1",
-    units: ["28", "26", "22", "20", "18", "16", "12", "10", "8", "2"],
-    tl: [177, 984],
-    tr: [505, 984],
-    br: [505, 1062],
-    bl: [193, 1062],
-  },
-  {
-    blok: "NAHARA TIMUR 2",
-    units: ["19", "17", "15", "11", "9", "7", "5", "3"],
-    tl: [525, 904],
-    tr: [850, 904],
-    br: [825, 984],
-    bl: [525, 984],
-  },
-  {
-    blok: "NAHARA TIMUR 1",
-    units: ["22", "20", "18", "16", "12", "10", "8", "6", "2"],
-    tl: [525, 984],
-    tr: [825, 984],
-    br: [800, 1062],
-    bl: [525, 1062],
-  },
-
-  // Barat 1 / Timur 1 bawah
-  {
-    blok: "NAHARA BARAT 1",
-    units: ["23", "21", "19", "17", "15", "11", "9", "5", "1"],
-    tl: [198, 1080],
-    tr: [506, 1080],
-    br: [506, 1158],
-    bl: [214, 1158],
-  },
-  {
-    blok: "NAHARA TIMUR 1",
-    units: ["19", "17", "15", "11", "9", "7", "5", "3"],
-    tl: [525, 1080],
-    tr: [805, 1080],
-    br: [792, 1158],
-    bl: [525, 1158],
-  },
-];
-
-const RC_POLYS: LotPoly[] = [
-  {
-    lotId: "RC-TIMUR-6",
-    blokKey: "RC-TIMUR-6",
-    unit: "RC",
-    isRC: true,
-    points: [
-      [950, 520],
-      [1090, 520],
-      [1090, 604],
-      [950, 604],
-    ],
-  },
-  {
-    lotId: "RC-TIMUR-3-A",
-    blokKey: "RC-TIMUR-3-A",
-    unit: "RC",
-    isRC: true,
-    points: [
-      [875, 715],
-      [930, 715],
-      [925, 793],
-      [875, 793],
-    ],
-  },
-  {
-    lotId: "RC-TIMUR-2-A",
-    blokKey: "RC-TIMUR-2-A",
-    unit: "RC",
-    isRC: true,
-    points: [
-      [830, 904],
-      [920, 904],
-      [905, 984],
-      [825, 984],
-    ],
-  },
-  {
-    lotId: "RC-TIMUR-2-B",
-    blokKey: "RC-TIMUR-2-B",
-    unit: "RC 2",
-    isRC: true,
-    points: [
-      [790, 984],
-      [875, 984],
-      [860, 1062],
-      [775, 1062],
-    ],
-  },
-];
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
-
-function interp(a: Point, b: Point, t: number): Point {
-  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
-}
-
-function rowToLots(row: RowDef): LotPoly[] {
-  const n = row.units.length;
-  return row.units.map((unit, index) => {
-    const a = index / n;
-    const b = (index + 1) / n;
-    return {
-      lotId: `${row.blok}-${row.tl[0]}-${row.tl[1]}-${unit}-${index}`,
-      blokKey: `${row.blok} ${unit}`,
-      unit,
-      points: [
-        interp(row.tl, row.tr, a),
-        interp(row.tl, row.tr, b),
-        interp(row.bl, row.br, b),
-        interp(row.bl, row.br, a),
-      ],
-    };
-  });
-}
-
-const SCALED_ROWS = ROWS.map(scaleRow).map((row) => insetRow(row, ROW_EDGE_INSET));
-
-const SITEPLAN_LOT_POLYGONS: LotPoly[] = [
-  ...SCALED_ROWS.flatMap(rowToLots),
-  ...RC_POLYS.map((rc) => ({
-    ...rc,
-    points: rc.points.map((p) => toImageCoords(p)),
-  })),
+  { label: "Lunas", fill: "#10b981", stroke: "#047857" },
+  { label: "Belum Bayar", fill: "#ef4444", stroke: "#b91c1c" },
+  { label: "Kontrak", fill: "#f59e0b", stroke: "#b45309" },
+  { label: "Kosong", fill: "#334155", stroke: "#475569" },
 ];
 
 function pointsToString(points: Point[]) {
   return points.map(([x, y]) => `${x},${y}`).join(" ");
 }
 
-// Supaya hover/click antar unit tidak saling “nyangkut” di garis batas,
-// area trigger dipisah dari area visual. Visual tetap full, hit-area mengecil.
-const VISUAL_GAP_X = 1.5;
-const VISUAL_GAP_Y = 1;
-const HIT_GAP_X = 5;
-const HIT_GAP_Y = 2;
-
-function insetQuadHitArea(
-  points: Point[],
-  gapX = HIT_GAP_X,
-  gapY = HIT_GAP_Y,
-): Point[] {
-  // Untuk row siteplan ini semua lot berupa quad: TL, TR, BR, BL.
-  // Inset dibuat horizontal/vertical supaya jauh lebih stabil daripada radial inset.
-  if (points.length !== 4) return points;
-  const [tl, tr, br, bl] = points;
-  return [
-    [tl[0] + gapX, tl[1] + gapY],
-    [tr[0] - gapX, tr[1] + gapY],
-    [br[0] - gapX, br[1] - gapY],
-    [bl[0] + gapX, bl[1] - gapY],
-  ];
-}
-
-function getHouseStyle(warga?: WargaWithIuran): {
-  fill: string;
-  stroke: string;
-} {
-  if (!warga || warga.status_hunian === "Kosong")
-    return { fill: "#1e2235", stroke: "#3a3f55" };
-  if (warga.status_hunian === "Kontrak")
-    return { fill: "#2a1a06", stroke: "#f97316" };
-  if (warga.iuran_lunas) return { fill: "#0a2a1f", stroke: "#00d4aa" };
-  return { fill: "#2a0a0a", stroke: "#ef4444" };
-}
-
-function getIuranLabel(warga?: WargaWithIuran): string {
-  if (!warga || warga.status_hunian === "Kosong") return "Kosong";
-  return warga.iuran_lunas ? "Lunas" : "Belum Bayar";
-}
-
-type LotPolygonProps = LotPoly & {
+type LotPolygonProps = {
+  lot: LotPoly;
   warga?: WargaWithIuran;
-  displayBlok: string;
-  onHouseClick: (blok: string, warga?: WargaWithIuran) => void;
+  selected: boolean;
+  opacity: number;
+  onSelect: () => void;
 };
 
-function LotPolygon({
-  blokKey,
-  displayBlok,
-  points,
-  warga,
-  isRC,
-  onHouseClick,
-}: LotPolygonProps) {
-  const colors = isRC
-    ? { fill: "rgba(6, 95, 70, 0.45)", stroke: "#34d399" }
+function LotPolygon({ lot, warga, selected, opacity, onSelect }: LotPolygonProps) {
+  const address = lot.isRC ? lot.blokKey : siteplanLabelToDbBlok(lot.blokKey);
+  const warning = provisionalIdentityWarning(address);
+  const colors = lot.isRC
+    ? { fill: "#a78bfa", stroke: "#7c3aed" }
     : getHouseStyle(warga);
-  const visualPoints = insetQuadHitArea(
-    points,
-    isRC ? 1 : VISUAL_GAP_X,
-    isRC ? 1 : VISUAL_GAP_Y,
-  );
-  const hitPoints = insetQuadHitArea(
-    points,
-    isRC ? 2 : HIT_GAP_X,
-    isRC ? 2 : HIT_GAP_Y,
-  );
-
-  function handleActivate() {
-    onHouseClick(isRC ? blokKey : siteplanLabelToDbBlok(blokKey), warga);
-  }
-
+  const type = approximateType(lot);
+  const title = lot.isRC ? "RC · Rumah Contoh" : address;
   return (
-    <>
-      <polygon
-        points={pointsToString(visualPoints)}
-        fill={colors.fill}
-        fillOpacity={isRC ? 0.85 : 0.52}
-        stroke={colors.stroke}
-        strokeWidth={1.2}
-        vectorEffect="non-scaling-stroke"
-        pointerEvents="none"
-      />
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <polygon
-            points={pointsToString(hitPoints)}
-            fill="transparent"
-            pointerEvents="all"
-            className="cursor-pointer outline-none"
-            onClick={handleActivate}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleActivate();
-              }
-            }}
-            tabIndex={0}
-            role="button"
-            aria-label={isRC ? `Fasilitas ${blokKey}` : `Kavling ${blokKey}`}
-          />
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <p className="font-semibold text-teal">{displayBlok}</p>
-          {isRC ? (
-            <p className="mt-0.5 text-slate-400">Fasilitas umum / green zone</p>
-          ) : warga ? (
-            <>
-              <p className="mt-0.5 text-slate-200">{warga.nama}</p>
-              <p className="text-slate-400">
-                {warga.status_hunian} · Iuran {getIuranLabel(warga)}
-              </p>
-            </>
-          ) : (
-            <p className="mt-0.5 text-slate-400">Kosong</p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <polygon
+          data-preview-key={lot.lotId}
+          data-geometry-verification="unverified"
+          points={pointsToString(lot.points)}
+          fill={colors.fill}
+          fillOpacity={opacity}
+          stroke={selected ? "#2563eb" : colors.stroke}
+          strokeWidth={selected ? 2.5 : 1}
+          strokeDasharray={warning ? "4 2" : undefined}
+          vectorEffect="non-scaling-stroke"
+          className="cursor-pointer outline-none hover:[fill-opacity:0.5] hover:!stroke-blue-600 focus-visible:!stroke-blue-600 focus-visible:!stroke-[3px]"
+          onClick={onSelect}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onSelect();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selected}
+          aria-label={`${title}, perkiraan belum terverifikasi${warning ? ", konflik penomoran" : ""}`}
+        />
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p className="font-semibold">{title}</p>
+        {type && <p>Tipe {type} · berdasarkan baris, sementara</p>}
+        {!lot.isRC && <p>{statusLabel(warga)}</p>}
+        {warga && <><p>{warga.nama}</p><p>{warga.status_hunian} · Iuran {warga.iuran_lunas ? "Lunas" : "Belum Bayar"}</p></>}
+        <p className="text-xs">Posisi & identitas belum terverifikasi</p>
+        {warning && <p className="mt-1 text-amber-300">{warning}</p>}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
-export default function PetaLingkungan({
-  wargaData,
-  onHouseClick,
-}: PetaLingkunganProps) {
+export default function PetaLingkungan({ wargaData, onHouseClick }: PetaLingkunganProps) {
+  const [mode, setMode] = useState<"2d" | "3d">("2d");
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const [opacity, setOpacity] = useState(0.25);
   const wargaMap = useMemo(() => {
     const m = new Map<string, WargaWithIuran>();
     wargaData.forEach((w) => {
-      const dbKey = normalizeBlokKey(w.blok);
-      m.set(dbKey, w);
+      m.set(normalizeBlokKey(w.blok), w);
       const label = dbBlokToSiteplanLabel(w.blok);
       if (label) m.set(label, w);
     });
     return m;
   }, [wargaData]);
 
-  function lookupWarga(blokKey: string): WargaWithIuran | undefined {
-    return (
-      wargaMap.get(blokKey) ??
-      wargaMap.get(normalizeBlokKey(siteplanLabelToDbBlok(blokKey)))
-    );
+  function lookupWarga(lot: LotPoly) {
+    if (lot.isRC) return undefined;
+    return wargaMap.get(lot.blokKey) ??
+      wargaMap.get(normalizeBlokKey(siteplanLabelToDbBlok(lot.blokKey)));
   }
 
+  function activateLot(lot: LotPoly) {
+    setSelectedKey(lot.lotId);
+    const address = lot.isRC ? lot.blokKey : siteplanLabelToDbBlok(lot.blokKey);
+    onHouseClick(address, lookupWarga(lot));
+  }
+
+  const selected = SITEPLAN_LOT_POLYGONS.find((lot) => lot.lotId === selectedKey);
+  const address = selected
+    ? selected.isRC ? selected.blokKey : siteplanLabelToDbBlok(selected.blokKey)
+    : "";
+  const warning = provisionalIdentityWarning(address);
+  const resident = selected ? lookupWarga(selected) : undefined;
   const { width, height } = SITEPLAN_IMAGE;
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+      <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+        <p className="font-semibold">Peta perkiraan · Belum terverifikasi</p>
+        <p className="mt-1">Batas dan posisi overlay masih perkiraan. Nomor yang tampil berasal dari peta lama; konflik penomoran belum diselesaikan.</p>
+      </div>
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
         {STATUS_LEGEND.map((item) => (
-          <span
-            key={item.label}
-            className="flex items-center gap-1.5 text-slate-500"
-          >
-            <span
-              className="inline-block h-3.5 w-3.5 rounded-sm border-[1.5px]"
-              style={{ backgroundColor: item.fill, borderColor: item.stroke }}
-            />
+          <span key={item.label} className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm border" style={{ backgroundColor: item.fill, borderColor: item.stroke }} />
             {item.label}
           </span>
         ))}
+        <span>Abu muda: data belum tersedia · Ungu: RC / Rumah Contoh</span>
       </div>
-
-      <MapZoomViewport>
-        <div
-          className="relative mx-auto w-full leading-[0]"
+      <div className="mb-3 flex gap-2" role="group" aria-label="Tampilan peta">
+        <button type="button" aria-pressed={mode === "2d"} onClick={() => setMode("2d")}
+          className="min-h-10 rounded border px-4 text-sm aria-pressed:border-blue-600 aria-pressed:bg-blue-50">2D Map</button>
+        <button type="button" aria-pressed={mode === "3d"} onClick={() => setMode("3d")}
+          className="min-h-10 rounded border px-4 text-sm aria-pressed:border-blue-600 aria-pressed:bg-blue-50">3D Provisional</button>
+      </div>
+      {mode === "2d" && <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-600">
+        <label className="flex min-h-9 items-center gap-2">
+          <input type="checkbox" checked={showOverlay} onChange={(e) => setShowOverlay(e.target.checked)} />
+          Tampilkan overlay perkiraan
+        </label>
+        <label className="flex min-h-9 items-center gap-2">
+          Opasitas
+          <input aria-label="Opasitas overlay" type="range" min="10" max="60" step="5"
+            value={Math.round(opacity * 100)} onChange={(e) => setOpacity(Number(e.target.value) / 100)}
+            disabled={!showOverlay} className="w-24" />
+          <span className="w-8 tabular-nums">{Math.round(opacity * 100)}%</span>
+        </label>
+      </div>}
+      {mode === "3d" ? (
+        <NaharaMap3D lots={SITEPLAN_LOT_POLYGONS} selectedKey={selectedKey}
+          lookupWarga={lookupWarga} onSelect={activateLot} onBack={() => setMode("2d")} />
+      ) : <MapZoomViewport>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="mx-auto block h-auto w-full"
           style={{ maxWidth: width }}
+          aria-label="Peta Nahara dengan overlay perkiraan belum terverifikasi"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={SITEPLAN_IMAGE.src}
-            alt="Siteplan perumahan Nahara"
-            width={width}
-            height={height}
-            className="block h-auto w-full select-none"
-            draggable={false}
-          />
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="pointer-events-none absolute inset-0 h-full w-full [&_*]:pointer-events-auto"
-            aria-label="Kavling interaktif"
-          >
-            {SITEPLAN_LOT_POLYGONS.map((lot) => {
-              const warga = lot.isRC ? undefined : lookupWarga(lot.blokKey);
-              const displayBlok = lot.isRC
-                ? lot.blokKey
-                : warga
-                  ? warga.blok
-                  : siteplanLabelToDbBlok(lot.blokKey);
-              return (
-                <LotPolygon
-                  key={lot.lotId}
-                  {...lot}
-                  displayBlok={displayBlok}
-                  warga={warga}
-                  onHouseClick={onHouseClick}
-                />
-              );
-            })}
-          </svg>
+          <image href={SITEPLAN_IMAGE.src} width={width} height={height} pointerEvents="none" />
+          {showOverlay && SITEPLAN_LOT_POLYGONS.map((lot) => (
+            <LotPolygon key={lot.lotId} lot={lot} warga={lookupWarga(lot)}
+              selected={lot.lotId === selectedKey} opacity={opacity}
+              onSelect={() => activateLot(lot)} />
+          ))}
+        </svg>
+      </MapZoomViewport>}
+      {selected && (
+        <section aria-label="Pilihan peta sementara" aria-live="polite"
+          className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-slate-700">
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-semibold">{selected.isRC ? "RC · Rumah Contoh" : address}</p>
+            <button type="button" className="min-h-10 px-2 text-xs underline" onClick={() => setSelectedKey(null)}>Tutup pilihan</button>
+          </div>
+          {!selected.isRC && <p>Tipe {approximateType(selected) ?? "belum diketahui"} · acuan baris sementara; Hoek belum dipastikan</p>}
+          <p className="mt-1 text-xs">Posisi dan identitas bidang belum terverifikasi.</p>
+          {selected.isRC ? (
+            <p className="mt-1 text-xs">RC berarti Rumah Contoh pada legenda brosur. Batas area ini masih perkiraan, bukan konfirmasi fasilitas umum.</p>
+          ) : (
+            <>
+              <p className="mt-2">{statusLabel(resident)}</p>
+              {resident && <><p className="font-medium">{resident.nama}</p><p>{resident.status_hunian} · Iuran {resident.iuran_lunas ? "Lunas" : "Belum Bayar"}</p><p className="text-xs">Data alamat {resident.blok}; kecocokan dengan bidang peta belum dipastikan.</p></>}
+              {warning && <p className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-950">{warning}</p>}
+              <button type="button" onClick={() => onHouseClick(address, resident)}
+                className="mt-3 min-h-10 rounded border border-blue-300 bg-white px-3 text-xs font-medium text-blue-800">
+                Lihat data alamat {address}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+      <details className="mt-3 rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
+        <summary className="cursor-pointer py-1 font-medium">Referensi brosur Tahap 1 · sementara</summary>
+        <p className="mt-2">Warna berikut menunjukkan tipe rumah pada brosur, bukan status pembayaran. Nomor cetak hanya kandidat Tahap 1; tidak mengganti nomor peta lama.</p>
+        <div className="mt-2 flex flex-wrap gap-3">
+          {BROCHURE_TYPE_LEGEND.map((item) => (
+            <span key={item.label} className="flex items-center gap-1">
+              <span className="h-3 w-3 rounded-sm border border-slate-400" style={{ backgroundColor: item.color }} />{item.label}
+            </span>
+          ))}
         </div>
-      </MapZoomViewport>
+        <p className="mt-2">Hoek = kavling sudut · RC = Rumah Contoh. Penetapan Hoek per bidang belum diverifikasi.</p>
+        <a href={BROCHURE_REFERENCE.url} target="_blank" rel="noreferrer" className="mt-2 inline-block min-h-9 py-2 text-blue-700 underline">Buka brosur halaman 7 (PDF)</a>
+        <p>Konflik terbuka: NHT-8/16 ganda; NHB-2: 38 vs 30; penomoran baris 1; baris 4–5 pada daftar lama tidak tampak pada peta.</p>
+      </details>
     </TooltipProvider>
   );
 }

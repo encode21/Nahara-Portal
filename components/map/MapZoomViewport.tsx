@@ -1,6 +1,7 @@
 "use client";
 
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { useEffect, useRef, type RefObject } from "react";
+import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 
 type MapZoomViewportProps = {
@@ -10,7 +11,27 @@ type MapZoomViewportProps = {
 const controlBtn =
   "flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-slate-700 shadow-sm transition-colors hover:border-gold/40 hover:bg-gold/10 hover:text-gold-dark active:scale-95";
 
+function RecenterOnResize({ viewport }: { viewport: RefObject<HTMLDivElement> }) {
+  const { centerView } = useControls();
+  useEffect(() => {
+    if (!viewport.current) return;
+    let previousWidth = viewport.current.clientWidth;
+    let frame = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      if (Math.abs(width - previousWidth) < 1) return;
+      previousWidth = width;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => centerView(1, 0));
+    });
+    observer.observe(viewport.current);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
+  }, [viewport, centerView]);
+  return null;
+}
+
 export function MapZoomViewport({ children }: MapZoomViewportProps) {
+  const viewport = useRef<HTMLDivElement>(null);
   return (
     <TransformWrapper
       initialScale={1}
@@ -24,7 +45,8 @@ export function MapZoomViewport({ children }: MapZoomViewportProps) {
       pinch={{ step: 5 }}
     >
       {({ zoomIn, zoomOut, resetTransform }) => (
-        <div className="relative">
+        <div className="relative" ref={viewport}>
+          <RecenterOnResize viewport={viewport} />
           <div className="absolute right-2 top-2 z-20 flex flex-col gap-1.5">
             <button
               type="button"

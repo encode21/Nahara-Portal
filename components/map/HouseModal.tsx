@@ -16,6 +16,7 @@ import {
 import { StatusBadge, getHunianVariant, getIuranVariant } from "@/components/ui/StatusBadge";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
 
 type HouseModalProps = {
   warga?: WargaWithIuran;
@@ -23,6 +24,7 @@ type HouseModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onIuranUpdated?: () => void;
+  mapPreview?: boolean;
 };
 
 type HistoryRow = {
@@ -49,7 +51,7 @@ function trailingMonths(focusMonth: string, count: number): string[] {
   return out;
 }
 
-export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: HouseModalProps) {
+export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated, mapPreview = false }: HouseModalProps) {
   const { isAdmin } = useAuth();
   const supabase = createClient();
   const [iuranByMonth, setIuranByMonth] = useState<Map<string, Iuran>>(new Map());
@@ -130,8 +132,19 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
         <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90vh] flex-col rounded-t-2xl border border-slate-200 bg-white outline-none sm:mx-auto sm:max-w-md">
           <div className="mx-auto mt-3 h-1 w-12 shrink-0 rounded-full bg-slate-200" />
           <div className="overflow-y-auto p-6">
-            <Drawer.Title className="font-display text-xl font-bold text-slate-900">{blok}</Drawer.Title>
+            <div className="flex items-center justify-between gap-3">
+              <Drawer.Title className="font-display text-xl font-bold text-slate-900">{blok}</Drawer.Title>
+              <Drawer.Close asChild><button type="button" className="min-h-10 px-2 text-xs text-slate-600 underline">Tutup detail</button></Drawer.Close>
+            </div>
             <Drawer.Description className="text-sm text-slate-400">Detail Kavling</Drawer.Description>
+            {mapPreview && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                Data untuk alamat {blok}. Posisi dan kecocokan bidang pada peta perkiraan belum terverifikasi. Pastikan alamat sebelum memperbarui iuran.
+              </p>
+            )}
+            {mapPreview && provisionalIdentityWarning(blok) && (
+              <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">{provisionalIdentityWarning(blok)}</p>
+            )}
 
             {warga ? (
               <div className="mt-4 space-y-4">
@@ -141,6 +154,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900">{warga.nama}</p>
+                    {mapPreview && <p className="text-xs text-slate-600">Iuran: {warga.iuran_lunas ? "Lunas" : "Belum Bayar"}</p>}
                     <StatusBadge
                       status={warga.status_hunian}
                       variant={getHunianVariant(warga.status_hunian)}
@@ -225,7 +239,7 @@ export function HouseModal({ warga, blok, open, onOpenChange, onIuranUpdated }: 
             ) : (
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
                 <Home className="mx-auto h-8 w-8 text-slate-600" />
-                <p className="mt-2 text-slate-400">Kavling kosong</p>
+                <p className="mt-2 text-slate-400">{mapPreview ? "Data hunian belum tersedia" : "Kavling kosong"}</p>
               </div>
             )}
           </div>

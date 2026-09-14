@@ -40,6 +40,7 @@ export function PetaLingkunganCard({
     <>
       <PetaLingkungan wargaData={wargaData} onHouseClick={handleHouseClick} />
       <HouseModal
+        mapPreview
         blok={selected?.blok ?? ""}
         warga={selected?.warga}
         open={selected !== null}
