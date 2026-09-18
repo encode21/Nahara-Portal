@@ -12,9 +12,8 @@ import type { LotPoly } from "@/lib/nahara/provisional-lots";
 import { previewPlacement, type PreviewPlacement } from "@/lib/nahara/provisional-3d";
 import { statusLabel } from "@/lib/nahara/preview-status";
 import { siteplanLabelToDbBlok } from "@/lib/constants/cluster-layout";
-import { provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
 import type { WargaWithIuran } from "@/lib/types";
-import { RenderBudget, QUALITY, type SceneQuality, type RenderMetrics } from "@/components/3d/RenderBudget";
+import { RenderBudget, QUALITY, type SceneQuality } from "@/components/3d/RenderBudget";
 import { ResidentBubbles } from "@/components/3d/ResidentBubbles";
 import { ResidentPopup } from "./ResidentPopup";
 import { residentPresentation, type ResidentAudience } from "@/lib/nahara/resident-presentation";
@@ -27,6 +26,9 @@ type Props = {
   onSelect: (lot: LotPoly) => void;
   onBack: () => void;
 };
+
+const ignorePosition = () => {};
+const ignoreRenderMetrics = () => {};
 
 function SelectionBoundary({ placement }: { placement: PreviewPlacement }) {
   const vertices = useMemo(() => new Float32Array(placement.points.flatMap(([x, z]) => [x, 0.14, z])), [placement]);
@@ -52,7 +54,6 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
   const audience: ResidentAudience = auth.loading || !auth.user ? "public" : auth.isAdmin ? "admin" : auth.isStaff || auth.isWargaRegistry ? "ops" : "resident";
   const [qualityChoice, setQualityChoice] = useState<"auto" | SceneQuality>("auto");
   const [mobile, setMobile] = useState(true);
-  const [renderMetrics, setRenderMetrics] = useState<RenderMetrics | null>(null);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 767px), (pointer: coarse)");
     const update = () => setMobile(query.matches);
@@ -63,14 +64,12 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
   const pointerType = useRef("mouse");
   const placements = useMemo(() => lots.map(previewPlacement), [lots]);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const [debug, setDebug] = useState(true);
   const [mode, setMode] = useState<ViewMode>("MASTERPLAN");
   const [locked, setLocked] = useState(false);
   const [targetKey, setTargetKey] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(true);
   const [request, setRequest] = useState(0);
   const [transitioning, setTransitioning] = useState(true);
-  const [walkPosition, setWalkPosition] = useState<[number, number, number] | null>(null);
   const joystick = useRef<WalkInput>({ x: 0, y: 0 });
   const streetViewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -110,9 +109,6 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
     return () => window.removeEventListener("keydown", inspect);
   }, [mode, transitioning, target, onSelect]);
   const spawn = useMemo(() => selected ? streetSpawn(network, selected) : null, [network, selected]);
-  const resident = active ? lookupWarga(active.lot) : undefined;
-  const address = active ? active.lot.isRC ? active.lot.blokKey : siteplanLabelToDbBlok(active.lot.blokKey) : "";
-  const warning = provisionalIdentityWarning(address);
   return <div data-scene-mode={mode} data-quality={quality} data-camera-transition={transitioning ? "moving" : "ready"}>
     <style>{`@keyframes nahara-enter { from { opacity: 0; transform: translateY(5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } } .nahara-enter { animation: nahara-enter 180ms ease-out both; } @media (prefers-reduced-motion: reduce) { .nahara-enter { animation: none; } }`}</style>
     <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
@@ -121,7 +117,6 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
         <label>Kualitas <select aria-label="Kualitas 3D" value={qualityChoice} onChange={(e) => setQualityChoice(e.target.value as typeof qualityChoice)} className="min-h-10 rounded border bg-white px-2">
           <option value="auto">Otomatis</option><option value="mobile">Hemat / mobile</option><option value="standard">Standar</option>
         </select></label>
-        <label className="flex min-h-10 items-center gap-2"><input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} />Debug</label>
         <button type="button" disabled={transitioning} className="min-h-10 underline" onClick={() => changeView("MASTERPLAN")}>← Kembali ke Peta</button>
       </div>
     </div>
@@ -150,8 +145,8 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
           {selected && <SelectionBoundary placement={selected} />}
           <ResidentBubbles bubbles={bubbles} />
           <CameraRig mode={mode} request={request} selected={selected} placements={placements} network={network}
-            joystick={joystick} onPosition={setWalkPosition} onTransition={setTransitioning} onLock={setLocked} onTarget={setTargetKey} />
-          <RenderBudget quality={quality} walking={mode === "STREET_EXPLORE"} onMetrics={setRenderMetrics} />
+            joystick={joystick} onPosition={ignorePosition} onTransition={setTransitioning} onLock={setLocked} onTarget={setTargetKey} />
+          <RenderBudget quality={quality} walking={mode === "STREET_EXPLORE"} onMetrics={ignoreRenderMetrics} />
         </Canvas>
       </SceneBoundary>
       <div className="pointer-events-none absolute left-3 top-3 rounded bg-white/95 px-2 py-1 text-xs font-semibold text-amber-900">Belum terverifikasi</div>
@@ -173,21 +168,6 @@ export default function NaharaMap3D({ lots, selectedKey, lookupWarga, onSelect, 
         </div>}
       </>}
     </div>
-      {debug && <div className="mt-3 rounded bg-slate-950/90 p-3 text-xs text-white" aria-live={mode === "STREET_EXPLORE" ? "off" : "polite"}>
-        {renderMetrics && <p data-render-triangles={renderMetrics.triangles} data-render-instances={renderMetrics.visible}>Kualitas: {quality} · DPR maks. {QUALITY[quality].dpr} · Rumah/vegetasi: {renderMetrics.visible}/{renderMetrics.total} bagian instansi · {renderMetrics.triangles.toLocaleString()} segitiga (bukan pengukuran FPS)</p>}
-        {walkPosition && <p data-walk-x={walkPosition[0]} data-walk-y={walkPosition[1]} data-walk-z={walkPosition[2]}>Kamera: {walkPosition.map((v) => v.toFixed(3)).join(", ")}</p>}
-        <p className="font-semibold">{address || "Pilih / arahkan ke kavling"}{active?.lot.isRC ? " · Rumah Contoh" : ""}</p>
-        {active && <>
-          <p>Tipe: {active.type ?? "—"} · world: {active.position.x.toFixed(2)}, 0, {active.position.z.toFixed(2)}</p>
-          <p>Rotasi: {(active.rotation * 180 / Math.PI).toFixed(1)}° · yaw sementara</p>
-          <p>SVG preview: {active.centroid.map((v) => v.toFixed(2)).join(", ")}</p>
-          <p className="break-all">previewKey: {active.lot.lotId}</p>
-          {!active.lot.isRC && <p>{resident?.nama} · {statusLabel(resident)}</p>}
-          {resident && <p>{resident.status_hunian} · Iuran {resident.iuran_lunas ? "Lunas" : "Belum Bayar"}</p>}
-          {warning && <p className="mt-1 text-amber-200">{warning}</p>}
-        </>}
-        <p>validationState=provisional</p>
-      </div>}
     <p className="mt-2 text-xs text-slate-500">Rumah prosedural Nahara 5/7/9 · Geser untuk orbit atau melihat saat berjalan · Ketuk rumah untuk fokus dan data warga. Jalur jalan diturunkan dari ruang di antara kavling. Tinggi pandang setara 1,65 m terhadap skala model; skala kawasan tetap provisional.</p>
   </div>;
 }

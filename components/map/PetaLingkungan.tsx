@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { SITEPLAN_LOT_POLYGONS, type LotPoly, type Point } from "@/lib/nahara/provisional-lots";
 import { getHouseStyle, statusLabel, approximateType } from "@/lib/nahara/preview-status";
 
-import { BROCHURE_REFERENCE, BROCHURE_TYPE_LEGEND, provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
+import { provisionalIdentityWarning } from "@/lib/nahara/provisional-reference";
 import {
   dbBlokToSiteplanLabel,
   normalizeBlokKey,
@@ -134,10 +134,6 @@ export default function PetaLingkungan({ wargaData, onHouseClick }: PetaLingkung
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
-        <p className="font-semibold">Peta perkiraan · Belum terverifikasi</p>
-        <p className="mt-1">Batas dan posisi overlay masih perkiraan. Nomor yang tampil berasal dari peta lama; konflik penomoran belum diselesaikan.</p>
-      </div>
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
         {STATUS_LEGEND.map((item) => (
           <span key={item.label} className="flex items-center gap-1.5">
@@ -208,20 +204,6 @@ export default function PetaLingkungan({ wargaData, onHouseClick }: PetaLingkung
           )}
         </section>
       )}
-      <details className="mt-3 rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
-        <summary className="cursor-pointer py-1 font-medium">Referensi brosur Tahap 1 · sementara</summary>
-        <p className="mt-2">Warna berikut menunjukkan tipe rumah pada brosur, bukan status pembayaran. Nomor cetak hanya kandidat Tahap 1; tidak mengganti nomor peta lama.</p>
-        <div className="mt-2 flex flex-wrap gap-3">
-          {BROCHURE_TYPE_LEGEND.map((item) => (
-            <span key={item.label} className="flex items-center gap-1">
-              <span className="h-3 w-3 rounded-sm border border-slate-400" style={{ backgroundColor: item.color }} />{item.label}
-            </span>
-          ))}
-        </div>
-        <p className="mt-2">Hoek = kavling sudut · RC = Rumah Contoh. Penetapan Hoek per bidang belum diverifikasi.</p>
-        <a href={BROCHURE_REFERENCE.url} target="_blank" rel="noreferrer" className="mt-2 inline-block min-h-9 py-2 text-blue-700 underline">Buka brosur halaman 7 (PDF)</a>
-        <p>Konflik terbuka: NHT-8/16 ganda; NHB-2: 38 vs 30; penomoran baris 1; baris 4–5 pada daftar lama tidak tampak pada peta.</p>
-      </details>
     </TooltipProvider>
   );
 }
