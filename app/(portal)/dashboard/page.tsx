@@ -17,6 +17,7 @@ import { SituationCenter } from "@/components/dashboard/SituationCenter";
 import { PetaLingkunganCard } from "@/components/map/PetaLingkunganCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
+import { WhatsAppGroupCard } from "@/components/dashboard/WhatsAppGroupCard";
 import { Users, Megaphone } from "lucide-react";
 
 type WargaWithIuranRows = Warga & { iuran: Pick<Iuran, "status" | "bulan">[] };
@@ -117,6 +118,8 @@ export default async function DashboardPage() {
       </header>
 
       <QuickActions />
+
+      <WhatsAppGroupCard />
 
       <SituationCenter bundle={situation} lingkungan={lingkungan} />
 
