@@ -7,6 +7,26 @@ export type Activity = {
   max_participants: number | null;
   registration_fee: number;
   image_url: string | null;
+  source_pengumuman_id: string | null;
+  created_at: string;
+};
+
+export type ActivityImage = {
+  id: string;
+  activity_id: string;
+  image_url: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type ActivityExpense = {
+  id: string;
+  activity_id: string;
+  description: string;
+  amount: number;
+  pic: string | null;
+  expense_date: string;
+  kas_entry_id: string | null;
   created_at: string;
 };
 

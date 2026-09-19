@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Activity } from "@/lib/types";
+import { Activity, ActivityExpense, ActivityImage } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/Loading";
-import { StoredImage } from "@/components/ui/StoredImage";
+import { ActivityGallery } from "@/components/ActivityGallery";
+import { ActivityExpenseSummary } from "@/components/ActivityExpenseSummary";
 
 type PublicParticipant = {
   id: string;
@@ -22,23 +23,38 @@ export default function PublicActivityDetailPage({
   const supabase = useMemo(() => createClient(), []);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [participants, setParticipants] = useState<PublicParticipant[]>([]);
+  const [images, setImages] = useState<ActivityImage[]>([]);
+  const [expenses, setExpenses] = useState<ActivityExpense[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
 
-      const [activityRes, participantsRes] = await Promise.all([
+      const [activityRes, participantsRes, imagesRes, expensesRes] = await Promise.all([
         supabase.from("activities").select("*").eq("id", params.id).single(),
         supabase
           .from("participants")
           .select("id,name,registered_at")
           .eq("activity_id", params.id)
           .order("registered_at", { ascending: false }),
+        supabase
+          .from("activity_images")
+          .select("*")
+          .eq("activity_id", params.id)
+          .order("sort_order"),
+        supabase
+          .from("activity_expenses")
+          .select("*")
+          .eq("activity_id", params.id)
+          .order("expense_date")
+          .order("created_at"),
       ]);
 
       setActivity((activityRes.data ?? null) as Activity | null);
       setParticipants((participantsRes.data ?? []) as PublicParticipant[]);
+      setImages((imagesRes.data ?? []) as ActivityImage[]);
+      setExpenses((expensesRes.data ?? []) as ActivityExpense[]);
       setLoading(false);
     }
 
@@ -64,6 +80,12 @@ export default function PublicActivityDetailPage({
     );
   }
 
+  const galleryUrls = images.length > 0
+    ? images.map((image) => image.image_url)
+    : activity.image_url
+      ? [activity.image_url]
+      : [];
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -71,17 +93,12 @@ export default function PublicActivityDetailPage({
           ← Kembali
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">{activity.title}</h1>
-        {activity.image_url && (
-          <StoredImage
-            src={activity.image_url}
-            alt={activity.title}
-            className="mt-4 max-h-80 w-full rounded-xl object-cover"
-          />
-        )}
         {activity.description && (
           <p className="mt-4 text-slate-600 whitespace-pre-line">{activity.description}</p>
         )}
       </div>
+
+      <ActivityGallery images={galleryUrls} title={activity.title} />
 
       <div className="card grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -110,6 +127,8 @@ export default function PublicActivityDetailPage({
           </p>
         </div>
       </div>
+
+      <ActivityExpenseSummary expenses={expenses} />
 
       <section className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -149,4 +168,3 @@ export default function PublicActivityDetailPage({
     </div>
   );
 }
-

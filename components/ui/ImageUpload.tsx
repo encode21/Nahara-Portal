@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   removePortalImage,
   uploadPortalImage,
+  isPortalStorageUrl,
   type UploadFolder,
 } from "@/lib/supabase/storage";
 import { StoredImage } from "@/components/ui/StoredImage";
@@ -36,7 +37,9 @@ export function ImageUpload({
     const supabase = createClient();
     const prev = value;
     onChange(null);
-    await removePortalImage(supabase, prev);
+    if (isPortalStorageUrl(prev, folder)) {
+      await removePortalImage(supabase, prev);
+    }
   }
 
   async function handleFile(file: File | null) {
@@ -52,7 +55,7 @@ export function ImageUpload({
       return;
     }
     onChange(url);
-    if (prev && prev !== url) {
+    if (prev && prev !== url && isPortalStorageUrl(prev, folder)) {
       await removePortalImage(supabase, prev);
     }
   }

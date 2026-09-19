@@ -90,7 +90,7 @@ export default function KegiatanPage() {
           description="Kegiatan akan muncul di sini setelah dibuat oleh admin."
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-2">
           {activities.map((activity) => (
             <ActivityCard
               key={activity.id}

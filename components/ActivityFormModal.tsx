@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Activity } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/Loading";
-import { ImageUpload } from "@/components/ui/ImageUpload";
+import { MultiImageUpload } from "@/components/ui/MultiImageUpload";
 import { dispatchNotificationPush } from "@/lib/notifications/api";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export function ActivityFormModal({ activity, onClose }: Props) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const isEdit = !!activity;
 
   const [title, setTitle] = useState(activity?.title ?? "");
@@ -30,9 +30,26 @@ export function ActivityFormModal({ activity, onClose }: Props) {
   const [registrationFee, setRegistrationFee] = useState(
     activity?.registration_fee?.toString() ?? "0"
   );
-  const [imageUrl, setImageUrl] = useState<string | null>(activity?.image_url ?? null);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    activity?.image_url ? [activity.image_url] : []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activity) return;
+    async function loadImages() {
+      const { data, error: imagesError } = await supabase
+        .from("activity_images")
+        .select("image_url")
+        .eq("activity_id", activity!.id)
+        .order("sort_order");
+      if (!imagesError && data && data.length > 0) {
+        setImageUrls(data.map((item: { image_url: string }) => item.image_url));
+      }
+    }
+    void loadImages();
+  }, [activity, supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +63,7 @@ export function ActivityFormModal({ activity, onClose }: Props) {
       location: location.trim() || null,
       max_participants: maxParticipants ? parseInt(maxParticipants, 10) : null,
       registration_fee: parseInt(registrationFee, 10) || 0,
-      image_url: imageUrl,
+      image_url: imageUrls[0] ?? null,
     };
 
     const result = isEdit
@@ -58,15 +75,25 @@ export function ActivityFormModal({ activity, onClose }: Props) {
           .maybeSingle()
       : await supabase.from("activities").insert(payload).select("id").single();
 
-    setLoading(false);
-
     if (result.error) {
+      setLoading(false);
       setError("Gagal menyimpan kegiatan.");
       return;
     }
 
     const id = (result.data as { id?: string } | null)?.id ?? activity?.id;
     if (id) {
+      const { error: imagesError } = await supabase.rpc("replace_activity_images", {
+        p_activity_id: id,
+        p_image_urls: imageUrls,
+      });
+
+      if (imagesError) {
+        setLoading(false);
+        setError("Kegiatan tersimpan, tetapi galeri foto gagal diperbarui. Coba simpan kembali.");
+        return;
+      }
+
       dispatchNotificationPush({
         sourceType: "activities",
         sourceId: id,
@@ -74,6 +101,7 @@ export function ActivityFormModal({ activity, onClose }: Props) {
       });
     }
 
+    setLoading(false);
     onClose();
   }
 
@@ -123,11 +151,12 @@ export function ActivityFormModal({ activity, onClose }: Props) {
             />
           </div>
 
-          <ImageUpload
+          <MultiImageUpload
             folder="kegiatan"
-            value={imageUrl}
-            onChange={setImageUrl}
-            label="Poster / Gambar Kegiatan"
+            values={imageUrls}
+            onChange={setImageUrls}
+            max={5}
+            label="Poster / Dokumentasi Kegiatan"
           />
 
           <div>

@@ -13,6 +13,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { ActivityFormModal } from "@/components/ActivityFormModal";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
+import { ActivityExpenseManager } from "@/components/ActivityExpenseManager";
 
 export default function ActivityDetailPage({
   params,
@@ -274,6 +275,8 @@ export default function ActivityDetailPage({
           updating={updating}
         />
       </section>
+
+      <ActivityExpenseManager activityId={activity.id} />
 
       {showEdit && (
         <ActivityFormModal
