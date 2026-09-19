@@ -14,7 +14,8 @@ type Props = {
 
 export function ActivityFormModal({ activity, onClose }: Props) {
   const supabase = useMemo(() => createClient(), []);
-  const isEdit = !!activity;
+  const [savedActivityId, setSavedActivityId] = useState<string | null>(activity?.id ?? null);
+  const isEdit = savedActivityId !== null;
 
   const [title, setTitle] = useState(activity?.title ?? "");
   const [description, setDescription] = useState(activity?.description ?? "");
@@ -66,11 +67,11 @@ export function ActivityFormModal({ activity, onClose }: Props) {
       image_url: imageUrls[0] ?? null,
     };
 
-    const result = isEdit
+    const result = savedActivityId
       ? await supabase
           .from("activities")
           .update(payload)
-          .eq("id", activity!.id)
+          .eq("id", savedActivityId)
           .select("id")
           .maybeSingle()
       : await supabase.from("activities").insert(payload).select("id").single();
@@ -81,16 +82,44 @@ export function ActivityFormModal({ activity, onClose }: Props) {
       return;
     }
 
-    const id = (result.data as { id?: string } | null)?.id ?? activity?.id;
+    const id = (result.data as { id?: string } | null)?.id ?? savedActivityId;
     if (id) {
-      const { error: imagesError } = await supabase.rpc("replace_activity_images", {
+      setSavedActivityId(id);
+      let { error: imagesError } = await supabase.rpc("replace_activity_images", {
         p_activity_id: id,
         p_image_urls: imageUrls,
       });
 
+      // Kompatibilitas sementara bila tabel sudah ada tetapi RPC belum masuk schema cache.
+      if (imagesError?.code === "PGRST202") {
+        const deleteResult = await supabase
+          .from("activity_images")
+          .delete()
+          .eq("activity_id", id);
+        if (!deleteResult.error) {
+          const insertResult = imageUrls.length > 0
+            ? await supabase.from("activity_images").insert(
+                imageUrls.map((image_url, sort_order) => ({
+                  activity_id: id,
+                  image_url,
+                  sort_order,
+                }))
+              )
+            : { error: null };
+          imagesError = insertResult.error;
+        } else {
+          imagesError = deleteResult.error;
+        }
+      }
+
       if (imagesError) {
         setLoading(false);
-        setError("Kegiatan tersimpan, tetapi galeri foto gagal diperbarui. Coba simpan kembali.");
+        const databaseNotReady = imagesError.code === "PGRST202" || imagesError.code === "PGRST205";
+        setError(
+          databaseNotReady
+            ? "Kegiatan sudah tersimpan, tetapi database galeri belum aktif. Jalankan migrasi galeri kegiatan, lalu simpan kembali—kegiatan ini tidak akan dibuat dua kali."
+            : "Kegiatan sudah tersimpan, tetapi galeri foto gagal diperbarui. Coba simpan kembali."
+        );
         return;
       }
 

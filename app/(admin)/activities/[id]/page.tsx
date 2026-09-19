@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Activity, Participant } from "@/lib/types";
+import { Activity, ActivityImage, Participant } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { AGUSTUSAN_ACTIVITY_ID } from "@/lib/constants/agustusan";
 import {
@@ -14,6 +14,8 @@ import { LoadingSpinner } from "@/components/ui/Loading";
 import { ActivityFormModal } from "@/components/ActivityFormModal";
 import { getSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { ActivityExpenseManager } from "@/components/ActivityExpenseManager";
+import { ActivityGallery } from "@/components/ActivityGallery";
+import { ActivityDescription } from "@/components/ActivityDescription";
 
 export default function ActivityDetailPage({
   params,
@@ -23,6 +25,7 @@ export default function ActivityDetailPage({
   const supabase = createClient();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [images, setImages] = useState<ActivityImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -41,17 +44,23 @@ export default function ActivityDetailPage({
   async function loadData() {
     setLoading(true);
 
-    const [activityRes, participantsRes] = await Promise.all([
+    const [activityRes, participantsRes, imagesRes] = await Promise.all([
       supabase.from("activities").select("*").eq("id", params.id).single(),
       supabase
         .from("participants")
         .select("*")
         .eq("activity_id", params.id)
         .order("registered_at", { ascending: false }),
+      supabase
+        .from("activity_images")
+        .select("*")
+        .eq("activity_id", params.id)
+        .order("sort_order"),
     ]);
 
     setActivity(activityRes.data as Activity | null);
     setParticipants((participantsRes.data ?? []) as Participant[]);
+    setImages((imagesRes.data ?? []) as ActivityImage[]);
     setLoading(false);
   }
 
@@ -146,11 +155,16 @@ export default function ActivityDetailPage({
 
   const paidCount = participants.filter((p) => p.payment_status).length;
   const attendingCount = participants.filter((p) => p.attendance_status).length;
+  const galleryUrls = images.length > 0
+    ? images.map((image) => image.image_url)
+    : activity.image_url
+      ? [activity.image_url]
+      : [];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <Link
             href="/activities"
             className="text-sm text-slate-500 hover:text-accent"
@@ -160,14 +174,13 @@ export default function ActivityDetailPage({
           <h1 className="mt-2 text-2xl font-bold text-slate-900">
             {activity.title}
           </h1>
-          {activity.description && (
-            <p className="mt-1 text-slate-600">{activity.description}</p>
-          )}
         </div>
         <button type="button" className="btn-secondary" onClick={() => setShowEdit(true)}>
           Edit Kegiatan
         </button>
       </div>
+
+      <ActivityGallery images={galleryUrls} title={activity.title} />
 
       <div className="card grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -197,6 +210,8 @@ export default function ActivityDetailPage({
           </p>
         </div>
       </div>
+
+      {activity.description && <ActivityDescription description={activity.description} />}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900">

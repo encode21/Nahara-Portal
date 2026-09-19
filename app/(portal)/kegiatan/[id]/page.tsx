@@ -8,6 +8,7 @@ import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { ActivityGallery } from "@/components/ActivityGallery";
 import { ActivityExpenseSummary } from "@/components/ActivityExpenseSummary";
+import { ActivityDescription } from "@/components/ActivityDescription";
 
 type PublicParticipant = {
   id: string;
@@ -93,9 +94,6 @@ export default function PublicActivityDetailPage({
           ← Kembali
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">{activity.title}</h1>
-        {activity.description && (
-          <p className="mt-4 text-slate-600 whitespace-pre-line">{activity.description}</p>
-        )}
       </div>
 
       <ActivityGallery images={galleryUrls} title={activity.title} />
@@ -127,6 +125,8 @@ export default function PublicActivityDetailPage({
           </p>
         </div>
       </div>
+
+      {activity.description && <ActivityDescription description={activity.description} />}
 
       <ActivityExpenseSummary expenses={expenses} />
 

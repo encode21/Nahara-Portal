@@ -154,6 +154,20 @@ CREATE POLICY "admin_all_activity_expenses"
   USING (public.is_portal_admin()) WITH CHECK (public.is_portal_admin());
 
 -- Jadikan pengumuman simulasi pemadaman sebagai kegiatan, bukan data duplikat lepas.
+-- Jika admin sudah sempat membuatnya dari form sebelum migrasi aktif, gunakan record itu.
+UPDATE public.activities a
+SET source_pengumuman_id = p.id
+FROM public.pengumuman p
+WHERE p.id = '7cd29f72-8559-4306-ad02-8e389f0d6d29'
+  AND a.id = (
+    SELECT candidate.id
+    FROM public.activities candidate
+    WHERE candidate.source_pengumuman_id IS NULL
+      AND candidate.title ILIKE '%simulasi%pemadaman%kebakaran%'
+    ORDER BY candidate.created_at DESC
+    LIMIT 1
+  );
+
 INSERT INTO public.activities (
   title, description, date, location, max_participants,
   registration_fee, image_url, source_pengumuman_id
@@ -171,8 +185,6 @@ FROM public.pengumuman p
 WHERE p.id = '7cd29f72-8559-4306-ad02-8e389f0d6d29'
 ON CONFLICT (source_pengumuman_id) WHERE source_pengumuman_id IS NOT NULL
 DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
   date = EXCLUDED.date,
   location = EXCLUDED.location,
   image_url = COALESCE(public.activities.image_url, EXCLUDED.image_url);
@@ -188,7 +200,7 @@ INSERT INTO public.activity_expenses (activity_id, description, amount, pic, exp
 SELECT a.id, expense.description, expense.amount, expense.pic, '2026-09-19'::date
 FROM public.activities a
 CROSS JOIN (VALUES
-  ('Konsumsi seluruh warga untuk acara (jajanan pasar + air mineral)', 487500, 'Vidora NHT3/30'),
+  ('Konsumsi seluruh warga untuk acara (jajanan pasar + air mineral)', 553050, 'Vidora NHT3/30'),
   ('Konsumsi makan siang petugas damkar, 6 orang (HokBen)', 349100, NULL)
 ) AS expense(description, amount, pic)
 WHERE a.source_pengumuman_id = '7cd29f72-8559-4306-ad02-8e389f0d6d29'
@@ -196,3 +208,6 @@ ON CONFLICT (activity_id, description) DO UPDATE SET
   amount = EXCLUDED.amount,
   pic = EXCLUDED.pic,
   expense_date = EXCLUDED.expense_date;
+
+-- Pastikan PostgREST segera mengenali tabel dan RPC baru.
+NOTIFY pgrst, 'reload schema';
